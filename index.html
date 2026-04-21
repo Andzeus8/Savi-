@@ -128,6 +128,7 @@ const IconArrowOut = p => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/
 const IconShare = p => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />;
 const IconUpload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />;
 const IconDownload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />;
+const IconEdit = p => <Icon {...p} d={<><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></>} />;
 // ============ CONSTANTS ============
 const STORAGE_KEY = "savi_v1";
 const ASSET_DB_NAME = "savi_assets";
@@ -307,7 +308,7 @@ const readTextPreview = async (file) => {
     return "";
   }
 };
-const readImageMetadata = async (file) => {
+const readImageMetadata = async (file, options = {}) => {
   const objectUrl = URL.createObjectURL(file);
   try {
     const image = await new Promise((resolve, reject) => {
@@ -316,7 +317,8 @@ const readImageMetadata = async (file) => {
       img.onerror = () => reject(new Error("image_load_failed"));
       img.src = objectUrl;
     });
-    const maxEdge = 1200;
+    const maxEdge = options.maxEdge || 1200;
+    const quality = options.quality || 0.86;
     const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round((image.naturalWidth || 1) * scale));
@@ -326,11 +328,16 @@ const readImageMetadata = async (file) => {
     return {
       width: image.naturalWidth || 0,
       height: image.naturalHeight || 0,
-      preview: canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.86),
+      preview: canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", quality),
     };
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+};
+const readFolderImage = async (file) => {
+  if (!file || !(file.type || "").startsWith("image/")) throw new Error("folder_image_required");
+  const imageMeta = await readImageMetadata(file, { maxEdge: 720, quality: 0.78 });
+  return imageMeta.preview;
 };
 const extractFileMetadata = async (file, folders) => {
   const extension = fileExtensionFromName(file.name);
@@ -731,6 +738,7 @@ function App() {
   const [prefillUrl, setPrefillUrl] = useState("");
   const [prefillFromClipboard, setPrefillFromClipboard] = useState(false);
   const [showFolderSheet, setShowFolderSheet] = useState(false);
+  const [editingFolderId, setEditingFolderId] = useState("");
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -874,7 +882,8 @@ function App() {
     setItems(prev => prev.filter(i => i.id !== id));
     if (selectedItem?.id === id) setSelectedItem(null);
   };
-  const addFolder = (name, color) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, name, color }]);
+  const addFolder = (folderDraft) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, ...folderDraft }]);
+  const updateFolder = (folderId, updates) => setFolders(prev => prev.map(folder => folder.id === folderId ? { ...folder, ...updates } : folder));
   const clearLibrary = async () => {
     localStorage.removeItem(STORAGE_KEY);
     await clearAssetRecords().catch(() => {});
@@ -894,7 +903,7 @@ function App() {
                     <HomeScreen folders={folders} items={visibleItems} activeFolder={activeFolder} setActiveFolder={setActiveFolder} folderCounts={folderCounts} search={search} setSearch={setSearch} onSelect={setSelectedItem} onDemoShare={() => setShowShareSheet(true)} />
                   )}
                   {route === "folders" && (
-                    <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>setShowFolderSheet(true)} />
+                    <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }} onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }} />
                   )}
                   {route === "profile" && (
                     <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
@@ -906,7 +915,21 @@ function App() {
 
                 {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
                 {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
-                {showFolderSheet && <FolderSheet onClose={()=>setShowFolderSheet(false)} onCreate={(n,c)=>{ addFolder(n,c); setShowFolderSheet(false); }} />}
+                {showFolderSheet && (
+                  <FolderSheet
+                    folder={folders.find(folder => folder.id === editingFolderId) || null}
+                    onClose={()=>{ setShowFolderSheet(false); setEditingFolderId(""); }}
+                    onSave={(draft)=>{
+                      if (editingFolderId) {
+                        updateFolder(editingFolderId, draft);
+                      } else {
+                        addFolder(draft);
+                      }
+                      setShowFolderSheet(false);
+                      setEditingFolderId("");
+                    }}
+                  />
+                )}
                 {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
               </div>
             </div>
@@ -1021,7 +1044,7 @@ function ItemCard({ item, onClick, delay }) {
   );
 }
 
-function FoldersScreen({ folders, folderCounts, onOpen, onNew }) {
+function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
   return (
     <div className="scroll anim-fade" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 12px" }}>
@@ -1035,16 +1058,25 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew }) {
       </div>
       <div style={{ padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         {folders.map((f, idx) => (
-          <button key={f.id} onClick={()=>onOpen(f.id)} className="anim-slide" style={{ animationDelay: `${idx * 35}ms`, textAlign: "left", padding: 16, borderRadius: 16, aspectRatio: "1 / 1", display: "flex", flexDirection: "column", justifyContent: "space-between", background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s" }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: f.system ? T.ink : `${f.color}20`, border: f.system ? "none" : `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {f.system ? <IconSparkles size={16} stroke={2} /> : <div style={{ width: 16, height: 16, borderRadius: 5, background: f.color }} />}
-              {f.system && <span style={{ display: "none" }}></span>}
-            </div>
-            <div>
-              <div className="serif" style={{ fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: T.ink }}>{f.name}</div>
-              <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
-            </div>
-          </button>
+          <div key={f.id} className="anim-slide" style={{ animationDelay: `${idx * 35}ms`, position: "relative" }}>
+            <button onClick={()=>onOpen(f.id)} style={{ width: "100%", textAlign: "left", padding: 16, borderRadius: 16, aspectRatio: "1 / 1", display: "flex", flexDirection: "column", justifyContent: "space-between", background: f.image ? `center / cover no-repeat url(${f.image}), ${T.card}` : T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", position: "relative" }}>
+              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.44) 100%)" }} />}
+              <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: f.system ? T.ink : f.image ? "rgba(255,255,255,0.84)" : `${f.color}20`, border: f.system ? "none" : `1px solid ${f.image ? "rgba(255,255,255,0.35)" : `${f.color}30`}`, display: "flex", alignItems: "center", justifyContent: "center", color: f.image ? T.ink : "inherit" }}>
+                  {f.system ? <IconSparkles size={16} stroke={2} /> : f.image ? <IconImage size={16} /> : <div style={{ width: 16, height: 16, borderRadius: 5, background: f.color }} />}
+                </div>
+              </div>
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div className="serif" style={{ fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: f.image ? T.paper : T.ink }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: f.image ? "rgba(245,241,234,0.84)" : T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
+              </div>
+            </button>
+            {!f.system && (
+              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 34, height: 34, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.9)" : T.paper, color: T.ink, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 18px -16px rgba(28,26,23,0.65)" }}>
+                <IconEdit size={14} />
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </div>
@@ -1730,20 +1762,76 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, folders, onClose,
   );
 }
 
-function FolderSheet({ onClose, onCreate }) {
-  const [name, setName] = useState("");
-  const [color, setColor] = useState(FOLDER_COLORS[0]);
+function FolderSheet({ folder, onClose, onSave }) {
+  const [name, setName] = useState(folder?.name || "");
+  const [color, setColor] = useState(folder?.color || FOLDER_COLORS[0]);
+  const [image, setImage] = useState(folder?.image || "");
+  const [imageNote, setImageNote] = useState("");
+  const [isReadingImage, setIsReadingImage] = useState(false);
+  const imageInputRef = useRef(null);
+
+  const openImagePicker = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setIsReadingImage(true);
+    try {
+      const nextImage = await readFolderImage(file);
+      setImage(nextImage);
+      setImageNote("Cover image added.");
+    } catch {
+      setImageNote("Pick an image file for the folder cover.");
+    } finally {
+      setIsReadingImage(false);
+    }
+  };
+
+  const clearImage = () => {
+    setImage("");
+    setImageNote("Cover image removed.");
+  };
+
   return (
     <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
       <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", background: T.paper }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
           <button onClick={onClose} style={{ fontSize: 14, color: T.inkSoft }}>Cancel</button>
-          <div className="serif" style={{ fontSize: 18, color: T.ink }}>New folder</div>
+          <div className="serif" style={{ fontSize: 18, color: T.ink }}>{folder ? "Edit folder" : "New folder"}</div>
           <div style={{ width: 48 }} />
         </div>
         <div style={{ padding: "0 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="Name"><input autoFocus value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter" && name.trim() && onCreate(name.trim(), color)} placeholder="e.g. Travel ideas" style={inputStyle()} /></Field>
+          <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+          <div style={{ borderRadius: 18, overflow: "hidden", minHeight: 140, background: image ? `center / cover no-repeat url(${image}), ${color}22` : `${color}22`, border: `1px solid ${T.lineSoft}`, position: "relative" }}>
+            <div style={{ position: "absolute", inset: 0, background: image ? "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.36) 100%)" : "none" }} />
+            <div style={{ position: "relative", zIndex: 1, padding: 18, minHeight: 140, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: image ? "rgba(255,255,255,0.88)" : T.card, display: "flex", alignItems: "center", justifyContent: "center", color: T.ink }}>
+                {image ? <IconImage size={18} /> : <div style={{ width: 18, height: 18, borderRadius: 6, background: color }} />}
+              </div>
+              <div>
+                <div className="serif" style={{ fontSize: 28, lineHeight: 1.05, color: image ? T.paper : T.ink }}>{name.trim() || "Folder cover"}</div>
+                <div className="mono" style={{ marginTop: 6, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: image ? "rgba(245,241,234,0.84)" : T.inkMute }}>{image ? "Custom image" : "Solid color"}</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={openImagePicker} style={{ flex: 1, padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 600, background: T.ink, color: T.paper, opacity: isReadingImage ? 0.65 : 1 }}>
+              {isReadingImage ? "Adding cover..." : image ? "Change cover image" : "Add cover image"}
+            </button>
+            {image && (
+              <button onClick={clearImage} style={{ padding: "12px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+                Clear
+              </button>
+            )}
+          </div>
+          {imageNote && (
+            <div style={{ fontSize: 11.5, color: T.inkSoft }}>{imageNote}</div>
+          )}
+          <Field label="Name"><input autoFocus value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter" && name.trim() && onSave({ name: name.trim(), color, image })} placeholder="e.g. Travel ideas" style={inputStyle()} /></Field>
           <Field label="Color">
             <div style={{ display: "flex", gap: 8 }}>
               {FOLDER_COLORS.map(c => (
@@ -1751,7 +1839,7 @@ function FolderSheet({ onClose, onCreate }) {
               ))}
             </div>
           </Field>
-          <button onClick={()=>name.trim() && onCreate(name.trim(), color)} disabled={!name.trim()} style={{ width: "100%", padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: name.trim() ? 1 : 0.3 }}>Create</button>
+          <button onClick={()=>name.trim() && onSave({ name: name.trim(), color, image })} disabled={!name.trim()} style={{ width: "100%", padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: name.trim() ? 1 : 0.3 }}>{folder ? "Save changes" : "Create folder"}</button>
         </div>
       </div>
     </div>
