@@ -77,9 +77,16 @@
   @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes gentle-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes dot-bounce { 0%, 80%, 100% { opacity: 0.28; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
   .anim-slide { animation: slide-up 0.35s ease-out forwards; opacity: 0; }
   .anim-fade { animation: fade-in 0.25s ease-out forwards; }
   .anim-sheet { animation: sheet-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+  .wizard-float { animation: gentle-float 1.6s ease-in-out infinite; }
+  .loading-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; vertical-align: middle; }
+  .loading-dots span { width: 4px; height: 4px; border-radius: 999px; background: currentColor; animation: dot-bounce 1s infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
 
   /* Utility */
   .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -900,6 +907,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const urlInputRef = useRef(null);
   const autoAnalyzeTimerRef = useRef(null);
   const lastAutoSubmittedRef = useRef("");
+  const analyzeRequestRef = useRef(0);
 
   const isTextEntry = (node) => node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable);
 
@@ -910,9 +918,16 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     });
   };
 
+  const cancelAnalyze = () => {
+    analyzeRequestRef.current += 1;
+    if (autoAnalyzeTimerRef.current) window.clearTimeout(autoAnalyzeTimerRef.current);
+    setIsAnalyzing(false);
+  };
+
   const analyze = async (nextUrl = url) => {
     const normalized = normalizeUrl(nextUrl);
     if (!normalized || !hostFromUrl(normalized) || isAnalyzing) return;
+    const requestId = ++analyzeRequestRef.current;
 
     setIsAnalyzing(true);
     setAnalysisNote("");
@@ -921,6 +936,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
 
     try {
       const metadata = await fetchLinkMetadata(normalized, folders);
+      if (requestId !== analyzeRequestRef.current) return;
       const fallbackDomain = domainGuess(normalized);
       const resolvedTitle = metadata.title || `Saved from ${fallbackDomain}`;
       const resolvedDescription = metadata.description || "Add your own notes about this save.";
@@ -936,6 +952,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
       setStep(2);
       setAnalysisNote(metadata.success ? "Metadata pulled from the link and folder selected automatically." : "Limited metadata was available, so some fields were guessed.");
     } catch (error) {
+      if (requestId !== analyzeRequestRef.current) return;
       const fallbackDomain = domainGuess(normalized);
       setUrl(normalized);
       setTitle(`Saved from ${fallbackDomain}`);
@@ -946,7 +963,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
       setStep(2);
       setAnalysisNote("Couldn't fetch rich metadata for this link, so SAVI filled what it could.");
     } finally {
-      setIsAnalyzing(false);
+      if (requestId === analyzeRequestRef.current) setIsAnalyzing(false);
     }
   };
 
@@ -1034,6 +1051,17 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     }, 30);
   };
 
+  const clearUrlInput = () => {
+    cancelAnalyze();
+    lastAutoSubmittedRef.current = "";
+    setUrl("");
+    setAnalysisNote("");
+    setStep(1);
+    window.setTimeout(() => {
+      urlInputRef.current?.focus({ preventScroll: true });
+    }, 20);
+  };
+
   const activeFolder = folders.find(f => f.id === folderId);
 
   return (
@@ -1056,11 +1084,36 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
           {step === 1 ? (
             <div style={{ padding: "12px 0" }}>
               <Label>Paste URL</Label>
-              <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: url ? "12px 46px 12px 14px" : "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+                  {url && (
+                    <button onClick={clearUrlInput} aria-label="Clear pasted link" style={{ position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)", width: 28, height: 28, borderRadius: 999, background: T.paperDim, color: T.inkSoft, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${T.lineSoft}` }}>
+                      <IconX size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
                 <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
                 <span>Paste a link and SAVI will continue automatically, then pick the title, thumbnail, and folder for you.</span>
               </div>
+              {isAnalyzing && (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 14, padding: 14, borderRadius: 14, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+                  <div className="wizard-float" style={{ width: 36, height: 36, borderRadius: 12, background: T.paperDim, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <IconSparkles size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>
+                      Pulling your title, description, and tags
+                      <span className="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                    </div>
+                    <div style={{ fontSize: 11.5, lineHeight: 1.45, color: T.inkSoft, marginTop: 4 }}>
+                      Wizard hands at work on the metadata. If the paste looked wrong, tap the `x` and try again.
+                    </div>
+                  </div>
+                </div>
+              )}
               <button onClick={() => analyze()} disabled={!url.trim() || isAnalyzing} style={{ width: "100%", marginTop: 20, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: url.trim() && !isAnalyzing ? 1 : 0.3 }}>
                 {isAnalyzing ? "Analyzing..." : "Continue"}
               </button>
