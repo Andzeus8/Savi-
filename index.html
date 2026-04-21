@@ -452,6 +452,23 @@ const loadState = () => {
 const saveState = (data) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
 };
+const BACKUP_VERSION = 1;
+const BACKUP_MIME = "application/json";
+
+const buildBackupPayload = (folders, items) => ({
+  app: "SAVI",
+  version: BACKUP_VERSION,
+  exportedAt: new Date().toISOString(),
+  folders,
+  items,
+});
+
+const isValidBackup = (backup) => {
+  if (!backup || typeof backup !== "object") return false;
+  if (backup.app !== "SAVI") return false;
+  if (!Array.isArray(backup.folders) || !Array.isArray(backup.items)) return false;
+  return true;
+};
 
 // ============ APP ============
 function App() {
@@ -513,6 +530,47 @@ function App() {
     return counts;
   }, [items, folders]);
 
+  const exportBackup = () => {
+    const payload = buildBackupPayload(folders, items);
+    const stamp = payload.exportedAt.replace(/[:.]/g, "-");
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: BACKUP_MIME });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `savi-backup-${stamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+
+  const importBackup = async (file) => {
+    if (!file) return { ok: false, message: "No backup file selected." };
+
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!isValidBackup(parsed)) {
+        return { ok: false, message: "That file doesn't look like a SAVI backup." };
+      }
+
+      setFolders(parsed.folders);
+      setItems(parsed.items);
+      setActiveFolder("f-all");
+      setRoute("home");
+      setSelectedItem(null);
+      setShowSaveSheet(false);
+      setShowFolderSheet(false);
+      setShowShareSheet(false);
+
+      return {
+        ok: true,
+        message: `Backup restored. ${parsed.items.length} ${parsed.items.length === 1 ? "item" : "items"} loaded.`,
+      };
+    } catch {
+      return { ok: false, message: "Couldn't read that backup file." };
+    }
+  };
+
   const addItem = (item) => setItems(prev => [{ ...item, id: `i-${Date.now()}`, savedAt: Date.now() }, ...prev]);
   const deleteItem = (id) => { setItems(prev => prev.filter(i => i.id !== id)); if (selectedItem?.id === id) setSelectedItem(null); };
   const addFolder = (name, color) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, name, color }]);
@@ -533,7 +591,7 @@ function App() {
                     <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>setShowFolderSheet(true)} />
                   )}
                   {route === "profile" && (
-                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} />
+                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} />
                   )}
                 </div>
                 <div className="navigator-shell">
@@ -687,13 +745,46 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew }) {
   );
 }
 
-function ProfileScreen({ itemCount, folderCount }) {
+function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup }) {
+  const fileInputRef = useRef(null);
+  const [backupMessage, setBackupMessage] = useState("");
+  const [backupTone, setBackupTone] = useState("muted");
+  const [isImporting, setIsImporting] = useState(false);
+
+  const showBackupMessage = (message, tone = "muted") => {
+    setBackupMessage(message);
+    setBackupTone(tone);
+  };
+
   const clearData = () => {
     if (confirm("Clear all saves and start over?")) {
       localStorage.removeItem(STORAGE_KEY);
       window.location.reload();
     }
   };
+
+  const handleExport = () => {
+    exportBackup();
+    showBackupMessage("Backup downloaded to your device.", "success");
+  };
+
+  const openImportPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const result = await importBackup(file);
+    showBackupMessage(result.message, result.ok ? "success" : "error");
+    event.target.value = "";
+    setIsImporting(false);
+  };
+
+  const backupMessageColor = backupTone === "error" ? T.accent : backupTone === "success" ? T.ink : T.inkSoft;
+
   return (
     <div className="scroll anim-fade" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 24px" }}>
@@ -728,6 +819,30 @@ function ProfileScreen({ itemCount, folderCount }) {
             <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>saved</div>
           </div>
           <div style={{ fontSize: 11.5, color: T.inkSoft }}>Your library persists on this device. Clearing browser data will erase it.</div>
+        </div>
+
+        <div style={{ padding: 16, borderRadius: 16, marginBottom: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <div style={{ fontSize: 14, color: T.ink }}>Backup</div>
+            <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>json</div>
+          </div>
+          <div style={{ fontSize: 11.5, lineHeight: 1.5, color: T.inkSoft }}>
+            Export your folders and saves to a backup file, then restore that file later on any device running SAVI.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+            <button onClick={handleExport} style={{ padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.ink, color: T.paper }}>
+              Download backup
+            </button>
+            <button onClick={openImportPicker} disabled={isImporting} style={{ padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, opacity: isImporting ? 0.5 : 1 }}>
+              {isImporting ? "Restoring..." : "Restore backup"}
+            </button>
+          </div>
+          <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={handleImport} className="sr-only" />
+          {backupMessage && (
+            <div style={{ marginTop: 12, fontSize: 11.5, color: backupMessageColor }}>
+              {backupMessage}
+            </div>
+          )}
         </div>
 
         <button onClick={clearData} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, marginBottom: 24, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
