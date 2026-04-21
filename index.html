@@ -101,7 +101,7 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel" data-presets="env,react">
-const { useState, useMemo, useEffect } = React;
+const { useState, useMemo, useEffect, useRef } = React;
 
 // ============ ICONS (inline SVG to avoid external deps) ============
 const Icon = ({ d, size = 16, stroke = 1.8, fill = "none" }) => (
@@ -477,12 +477,24 @@ function App() {
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  const dismissActiveField = () => {
+    const active = document.activeElement;
+    if (!active) return;
+    const tag = active.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable) active.blur();
+  };
+
+  const openSaveSheet = (nextUrl = "") => {
+    dismissActiveField();
+    setPrefillUrl(nextUrl);
+    setShowSaveSheet(true);
+  };
+
   // If opened with ?url=..., auto-open the save sheet
   useEffect(() => {
     const incoming = getIncomingUrl();
     if (incoming) {
-      setPrefillUrl(incoming);
-      setShowSaveSheet(true);
+      openSaveSheet(incoming);
       // clean url so refresh doesn't re-trigger
       try { window.history.replaceState({}, "", window.location.pathname); } catch {}
     }
@@ -536,10 +548,10 @@ function App() {
                   )}
                 </div>
                 <div className="navigator-shell">
-                  <TabBar route={route} setRoute={setRoute} onSavePress={()=>{ setPrefillUrl(""); setShowSaveSheet(true); }} />
+                  <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet()} />
                 </div>
 
-                {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); setPrefillUrl("https://wired.com/future-of-pkm"); setShowSaveSheet(true); }} />}
+                {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
                 {showSaveSheet && <SaveSheet initialUrl={prefillUrl} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={(i)=>{ addItem(i); setShowSaveSheet(false); }} />}
                 {showFolderSheet && <FolderSheet onClose={()=>setShowFolderSheet(false)} onCreate={(n,c)=>{ addFolder(n,c); setShowFolderSheet(false); }} />}
                 {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
@@ -790,6 +802,19 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const [thumbnail, setThumbnail] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisNote, setAnalysisNote] = useState("");
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const sheetRef = useRef(null);
+  const scrollRef = useRef(null);
+  const urlInputRef = useRef(null);
+
+  const isTextEntry = (node) => node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable);
+
+  const ensureVisible = (node, behavior = "smooth") => {
+    if (!node || !scrollRef.current) return;
+    window.requestAnimationFrame(() => {
+      node.scrollIntoView({ block: "center", behavior });
+    });
+  };
 
   const analyze = async (nextUrl = url) => {
     const normalized = normalizeUrl(nextUrl);
@@ -835,6 +860,47 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     }
   }, [initialUrl]);
 
+  useEffect(() => {
+    if (step !== 1 || initialUrl) return;
+    const timer = window.setTimeout(() => {
+      const input = urlInputRef.current;
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      ensureVisible(input, "auto");
+    }, 140);
+    return () => window.clearTimeout(timer);
+  }, [step, initialUrl]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateKeyboardInset = () => {
+      const nextInset = Math.max(0, Math.round(window.innerHeight - (viewport.height + viewport.offsetTop)));
+      setKeyboardInset(nextInset);
+      const active = document.activeElement;
+      if (sheetRef.current?.contains(active) && isTextEntry(active)) {
+        window.setTimeout(() => ensureVisible(active), 90);
+      }
+    };
+
+    updateKeyboardInset();
+    viewport.addEventListener("resize", updateKeyboardInset);
+    viewport.addEventListener("scroll", updateKeyboardInset);
+    window.addEventListener("orientationchange", updateKeyboardInset);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardInset);
+      viewport.removeEventListener("scroll", updateKeyboardInset);
+      window.removeEventListener("orientationchange", updateKeyboardInset);
+    };
+  }, []);
+
+  const handleFocusCapture = (event) => {
+    if (!isTextEntry(event.target)) return;
+    window.setTimeout(() => ensureVisible(event.target), 120);
+  };
+
   const submit = () => {
     const folder = folders.find(f => f.id === folderId);
     onSave({
@@ -850,8 +916,8 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   };
 
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
-      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={onClose}>
+      <div ref={sheetRef} className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: keyboardInset ? `calc(100% - ${keyboardInset + 8}px)` : "85%", transition: "max-height 180ms ease" }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center", flexShrink: 0 }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", flexShrink: 0 }}>
           <button onClick={step === 1 ? onClose : () => setStep(1)} style={{ fontSize: 14, color: T.inkSoft }}>{step === 1 ? "Cancel" : "Back"}</button>
@@ -859,11 +925,11 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
           <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{step}/2</div>
         </div>
 
-        <div className="scroll" style={{ padding: "0 20px 20px" }}>
+        <div ref={scrollRef} className="scroll" style={{ padding: "0 20px 20px" }} onFocusCapture={handleFocusCapture}>
           {step === 1 ? (
             <div style={{ padding: "12px 0" }}>
               <Label>Paste URL</Label>
-              <input autoFocus value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+              <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
                 <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
                 <span>SAVI will try to pull the title, description, thumbnail, and best folder automatically from the link metadata.</span>
