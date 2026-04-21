@@ -126,8 +126,13 @@ const IconGrid = p => <Icon {...p} d={<><rect x="3" y="3" width="7" height="7"/>
 const IconUser = p => <Icon {...p} d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />;
 const IconArrowOut = p => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
 const IconShare = p => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />;
+const IconUpload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />;
+const IconDownload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />;
 // ============ CONSTANTS ============
 const STORAGE_KEY = "savi_v1";
+const ASSET_DB_NAME = "savi_assets";
+const ASSET_DB_VERSION = 1;
+const ASSET_STORE = "assets";
 const T = { paper: "#F5F1EA", paperDim: "#EBE6DD", ink: "#1C1A17", inkSoft: "#5C574F", inkMute: "#8F8A80", line: "#D9D3C7", lineSoft: "#E6E0D4", accent: "#C8553D", card: "#FFFFFF" };
 
 const SEED_FOLDERS = [
@@ -158,6 +163,10 @@ const SEED_ITEMS = [
 ];
 
 const FOLDER_COLORS = ["#C8553D", "#588B8B", "#D4A574", "#7A9B76", "#8B7EC8", "#DD8452", "#5C7A99", "#6B8E7F"];
+const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
+const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
+const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
+const PREVIEWABLE_MIME_TYPES = ["application/pdf", "application/json"];
 
 const normalizeUrl = (value) => {
   const raw = (value || "").trim();
@@ -180,6 +189,214 @@ const hostFromUrl = (value) => {
 
 const domainGuess = (value) => hostFromUrl(value).split(".")[0] || "";
 const dedupe = (values) => [...new Set(values.filter(Boolean))];
+const clampText = (value = "", limit = 180) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
+const normalizeFilename = (name = "") => name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+const fileExtensionFromName = (name = "") => {
+  const match = name.toLowerCase().match(/\.([a-z0-9]+)$/i);
+  return match?.[1] || "";
+};
+const titleFromFilename = (name = "") => {
+  const normalized = normalizeFilename(name);
+  if (!normalized) return "Untitled file";
+  return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+const formatBytes = (bytes = 0) => {
+  if (!bytes) return "0 KB";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value >= 10 || unitIndex === 0 ? value.toFixed(unitIndex === 0 ? 0 : 0) : value.toFixed(1)} ${units[unitIndex]}`;
+};
+const humanizeToken = (value = "") => value.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\b\w/g, (char) => char.toUpperCase());
+const isTextLikeFile = (file) => {
+  const extension = fileExtensionFromName(file?.name || "");
+  return (file?.type || "").startsWith("text/") || TEXT_FILE_EXTENSIONS.includes(extension);
+};
+const isPreviewableAsset = (item) => PREVIEWABLE_MIME_PREFIXES.some(prefix => (item?.assetMime || "").startsWith(prefix)) || PREVIEWABLE_MIME_TYPES.includes(item?.assetMime || "");
+const inferTypeFromFile = (file) => {
+  const mime = file?.type || "";
+  const extension = fileExtensionFromName(file?.name || "");
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  if (isTextLikeFile(file) || DOCUMENT_FILE_EXTENSIONS.includes(extension)) return "file";
+  return "file";
+};
+const describeFileKind = (file) => {
+  const extension = fileExtensionFromName(file?.name || "");
+  const mime = file?.type || "";
+  if (mime.startsWith("image/")) return `${humanizeToken(mime.replace("image/", ""))} image`;
+  if (mime.startsWith("video/")) return `${humanizeToken(mime.replace("video/", ""))} video`;
+  if (mime === "application/pdf" || extension === "pdf") return "PDF document";
+  if (isTextLikeFile(file)) return `${humanizeToken(extension || "text")} note`;
+  if (DOCUMENT_FILE_EXTENSIONS.includes(extension)) return `${humanizeToken(extension)} file`;
+  return humanizeToken(extension || mime.split("/").pop() || "file");
+};
+const pickTextSnippet = (text = "") => {
+  const lines = text
+    .split(/\r?\n/)
+    .map(line => sanitizeText(line))
+    .filter(Boolean)
+    .filter(line => !/^([#>*-]|\d+\.)\s*$/.test(line));
+  return clampText(lines.slice(0, 3).join(" "), 180);
+};
+
+let assetDbPromise = null;
+const openAssetDb = () => {
+  if (assetDbPromise) return assetDbPromise;
+  assetDbPromise = new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      reject(new Error("indexeddb_unavailable"));
+      return;
+    }
+    const request = window.indexedDB.open(ASSET_DB_NAME, ASSET_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(ASSET_STORE)) {
+        db.createObjectStore(ASSET_STORE, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("indexeddb_open_failed"));
+  });
+  return assetDbPromise;
+};
+const assetStoreRequest = async (mode, executor) => {
+  const db = await openAssetDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(ASSET_STORE, mode);
+    const store = transaction.objectStore(ASSET_STORE);
+    executor(store, resolve, reject);
+    transaction.onerror = () => reject(transaction.error || new Error("indexeddb_tx_failed"));
+  });
+};
+const putAssetRecord = async (record) => assetStoreRequest("readwrite", (store, resolve) => {
+  const request = store.put(record);
+  request.onsuccess = () => resolve(record);
+});
+const getAssetRecord = async (id) => assetStoreRequest("readonly", (store, resolve) => {
+  const request = store.get(id);
+  request.onsuccess = () => resolve(request.result || null);
+});
+const deleteAssetRecord = async (id) => assetStoreRequest("readwrite", (store, resolve) => {
+  const request = store.delete(id);
+  request.onsuccess = () => resolve(true);
+});
+const clearAssetRecords = async () => assetStoreRequest("readwrite", (store, resolve) => {
+  const request = store.clear();
+  request.onsuccess = () => resolve(true);
+});
+const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(reader.error || new Error("blob_read_failed"));
+  reader.readAsDataURL(blob);
+});
+const dataUrlToBlob = async (dataUrl) => {
+  const response = await fetch(dataUrl);
+  return response.blob();
+};
+const readTextPreview = async (file) => {
+  try {
+    const text = await file.slice(0, 5000).text();
+    return pickTextSnippet(text);
+  } catch {
+    return "";
+  }
+};
+const readImageMetadata = async (file) => {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("image_load_failed"));
+      img.src = objectUrl;
+    });
+    const maxEdge = 1200;
+    const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round((image.naturalWidth || 1) * scale));
+    canvas.height = Math.max(1, Math.round((image.naturalHeight || 1) * scale));
+    const context = canvas.getContext("2d");
+    if (context) context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return {
+      width: image.naturalWidth || 0,
+      height: image.naturalHeight || 0,
+      preview: canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.86),
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+const extractFileMetadata = async (file, folders) => {
+  const extension = fileExtensionFromName(file.name);
+  const type = inferTypeFromFile(file);
+  const title = titleFromFilename(file.name);
+  const sizeLabel = formatBytes(file.size);
+  const tags = dedupe([
+    "upload",
+    extension,
+    file.type.split("/")[0],
+    type === "image" ? "photo" : "",
+  ]);
+  let thumbnail = "";
+  let description = `${describeFileKind(file)} from your device • ${sizeLabel}`;
+  let extra = {};
+
+  if (type === "image") {
+    try {
+      const imageMeta = await readImageMetadata(file);
+      thumbnail = imageMeta.preview;
+      description = `${describeFileKind(file)} from your device • ${imageMeta.width} × ${imageMeta.height} • ${sizeLabel}`;
+      extra = { width: imageMeta.width, height: imageMeta.height };
+    } catch {}
+  } else if (isTextLikeFile(file)) {
+    const snippet = await readTextPreview(file);
+    if (snippet) description = snippet;
+  }
+
+  const folderId = guessFolderId({
+    title,
+    description,
+    filename: file.name,
+    mimeType: file.type,
+    source: "device",
+    tags,
+  }, folders);
+
+  return {
+    title,
+    description,
+    type,
+    folderId,
+    tags,
+    thumbnail,
+    source: "device",
+    assetName: file.name,
+    assetMime: file.type || "application/octet-stream",
+    assetSize: file.size || 0,
+    ...extra,
+  };
+};
+const downloadBlob = ({ blob, name, openInNewTab = false }) => {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  if (openInNewTab) {
+    link.target = "_blank";
+    link.rel = "noreferrer";
+  } else {
+    link.download = name || "download";
+  }
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+};
 
 const inferTypeFromUrl = (value) => {
   const normalized = normalizeUrl(value).toLowerCase();
@@ -361,7 +578,9 @@ const scoreFolder = (folder, haystack) => {
 };
 
 const guessFolderId = (metadata, folders) => {
-  const fallback = folders.find(f => f.id === "f-read" || f.name.toLowerCase() === "read later") || folders.find(f => !f.system);
+  const uploadFallback = folders.find(f => f.id === "f-personal" || f.name.toLowerCase() === "personal");
+  const linkFallback = folders.find(f => f.id === "f-read" || f.name.toLowerCase() === "read later");
+  const fallback = metadata.filename || metadata.assetName ? (uploadFallback || linkFallback || folders.find(f => !f.system)) : (linkFallback || uploadFallback || folders.find(f => !f.system));
   const haystack = sanitizeText([
     metadata.title,
     metadata.description,
@@ -369,6 +588,10 @@ const guessFolderId = (metadata, folders) => {
     metadata.author,
     metadata.source,
     metadata.url,
+    metadata.filename,
+    metadata.mimeType,
+    metadata.extension,
+    Array.isArray(metadata.tags) ? metadata.tags.join(" ") : metadata.tags,
   ].join(" ").toLowerCase());
 
   let best = fallback || folders.find(f => !f.system);
@@ -427,6 +650,7 @@ const typeIconFor = (type, props) => {
   if (type === "article") return <IconFile {...P} />;
   if (type === "video") return <IconFilm {...P} />;
   if (type === "image") return <IconImage {...P} />;
+  if (type === "file") return <IconFile {...P} />;
   return <IconLink {...P} />;
 };
 
@@ -459,21 +683,39 @@ const loadState = () => {
 const saveState = (data) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
 };
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2;
 const BACKUP_MIME = "application/json";
 
-const buildBackupPayload = (folders, items) => ({
-  app: "SAVI",
-  version: BACKUP_VERSION,
-  exportedAt: new Date().toISOString(),
-  folders,
-  items,
-});
+const buildBackupPayload = async (folders, items) => {
+  const assetIds = dedupe(items.map(item => item.assetId));
+  const assets = [];
+  for (const assetId of assetIds) {
+    const asset = await getAssetRecord(assetId).catch(() => null);
+    if (!asset?.blob) continue;
+    assets.push({
+      id: asset.id,
+      name: asset.name || "",
+      type: asset.type || asset.blob.type || "application/octet-stream",
+      size: typeof asset.size === "number" ? asset.size : asset.blob.size,
+      dataUrl: await blobToDataUrl(asset.blob),
+    });
+  }
+
+  return {
+    app: "SAVI",
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    folders,
+    items,
+    assets,
+  };
+};
 
 const isValidBackup = (backup) => {
   if (!backup || typeof backup !== "object") return false;
   if (backup.app !== "SAVI") return false;
   if (!Array.isArray(backup.folders) || !Array.isArray(backup.items)) return false;
+  if (backup.assets && !Array.isArray(backup.assets)) return false;
   return true;
 };
 
@@ -525,7 +767,9 @@ function App() {
         i.title.toLowerCase().includes(q) ||
         i.description.toLowerCase().includes(q) ||
         i.tags.some(t => t.toLowerCase().includes(q)) ||
-        i.source.toLowerCase().includes(q)
+        i.source.toLowerCase().includes(q) ||
+        (i.assetName || "").toLowerCase().includes(q) ||
+        (i.assetMime || "").toLowerCase().includes(q)
       );
     }
     return list.sort((a,b) => b.savedAt - a.savedAt);
@@ -537,8 +781,8 @@ function App() {
     return counts;
   }, [items, folders]);
 
-  const exportBackup = () => {
-    const payload = buildBackupPayload(folders, items);
+  const exportBackup = async () => {
+    const payload = await buildBackupPayload(folders, items);
     const stamp = payload.exportedAt.replace(/[:.]/g, "-");
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: BACKUP_MIME });
     const url = URL.createObjectURL(blob);
@@ -560,6 +804,20 @@ function App() {
         return { ok: false, message: "That file doesn't look like a SAVI backup." };
       }
 
+      await clearAssetRecords().catch(() => {});
+      for (const asset of parsed.assets || []) {
+        if (!asset?.id || !asset?.dataUrl) continue;
+        const blob = await dataUrlToBlob(asset.dataUrl);
+        await putAssetRecord({
+          id: asset.id,
+          name: asset.name || "",
+          type: asset.type || blob.type || "application/octet-stream",
+          size: typeof asset.size === "number" ? asset.size : blob.size,
+          blob,
+          updatedAt: Date.now(),
+        });
+      }
+
       setFolders(parsed.folders);
       setItems(parsed.items);
       setActiveFolder("f-all");
@@ -578,9 +836,48 @@ function App() {
     }
   };
 
-  const addItem = (item) => setItems(prev => [{ ...item, id: `i-${Date.now()}`, savedAt: Date.now() }, ...prev]);
-  const deleteItem = (id) => { setItems(prev => prev.filter(i => i.id !== id)); if (selectedItem?.id === id) setSelectedItem(null); };
+  const addItem = async (item) => {
+    const nextId = `i-${Date.now()}`;
+    const savedAt = Date.now();
+    const { assetFile, ...rest } = item;
+    let nextItem = { ...rest, id: nextId, savedAt };
+
+    if (assetFile) {
+      const assetId = `a-${savedAt}-${Math.random().toString(36).slice(2, 8)}`;
+      await putAssetRecord({
+        id: assetId,
+        name: item.assetName || assetFile.name || `${nextId}.bin`,
+        type: item.assetMime || assetFile.type || "application/octet-stream",
+        size: typeof item.assetSize === "number" ? item.assetSize : assetFile.size,
+        blob: assetFile,
+        updatedAt: savedAt,
+      });
+      nextItem = {
+        ...nextItem,
+        assetId,
+        assetName: item.assetName || assetFile.name || "",
+        assetMime: item.assetMime || assetFile.type || "application/octet-stream",
+        assetSize: typeof item.assetSize === "number" ? item.assetSize : assetFile.size,
+      };
+    }
+
+    setItems(prev => [nextItem, ...prev]);
+    return nextItem;
+  };
+  const deleteItem = async (id) => {
+    const item = items.find(entry => entry.id === id);
+    if (item?.assetId) {
+      await deleteAssetRecord(item.assetId).catch(() => {});
+    }
+    setItems(prev => prev.filter(i => i.id !== id));
+    if (selectedItem?.id === id) setSelectedItem(null);
+  };
   const addFolder = (name, color) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, name, color }]);
+  const clearLibrary = async () => {
+    localStorage.removeItem(STORAGE_KEY);
+    await clearAssetRecords().catch(() => {});
+    window.location.reload();
+  };
 
   return (
     <div className="stage">
@@ -598,7 +895,7 @@ function App() {
                     <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>setShowFolderSheet(true)} />
                   )}
                   {route === "profile" && (
-                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} />
+                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
                   )}
                 </div>
                 <div className="navigator-shell">
@@ -606,7 +903,7 @@ function App() {
                 </div>
 
                 {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
-                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={(i)=>{ addItem(i); setShowSaveSheet(false); }} />}
+                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
                 {showFolderSheet && <FolderSheet onClose={()=>setShowFolderSheet(false)} onCreate={(n,c)=>{ addFolder(n,c); setShowFolderSheet(false); }} />}
                 {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
               </div>
@@ -752,27 +1049,34 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew }) {
   );
 }
 
-function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup }) {
+function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, clearLibrary }) {
   const fileInputRef = useRef(null);
   const [backupMessage, setBackupMessage] = useState("");
   const [backupTone, setBackupTone] = useState("muted");
   const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const showBackupMessage = (message, tone = "muted") => {
     setBackupMessage(message);
     setBackupTone(tone);
   };
 
-  const clearData = () => {
+  const clearData = async () => {
     if (confirm("Clear all saves and start over?")) {
-      localStorage.removeItem(STORAGE_KEY);
-      window.location.reload();
+      await clearLibrary();
     }
   };
 
-  const handleExport = () => {
-    exportBackup();
-    showBackupMessage("Backup downloaded to your device.", "success");
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportBackup();
+      showBackupMessage("Backup downloaded to your device.", "success");
+    } catch {
+      showBackupMessage("Couldn't build that backup right now.", "error");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const openImportPicker = () => {
@@ -825,7 +1129,7 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup }) {
             <div style={{ fontSize: 14, color: T.ink }}>Local device</div>
             <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>saved</div>
           </div>
-          <div style={{ fontSize: 11.5, color: T.inkSoft }}>Your library persists on this device. Clearing browser data will erase it.</div>
+          <div style={{ fontSize: 11.5, color: T.inkSoft }}>Your library, uploaded files, and image previews persist on this device. Clearing browser data will erase it.</div>
         </div>
 
         <div style={{ padding: 16, borderRadius: 16, marginBottom: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
@@ -834,11 +1138,11 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup }) {
             <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>json</div>
           </div>
           <div style={{ fontSize: 11.5, lineHeight: 1.5, color: T.inkSoft }}>
-            Export your folders and saves to a backup file, then restore that file later on any device running SAVI.
+            Export your folders, saves, and uploaded files to a backup file, then restore that file later on any device running SAVI.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
-            <button onClick={handleExport} style={{ padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.ink, color: T.paper }}>
-              Download backup
+            <button onClick={handleExport} disabled={isExporting} style={{ padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.ink, color: T.paper, opacity: isExporting ? 0.65 : 1 }}>
+              {isExporting ? "Packing backup..." : "Download backup"}
             </button>
             <button onClick={openImportPicker} disabled={isImporting} style={{ padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, opacity: isImporting ? 0.5 : 1 }}>
               {isImporting ? "Restoring..." : "Restore backup"}
@@ -891,6 +1195,7 @@ function TabBar({ route, setRoute, onSavePress }) {
 
 function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const [step, setStep] = useState(1);
+  const [inputMode, setInputMode] = useState("link");
   const [url, setUrl] = useState(initialUrl || "");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -899,12 +1204,16 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const [type, setType] = useState("article");
   const [thumbnail, setThumbnail] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [analysisNote, setAnalysisNote] = useState("");
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
   const sheetRef = useRef(null);
   const scrollRef = useRef(null);
   const urlInputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const autoAnalyzeTimerRef = useRef(null);
   const lastAutoSubmittedRef = useRef("");
   const analyzeRequestRef = useRef(0);
@@ -924,9 +1233,30 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     setIsAnalyzing(false);
   };
 
+  const switchMode = (nextMode) => {
+    if (nextMode === inputMode) return;
+    cancelAnalyze();
+    setInputMode(nextMode);
+    setStep(1);
+    setAnalysisNote("");
+    setShowAdvanced(false);
+    if (nextMode === "link") {
+      setSelectedFile(null);
+      setThumbnail("");
+      setType("article");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      window.setTimeout(() => {
+        urlInputRef.current?.focus({ preventScroll: true });
+      }, 90);
+    } else {
+      setType("file");
+    }
+  };
+
   const analyze = async (nextUrl = url) => {
     const normalized = normalizeUrl(nextUrl);
     if (!normalized || !hostFromUrl(normalized) || isAnalyzing) return;
+    setInputMode("link");
     const requestId = ++analyzeRequestRef.current;
 
     setIsAnalyzing(true);
@@ -967,14 +1297,49 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     }
   };
 
+  const analyzeFile = async (file) => {
+    if (!file || isAnalyzing) return;
+    const requestId = ++analyzeRequestRef.current;
+    setInputMode("file");
+    setSelectedFile(file);
+    setIsAnalyzing(true);
+    setAnalysisNote("");
+    setShowAdvanced(false);
+
+    try {
+      const metadata = await extractFileMetadata(file, folders);
+      if (requestId !== analyzeRequestRef.current) return;
+      setTitle(metadata.title);
+      setDescription(metadata.description);
+      setType(metadata.type || "file");
+      setThumbnail(metadata.thumbnail || "");
+      if (metadata.folderId) setFolderId(metadata.folderId);
+      setTags((metadata.tags || []).join(", "));
+      setStep(2);
+      setAnalysisNote(metadata.thumbnail ? "Preview built from your file and folder selected automatically." : "SAVI read the file details and picked the closest folder automatically.");
+    } catch {
+      if (requestId !== analyzeRequestRef.current) return;
+      setTitle(titleFromFilename(file.name));
+      setDescription(`${describeFileKind(file)} from your device • ${formatBytes(file.size)}`);
+      setType(inferTypeFromFile(file));
+      setThumbnail("");
+      setTags(dedupe(["upload", fileExtensionFromName(file.name)]).join(", "));
+      setStep(2);
+      setAnalysisNote("SAVI couldn't read rich metadata from that file, so it saved the essentials instead.");
+    } finally {
+      if (requestId === analyzeRequestRef.current) setIsAnalyzing(false);
+    }
+  };
+
   useEffect(() => {
     if (initialUrl) {
+      setInputMode("link");
       analyze(initialUrl);
     }
   }, [initialUrl]);
 
   useEffect(() => {
-    if (step !== 1 || initialUrl || isAnalyzing) return;
+    if (inputMode !== "link" || step !== 1 || initialUrl || isAnalyzing) return;
     const normalized = normalizeUrl(url);
     if (!normalized || !hostFromUrl(normalized) || normalized === lastAutoSubmittedRef.current) return;
 
@@ -985,10 +1350,10 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     return () => {
       if (autoAnalyzeTimerRef.current) window.clearTimeout(autoAnalyzeTimerRef.current);
     };
-  }, [url, step, initialUrl, isAnalyzing]);
+  }, [url, step, initialUrl, isAnalyzing, inputMode]);
 
   useEffect(() => {
-    if (step !== 1 || initialUrl) return;
+    if (inputMode !== "link" || step !== 1 || initialUrl) return;
     const timer = window.setTimeout(() => {
       const input = urlInputRef.current;
       if (!input) return;
@@ -996,7 +1361,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
       ensureVisible(input, "auto");
     }, 140);
     return () => window.clearTimeout(timer);
-  }, [step, initialUrl]);
+  }, [step, initialUrl, inputMode]);
 
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -1028,18 +1393,45 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     window.setTimeout(() => ensureVisible(event.target), 120);
   };
 
-  const submit = () => {
+  const submit = async () => {
+    if (isSaving) return;
     const folder = folders.find(f => f.id === folderId);
-    onSave({
-      title: title.trim() || "Untitled save",
-      description: description.trim(),
-      url: normalizeUrl(url.trim()),
-      source: hostFromUrl(url.trim()) || "manual",
-      type, folderId,
-      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
-      color: folder?.color || T.accent,
-      thumbnail,
-    });
+    const nextTags = tags.split(",").map(t => t.trim()).filter(Boolean);
+    setIsSaving(true);
+    try {
+      if (inputMode === "file" && selectedFile) {
+        await onSave({
+          title: title.trim() || titleFromFilename(selectedFile.name),
+          description: description.trim() || `${describeFileKind(selectedFile)} from your device • ${formatBytes(selectedFile.size)}`,
+          url: "",
+          source: "device",
+          type: type || inferTypeFromFile(selectedFile),
+          folderId,
+          tags: nextTags,
+          color: folder?.color || T.accent,
+          thumbnail,
+          assetFile: selectedFile,
+          assetName: selectedFile.name,
+          assetMime: selectedFile.type || "application/octet-stream",
+          assetSize: selectedFile.size || 0,
+        });
+        return;
+      }
+
+      await onSave({
+        title: title.trim() || "Untitled save",
+        description: description.trim(),
+        url: normalizeUrl(url.trim()),
+        source: hostFromUrl(url.trim()) || "manual",
+        type,
+        folderId,
+        tags: nextTags,
+        color: folder?.color || T.accent,
+        thumbnail,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePaste = () => {
@@ -1062,7 +1454,43 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     }, 20);
   };
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const clearSelectedFile = () => {
+    cancelAnalyze();
+    setSelectedFile(null);
+    setThumbnail("");
+    setTitle("");
+    setDescription("");
+    setTags("");
+    setAnalysisNote("");
+    setStep(1);
+    setShowAdvanced(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    analyzeFile(file);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragActive(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    analyzeFile(file);
+  };
+
   const activeFolder = folders.find(f => f.id === folderId);
+  const loadingTitle = inputMode === "file" ? "Reading your file, preview, and folder" : "Pulling your title, description, and tags";
+  const loadingBody = inputMode === "file"
+    ? "SAVI is checking the file name, type, and preview so it can sort this into the right folder for you."
+    : "Wizard hands at work on the metadata. If the paste looked wrong, tap the x and try again.";
 
   return (
     <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={onClose}>
@@ -1074,30 +1502,79 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
           {step === 1 ? (
             <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{step}/2</div>
           ) : (
-            <button onClick={submit} style={{ padding: "9px 14px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: T.ink, color: T.paper }}>
-              Save
+            <button onClick={submit} disabled={isSaving} style={{ padding: "9px 14px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: T.ink, color: T.paper, opacity: isSaving ? 0.65 : 1 }}>
+              {isSaving ? "Saving..." : "Save"}
             </button>
           )}
         </div>
 
         <div ref={scrollRef} className="scroll" style={{ padding: "0 20px 20px" }} onFocusCapture={handleFocusCapture}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+            {[
+              { id: "link", label: "Link", icon: <IconLink size={14} /> },
+              { id: "file", label: "File", icon: <IconFile size={14} /> },
+            ].map(option => (
+              <button key={option.id} onClick={() => switchMode(option.id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 12px", borderRadius: 12, background: inputMode === option.id ? T.ink : T.paperDim, color: inputMode === option.id ? T.paper : T.inkSoft, border: `1px solid ${inputMode === option.id ? T.ink : T.lineSoft}` }}>
+                {option.icon}
+                <span className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>{option.label}</span>
+              </button>
+            ))}
+          </div>
           {step === 1 ? (
             <div style={{ padding: "12px 0" }}>
-              <Label>Paste URL</Label>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ position: "relative", flex: 1 }}>
-                  <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: url ? "12px 46px 12px 14px" : "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
-                  {url && (
-                    <button onClick={clearUrlInput} aria-label="Clear pasted link" style={{ position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)", width: 28, height: 28, borderRadius: 999, background: T.paperDim, color: T.inkSoft, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${T.lineSoft}` }}>
-                      <IconX size={12} />
+              {inputMode === "link" ? (
+                <>
+                  <Label>Paste URL</Label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: url ? "12px 46px 12px 14px" : "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+                      {url && (
+                        <button onClick={clearUrlInput} aria-label="Clear pasted link" style={{ position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)", width: 28, height: 28, borderRadius: 999, background: T.paperDim, color: T.inkSoft, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${T.lineSoft}` }}>
+                          <IconX size={12} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
+                    <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
+                    <span>Paste a link and SAVI will continue automatically, then pick the title, thumbnail, and folder for you.</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Label>Add file or photo</Label>
+                  <input ref={fileInputRef} type="file" onChange={handleFileChange} className="sr-only" />
+                  <div
+                    onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
+                    onDragOver={(event) => { event.preventDefault(); setDragActive(true); }}
+                    onDragLeave={(event) => { event.preventDefault(); setDragActive(false); }}
+                    onDrop={handleDrop}
+                    style={{ padding: 18, borderRadius: 18, border: `1px dashed ${dragActive ? T.ink : T.line}`, background: dragActive ? T.paperDim : T.card, transition: "background 120ms ease, border-color 120ms ease" }}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: T.paperDim, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                      <IconUpload size={18} />
+                    </div>
+                    <div className="serif" style={{ fontSize: 26, lineHeight: 1.05, color: T.ink, marginBottom: 8 }}>
+                      {selectedFile ? titleFromFilename(selectedFile.name) : "Drop in a file"}
+                    </div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.5, color: T.inkSoft, marginBottom: 14 }}>
+                      {selectedFile ? `${describeFileKind(selectedFile)} • ${formatBytes(selectedFile.size)}` : "Choose from your phone, upload a document, or drag a file in on desktop. SAVI will preview it and sort it into a folder for you."}
+                    </div>
+                    <button onClick={openFilePicker} style={{ padding: "12px 14px", borderRadius: 12, background: T.ink, color: T.paper, fontSize: 13, fontWeight: 600 }}>
+                      {selectedFile ? "Choose another file" : "Choose file"}
+                    </button>
+                  </div>
+                  {selectedFile && !isAnalyzing && (
+                    <button onClick={clearSelectedFile} style={{ width: "100%", marginTop: 12, padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+                      Clear selected file
                     </button>
                   )}
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
-                <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
-                <span>Paste a link and SAVI will continue automatically, then pick the title, thumbnail, and folder for you.</span>
-              </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
+                    <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconImage size={13} /></div>
+                    <span>Photos, notes, PDFs, and documents can live beside your links so SAVI becomes one organized library.</span>
+                  </div>
+                </>
+              )}
               {isAnalyzing && (
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 14, padding: 14, borderRadius: 14, background: T.card, border: `1px solid ${T.lineSoft}` }}>
                   <div className="wizard-float" style={{ width: 36, height: 36, borderRadius: 12, background: T.paperDim, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1105,18 +1582,20 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
                   </div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>
-                      Pulling your title, description, and tags
+                      {loadingTitle}
                       <span className="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
                     </div>
                     <div style={{ fontSize: 11.5, lineHeight: 1.45, color: T.inkSoft, marginTop: 4 }}>
-                      Wizard hands at work on the metadata. If the paste looked wrong, tap the `x` and try again.
+                      {loadingBody}
                     </div>
                   </div>
                 </div>
               )}
-              <button onClick={() => analyze()} disabled={!url.trim() || isAnalyzing} style={{ width: "100%", marginTop: 20, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: url.trim() && !isAnalyzing ? 1 : 0.3 }}>
-                {isAnalyzing ? "Analyzing..." : "Continue"}
-              </button>
+              {inputMode === "link" && (
+                <button onClick={() => analyze()} disabled={!url.trim() || isAnalyzing} style={{ width: "100%", marginTop: 20, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: url.trim() && !isAnalyzing ? 1 : 0.3 }}>
+                  {isAnalyzing ? "Analyzing..." : "Continue"}
+                </button>
+              )}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "8px 0" }}>
@@ -1140,6 +1619,11 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
                 <div className="clamp2" style={{ fontSize: 12.5, lineHeight: 1.45, color: T.inkSoft, marginBottom: 12 }}>
                   {description}
                 </div>
+                {inputMode === "file" && selectedFile && (
+                  <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute, marginBottom: 12 }}>
+                    {selectedFile.name} • {formatBytes(selectedFile.size)}
+                  </div>
+                )}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
                   <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
                     {type}
@@ -1156,8 +1640,8 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
                     </div>
                   ))}
                 </div>
-                <button onClick={submit} style={{ width: "100%", padding: 15, borderRadius: 14, fontSize: 16, fontWeight: 600, background: T.ink, color: T.paper }}>
-                  Save to library
+                <button onClick={submit} disabled={isSaving} style={{ width: "100%", padding: 15, borderRadius: 14, fontSize: 16, fontWeight: 600, background: T.ink, color: T.paper, opacity: isSaving ? 0.65 : 1 }}>
+                  {isSaving ? "Saving..." : "Save to library"}
                 </button>
               </div>
               <button onClick={()=>setShowAdvanced(v => !v)} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
@@ -1169,7 +1653,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
                   <Field label="Description"><textarea value={description} onChange={e=>setDescription(e.target.value)} rows={3} style={{ ...inputStyle(), resize: "none" }} /></Field>
                   <Field label="Type">
                     <div style={{ display: "flex", gap: 6 }}>
-                      {["article", "video", "image", "link"].map(t => (
+                      {["article", "video", "image", "file", "link"].map(t => (
                         <button key={t} onClick={()=>setType(t)} className="mono" style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: type === t ? T.ink : T.card, color: type === t ? T.paper : T.inkSoft, border: `1px solid ${type === t ? T.ink : T.lineSoft}` }}>{t}</button>
                       ))}
                     </div>
@@ -1225,6 +1709,30 @@ function FolderSheet({ onClose, onCreate }) {
 
 function ItemSheet({ item, folders, onClose, onDelete }) {
   const folder = folders.find(f => f.id === item.folderId);
+  const [isOpeningAsset, setIsOpeningAsset] = useState(false);
+  const hasLocalAsset = Boolean(item.assetId);
+
+  const openAsset = async () => {
+    if (!item.assetId || isOpeningAsset) return;
+    setIsOpeningAsset(true);
+    try {
+      const asset = await getAssetRecord(item.assetId);
+      if (!asset?.blob) {
+        alert("That file isn't available on this device anymore. Restore a backup or upload it again.");
+        return;
+      }
+      downloadBlob({
+        blob: asset.blob,
+        name: item.assetName || asset.name || item.title,
+        openInNewTab: isPreviewableAsset(item),
+      });
+    } catch {
+      alert("Couldn't open that file right now.");
+    } finally {
+      setIsOpeningAsset(false);
+    }
+  };
+
   return (
     <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
       <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
@@ -1246,6 +1754,17 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
           <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{item.source} · saved {relativeTime(item.savedAt)}</div>
           <h2 className="serif" style={{ fontSize: 26, lineHeight: 1.2, marginBottom: 8, marginTop: 0, color: T.ink }}>{item.title}</h2>
           <p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 12, color: T.inkSoft }}>{item.description}</p>
+          {hasLocalAsset && (
+            <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
+              <div className="mono clamp1" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginBottom: 6 }}>
+                Local file
+              </div>
+              <div className="clamp1" style={{ fontSize: 12.5, color: T.ink, marginBottom: 4 }}>{item.assetName || item.title}</div>
+              <div className="mono" style={{ fontSize: 10, color: T.inkSoft }}>
+                {[item.assetMime, item.assetSize ? formatBytes(item.assetSize) : ""].filter(Boolean).join(" • ")}
+              </div>
+            </div>
+          )}
           {folder && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 11, color: T.inkSoft }}>
               <div style={{ width: 8, height: 8, borderRadius: 2, background: folder.color }} />
@@ -1260,9 +1779,16 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
             </div>
           )}
           <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: `1px solid ${T.lineSoft}` }}>
-            <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
-              <IconArrowOut size={14} />Open source
-            </a>
+            {hasLocalAsset ? (
+              <button onClick={openAsset} disabled={isOpeningAsset} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, opacity: isOpeningAsset ? 0.65 : 1 }}>
+                {isPreviewableAsset(item) ? <IconArrowOut size={14} /> : <IconDownload size={14} />}
+                {isOpeningAsset ? "Opening..." : isPreviewableAsset(item) ? "Open file" : "Download file"}
+              </button>
+            ) : (
+              <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
+                <IconArrowOut size={14} />Open source
+              </a>
+            )}
             <button onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
               <IconTrash size={14} />
             </button>
