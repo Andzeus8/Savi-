@@ -168,6 +168,87 @@ const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
 const PREVIEWABLE_MIME_TYPES = ["application/pdf", "application/json"];
+const svgCoverDataUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+const PRESET_FOLDER_COVERS = [
+  {
+    id: "aurora",
+    name: "Aurora",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#11213a"/>
+          <stop offset="50%" stop-color="#1e5d88"/>
+          <stop offset="100%" stop-color="#0f8b8d"/>
+        </linearGradient>
+        <filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
+      </defs>
+      <rect width="720" height="480" fill="url(#bg)"/>
+      <ellipse cx="140" cy="120" rx="140" ry="90" fill="#f4d35e" opacity="0.45" filter="url(#blur)">
+        <animate attributeName="cx" values="140;220;140" dur="9s" repeatCount="indefinite"/>
+      </ellipse>
+      <ellipse cx="560" cy="340" rx="180" ry="110" fill="#ee964b" opacity="0.35" filter="url(#blur)">
+        <animate attributeName="cy" values="340;300;340" dur="11s" repeatCount="indefinite"/>
+      </ellipse>
+      <ellipse cx="440" cy="110" rx="150" ry="80" fill="#f95738" opacity="0.3" filter="url(#blur)">
+        <animate attributeName="rx" values="150;180;150" dur="8s" repeatCount="indefinite"/>
+      </ellipse>
+    </svg>`),
+  },
+  {
+    id: "tide",
+    name: "Tide",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#102542"/>
+      <path d="M0 320 C120 280 220 380 360 340 C500 300 590 210 720 250 V480 H0 Z" fill="#3e92cc">
+        <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0 320 C120 280 220 380 360 340 C500 300 590 210 720 250 V480 H0 Z;M0 300 C140 250 260 380 360 360 C500 340 610 240 720 270 V480 H0 Z;M0 320 C120 280 220 380 360 340 C500 300 590 210 720 250 V480 H0 Z"/>
+      </path>
+      <path d="M0 360 C110 320 240 420 390 390 C520 360 620 300 720 320 V480 H0 Z" fill="#8ecae6" opacity="0.75">
+        <animate attributeName="d" dur="6.5s" repeatCount="indefinite" values="M0 360 C110 320 240 420 390 390 C520 360 620 300 720 320 V480 H0 Z;M0 350 C150 300 250 410 390 370 C520 330 600 320 720 340 V480 H0 Z;M0 360 C110 320 240 420 390 390 C520 360 620 300 720 320 V480 H0 Z"/>
+      </path>
+    </svg>`),
+  },
+  {
+    id: "grid",
+    name: "Grid",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#111111"/>
+      <g stroke="#f7b267" stroke-width="2" opacity="0.45">
+        <path d="M60 0 V480"/><path d="M180 0 V480"/><path d="M300 0 V480"/><path d="M420 0 V480"/><path d="M540 0 V480"/><path d="M660 0 V480"/>
+        <path d="M0 80 H720"/><path d="M0 200 H720"/><path d="M0 320 H720"/><path d="M0 440 H720"/>
+      </g>
+      <rect x="70" y="110" width="170" height="120" rx="18" fill="#f4845f">
+        <animate attributeName="x" values="70;100;70" dur="7s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="430" y="210" width="190" height="140" rx="24" fill="#f25c54">
+        <animate attributeName="y" values="210;180;210" dur="6s" repeatCount="indefinite"/>
+      </rect>
+      <circle cx="360" cy="140" r="52" fill="#f7b267">
+        <animate attributeName="r" values="52;68;52" dur="5s" repeatCount="indefinite"/>
+      </circle>
+    </svg>`),
+  },
+  {
+    id: "petals",
+    name: "Petals",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#3d315b"/>
+      <g opacity="0.9">
+        <circle cx="180" cy="180" r="64" fill="#f7c59f">
+          <animate attributeName="cy" values="180;150;180" dur="6s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="310" cy="120" r="86" fill="#ef798a">
+          <animate attributeName="cx" values="310;340;310" dur="8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="470" cy="260" r="110" fill="#ff9f1c">
+          <animate attributeName="cy" values="260;230;260" dur="7.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="610" cy="150" r="54" fill="#ffbf69">
+          <animate attributeName="r" values="54;74;54" dur="5.5s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>`),
+  },
+];
 
 const normalizeUrl = (value) => {
   const raw = (value || "").trim();
@@ -336,6 +417,9 @@ const readImageMetadata = async (file, options = {}) => {
 };
 const readFolderImage = async (file) => {
   if (!file || !(file.type || "").startsWith("image/")) throw new Error("folder_image_required");
+  if (file.type === "image/gif" || file.type === "image/webp") {
+    return blobToDataUrl(file);
+  }
   const imageMeta = await readImageMetadata(file, { maxEdge: 720, quality: 0.78 });
   return imageMeta.preview;
 };
@@ -755,6 +839,10 @@ function App() {
     setPrefillFromClipboard(Boolean(options.tryClipboard && !nextUrl));
     setShowSaveSheet(true);
   };
+
+  useEffect(() => {
+    dismissActiveField();
+  }, [route]);
 
   // If opened with ?url=..., auto-open the save sheet
   useEffect(() => {
@@ -1766,6 +1854,7 @@ function FolderSheet({ folder, onClose, onSave }) {
   const [name, setName] = useState(folder?.name || "");
   const [color, setColor] = useState(folder?.color || FOLDER_COLORS[0]);
   const [image, setImage] = useState(folder?.image || "");
+  const [imageUrl, setImageUrl] = useState("");
   const [imageNote, setImageNote] = useState("");
   const [isReadingImage, setIsReadingImage] = useState(false);
   const imageInputRef = useRef(null);
@@ -1782,6 +1871,7 @@ function FolderSheet({ folder, onClose, onSave }) {
     try {
       const nextImage = await readFolderImage(file);
       setImage(nextImage);
+      setImageUrl("");
       setImageNote("Cover image added.");
     } catch {
       setImageNote("Pick an image file for the folder cover.");
@@ -1790,9 +1880,41 @@ function FolderSheet({ folder, onClose, onSave }) {
     }
   };
 
+  const handleImagePaste = async (event) => {
+    const items = Array.from(event.clipboardData?.items || []);
+    const imageItem = items.find(item => (item.type || "").startsWith("image/"));
+    if (!imageItem) return;
+    event.preventDefault();
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    setIsReadingImage(true);
+    try {
+      const nextImage = await readFolderImage(file);
+      setImage(nextImage);
+      setImageUrl("");
+      setImageNote("Cover image pasted from your clipboard.");
+    } catch {
+      setImageNote("That pasted image couldn't be used.");
+    } finally {
+      setIsReadingImage(false);
+    }
+  };
+
   const clearImage = () => {
     setImage("");
+    setImageUrl("");
     setImageNote("Cover image removed.");
+  };
+
+  const applyImageUrl = () => {
+    const next = (imageUrl || "").trim();
+    if (!next) {
+      setImage("");
+      setImageNote("Cover image removed.");
+      return;
+    }
+    setImage(next);
+    setImageNote("Cover image updated from pasted URL.");
   };
 
   return (
@@ -1828,10 +1950,33 @@ function FolderSheet({ folder, onClose, onSave }) {
               </button>
             )}
           </div>
+          <Field label="Paste image, GIF, or URL">
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} onPaste={handleImagePaste} placeholder="Paste an image, GIF, or URL" style={{ ...inputStyle(), flex: 1 }} />
+              <button onClick={applyImageUrl} style={{ padding: "0 14px", borderRadius: 10, background: T.ink, color: T.paper, fontSize: 12, fontWeight: 600 }}>
+                Use
+              </button>
+            </div>
+          </Field>
+          <Field label="Pick a motion cover">
+            <div className="scroll" style={{ display: "flex", gap: 10, overflowX: "auto", overflowY: "hidden", margin: "0 -20px", padding: "0 20px 2px" }}>
+              {PRESET_FOLDER_COVERS.map((cover) => {
+                const active = image === cover.image;
+                return (
+                  <button key={cover.id} onClick={()=>{ setImage(cover.image); setImageUrl(""); setImageNote(`${cover.name} cover selected.`); }} style={{ flexShrink: 0, width: 132, textAlign: "left" }}>
+                    <div style={{ height: 110, borderRadius: 14, overflow: "hidden", background: `center / cover no-repeat url(${cover.image}), ${T.paperDim}`, border: `2px solid ${active ? T.ink : T.lineSoft}` }} />
+                    <div className="mono" style={{ marginTop: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: active ? T.ink : T.inkMute }}>
+                      {cover.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
           {imageNote && (
             <div style={{ fontSize: 11.5, color: T.inkSoft }}>{imageNote}</div>
           )}
-          <Field label="Name"><input autoFocus value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter" && name.trim() && onSave({ name: name.trim(), color, image })} placeholder="e.g. Travel ideas" style={inputStyle()} /></Field>
+          <Field label="Name"><input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter" && name.trim() && onSave({ name: name.trim(), color, image })} placeholder="e.g. Travel ideas" style={inputStyle()} /></Field>
           <Field label="Color">
             <div style={{ display: "flex", gap: 8 }}>
               {FOLDER_COLORS.map(c => (
