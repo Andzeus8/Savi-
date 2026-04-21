@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="SAVI" />
+<meta name="theme-color" content="#F5F1EA" />
+<title>SAVI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F1EA;
+    --paper-dim: #EBE6DD;
+    --ink: #1C1A17;
+    --ink-soft: #5C574F;
+    --ink-mute: #8F8A80;
+    --line: #D9D3C7;
+    --line-soft: #E6E0D4;
+    --card: #FFFFFF;
+    --accent: #C8553D;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: 'Inter', system-ui, -apple-system, sans-serif; overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.015em; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* App container — fullscreen on mobile, phone-frame on desktop */
+  .stage { min-height: 100dvh; display: flex; align-items: stretch; justify-content: center; background: var(--paper); }
+  @media (min-width: 500px) {
+    .stage {
+      align-items: center;
+      padding: 32px;
+      background: linear-gradient(180deg, #EDE6D9 0%, #DDD4C2 100%);
+    }
+    .frame-wrap { width: 390px; height: 844px; position: relative; }
+    .bezel { position: absolute; inset: 0; border-radius: 55px; padding: 3px; background: linear-gradient(145deg, #3a3733 0%, #1a1815 50%, #3a3733 100%); box-shadow: 0 40px 80px -20px rgba(60,50,40,0.35), 0 0 0 2px rgba(255,255,255,0.04); }
+    .bezel-inner { width: 100%; height: 100%; border-radius: 52px; padding: 2px; background: #000; }
+    .screen { width: 100%; height: 100%; border-radius: 50px; overflow: hidden; position: relative; background: var(--paper); }
+    .notch { position: absolute; left: 50%; transform: translateX(-50%); top: 8px; width: 110px; height: 30px; background: #000; border-radius: 999px; z-index: 50; pointer-events: none; }
+    .status-bar-desktop { display: flex; }
+  }
+  @media (max-width: 499px) {
+    .frame-wrap { width: 100%; min-height: 100dvh; }
+    .bezel, .bezel-inner { all: unset; display: block; width: 100%; min-height: 100dvh; }
+    .screen { width: 100%; min-height: 100dvh; background: var(--paper); position: relative; overflow: hidden; }
+    .notch { display: none; }
+    .status-bar-desktop { display: none; }
+  }
+
+  .app { display: flex; flex-direction: column; height: 100%; min-height: 100dvh; }
+  @media (min-width: 500px) { .app { height: 844px; min-height: 0; } }
+
+  /* Status bar (desktop only — on mobile the system bar is there) */
+  .status-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 32px 4px; font-size: 13px; font-weight: 600; height: 44px; flex-shrink: 0; }
+
+  /* Scroll areas */
+  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* Buttons */
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+  button:active { transform: scale(0.985); }
+  input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  input:focus, textarea:focus { outline: none; border-color: var(--ink) !important; }
+
+  /* Animations */
+  @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .anim-slide { animation: slide-up 0.35s ease-out forwards; opacity: 0; }
+  .anim-fade { animation: fade-in 0.25s ease-out forwards; }
+  .anim-sheet { animation: sheet-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+
+  /* Utility */
+  .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useMemo, useEffect } = React;
+
+// ============ ICONS (inline SVG to avoid external deps) ============
+const Icon = ({ d, size = 16, stroke = 1.8, fill = "none" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {d}
+  </svg>
+);
+const IconSearch = p => <Icon {...p} d={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} />;
+const IconPlus = p => <Icon {...p} d={<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>} />;
+const IconFolderPlus = p => <Icon {...p} d={<><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></>} />;
+const IconLink = p => <Icon {...p} d={<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>} />;
+const IconFile = p => <Icon {...p} d={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>} />;
+const IconFilm = p => <Icon {...p} d={<><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></>} />;
+const IconImage = p => <Icon {...p} d={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />;
+const IconBookmark = p => <Icon {...p} fill={p.fill || "none"} d={<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>} />;
+const IconX = p => <Icon {...p} d={<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>} />;
+const IconTrash = p => <Icon {...p} d={<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>} />;
+const IconSparkles = p => <Icon {...p} d={<><path d="M12 3l1.9 5.8 5.8 1.9-5.8 1.9L12 18.4l-1.9-5.8L4.3 10.7l5.8-1.9z"/></>} />;
+const IconHome = p => <Icon {...p} d={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>} />;
+const IconGrid = p => <Icon {...p} d={<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>} />;
+const IconUser = p => <Icon {...p} d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />;
+const IconArrowOut = p => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
+const IconShare = p => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />;
+const IconSignal = p => <Icon {...p} d={<><rect x="2" y="16" width="3" height="5"/><rect x="8" y="12" width="3" height="9"/><rect x="14" y="8" width="3" height="13"/><rect x="20" y="4" width="3" height="17"/></>} fill="currentColor" stroke="none" />;
+const IconWifi = p => <Icon {...p} d={<><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></>} />;
+const IconBattery = p => <Icon {...p} d={<><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/></>} />;
+
+// ============ CONSTANTS ============
+const STORAGE_KEY = "savi_v1";
+const T = { paper: "#F5F1EA", paperDim: "#EBE6DD", ink: "#1C1A17", inkSoft: "#5C574F", inkMute: "#8F8A80", line: "#D9D3C7", lineSoft: "#E6E0D4", accent: "#C8553D", card: "#FFFFFF" };
+
+const SEED_FOLDERS = [
+  { id: "f-all", name: "All Saves", system: true },
+  { id: "f-personal", name: "Personal", color: "#8B7EC8" },
+  { id: "f-hacks", name: "Life Hacks", color: "#D4A574" },
+  { id: "f-health", name: "Health & Wellness", color: "#7A9B76" },
+  { id: "f-finance", name: "Finance & Money", color: "#6B8E7F" },
+  { id: "f-career", name: "Career & Work", color: "#5C7A99" },
+  { id: "f-read", name: "Read Later", color: "#C8553D" },
+  { id: "f-design", name: "Design", color: "#588B8B" },
+  { id: "f-research", name: "Research", color: "#B8860B" },
+  { id: "f-recipes", name: "Recipes", color: "#A0522D" },
+  { id: "f-travel", name: "Travel", color: "#DD8452" },
+];
+
+const SEED_ITEMS = [
+  { id: "i1", title: "Letter to my future self", description: "A 30-day journaling practice that changed how I think about time.", url: "https://medium.com/letter-future-self", source: "medium.com", type: "article", folderId: "f-personal", tags: ["reflection", "journaling", "growth"], savedAt: Date.now() - 3600000 * 2, color: "#8B7EC8" },
+  { id: "i2", title: "20 things I wish I learned earlier", description: "Practical wisdom from someone who figured it out the hard way.", url: "https://youtube.com/watch?v=wisdom", source: "youtube.com", type: "video", folderId: "f-hacks", tags: ["tips", "wisdom", "life"], savedAt: Date.now() - 3600000 * 8, color: "#D4A574" },
+  { id: "i3", title: "The 7-minute morning stretch routine", description: "A full-body mobility flow that takes less time than making coffee.", url: "https://nytimes.com/well/morning-stretch", source: "nytimes.com", type: "article", folderId: "f-health", tags: ["stretching", "morning", "routine"], savedAt: Date.now() - 3600000 * 18, color: "#7A9B76" },
+  { id: "i4", title: "How to automate your savings", description: "Set it and forget it: the framework that builds wealth on autopilot.", url: "https://iwillteachyoutoberich.com/automate", source: "iwillteachyoutoberich.com", type: "article", folderId: "f-finance", tags: ["saving", "automation", "finance"], savedAt: Date.now() - 3600000 * 26, color: "#6B8E7F" },
+  { id: "i5", title: "Negotiating your first raise", description: "The scripts, research, and mindset that get you paid what you're worth.", url: "https://hbr.org/negotiating-raise", source: "hbr.org", type: "article", folderId: "f-career", tags: ["career", "negotiation", "salary"], savedAt: Date.now() - 3600000 * 48, color: "#5C7A99" },
+  { id: "i6", title: "The Future of Personal Knowledge Management", description: "How we'll organize information over the next decade — from static bookmarks to living libraries.", url: "https://wired.com/pkm-future", source: "wired.com", type: "article", folderId: "f-read", tags: ["productivity", "future", "knowledge"], savedAt: Date.now() - 3600000 * 72, color: "#C8553D" },
+  { id: "i7", title: "Swiss Poster Design Archive", description: "500 iconic posters from 1950–1980, digitized and searchable.", url: "https://behance.net/swiss-posters", source: "behance.net", type: "image", folderId: "f-design", tags: ["design", "posters", "typography"], savedAt: Date.now() - 3600000 * 96, color: "#588B8B" },
+  { id: "i8", title: "Why Neural Nets Work: A Visual Essay", description: "Interactive explainer walking through backprop with hand-drawn illustrations.", url: "https://distill.pub/neural-viz", source: "distill.pub", type: "article", folderId: "f-research", tags: ["ml", "ai", "viz"], savedAt: Date.now() - 3600000 * 120, color: "#B8860B" },
+  { id: "i9", title: "One-Pot Miso Butter Pasta", description: "15-minute weeknight dinner — umami bomb, single pan.", url: "https://cooking.nytimes.com/miso-pasta", source: "cooking.nytimes.com", type: "article", folderId: "f-recipes", tags: ["recipe", "dinner", "quick"], savedAt: Date.now() - 3600000 * 150, color: "#A0522D" },
+  { id: "i10", title: "Hidden gems in Lisbon", description: "Beyond the tram stops: neighborhoods, miradouros, and the best pastéis in town.", url: "https://cntraveler.com/lisbon", source: "cntraveler.com", type: "article", folderId: "f-travel", tags: ["lisbon", "travel", "portugal"], savedAt: Date.now() - 3600000 * 200, color: "#DD8452" },
+];
+
+const FOLDER_COLORS = ["#C8553D", "#588B8B", "#D4A574", "#7A9B76", "#8B7EC8", "#DD8452", "#5C7A99", "#6B8E7F"];
+
+const typeIconFor = (type, props) => {
+  const P = { size: 18, stroke: 1.5, ...props };
+  if (type === "article") return <IconFile {...P} />;
+  if (type === "video") return <IconFilm {...P} />;
+  if (type === "image") return <IconImage {...P} />;
+  return <IconLink {...P} />;
+};
+
+const relativeTime = (ts) => {
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return new Date(ts).toLocaleDateString();
+};
+
+// Check URL params on load: SAVI supports ?url=... to receive shared URLs
+const getIncomingUrl = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("url") || params.get("text") || "";
+  } catch { return ""; }
+};
+
+const loadState = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+};
+const saveState = (data) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+};
+
+// ============ APP ============
+function App() {
+  const saved = loadState();
+  const [folders, setFolders] = useState(saved?.folders || SEED_FOLDERS);
+  const [items, setItems] = useState(saved?.items || SEED_ITEMS);
+  const [activeFolder, setActiveFolder] = useState("f-all");
+  const [search, setSearch] = useState("");
+  const [route, setRoute] = useState("home");
+  const [showSaveSheet, setShowSaveSheet] = useState(false);
+  const [prefillUrl, setPrefillUrl] = useState("");
+  const [showFolderSheet, setShowFolderSheet] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // If opened with ?url=..., auto-open the save sheet
+  useEffect(() => {
+    const incoming = getIncomingUrl();
+    if (incoming) {
+      setPrefillUrl(incoming);
+      setShowSaveSheet(true);
+      // clean url so refresh doesn't re-trigger
+      try { window.history.replaceState({}, "", window.location.pathname); } catch {}
+    }
+  }, []);
+
+  useEffect(() => { saveState({ folders, items }); }, [folders, items]);
+
+  const visibleItems = useMemo(() => {
+    let list = items;
+    if (activeFolder !== "f-all") list = list.filter(i => i.folderId === activeFolder);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(i =>
+        i.title.toLowerCase().includes(q) ||
+        i.description.toLowerCase().includes(q) ||
+        i.tags.some(t => t.toLowerCase().includes(q)) ||
+        i.source.toLowerCase().includes(q)
+      );
+    }
+    return list.sort((a,b) => b.savedAt - a.savedAt);
+  }, [items, activeFolder, search]);
+
+  const folderCounts = useMemo(() => {
+    const counts = { "f-all": items.length };
+    folders.forEach(f => { if (!f.system) counts[f.id] = items.filter(i => i.folderId === f.id).length; });
+    return counts;
+  }, [items, folders]);
+
+  const addItem = (item) => setItems(prev => [{ ...item, id: `i-${Date.now()}`, savedAt: Date.now() }, ...prev]);
+  const deleteItem = (id) => { setItems(prev => prev.filter(i => i.id !== id)); if (selectedItem?.id === id) setSelectedItem(null); };
+  const addFolder = (name, color) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, name, color }]);
+
+  return (
+    <div className="stage">
+      <div className="frame-wrap">
+        <div className="bezel">
+          <div className="bezel-inner">
+            <div className="screen">
+              <div className="notch" />
+              <div className="app">
+                <StatusBar />
+                <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                  {route === "home" && (
+                    <HomeScreen folders={folders} items={visibleItems} activeFolder={activeFolder} setActiveFolder={setActiveFolder} folderCounts={folderCounts} search={search} setSearch={setSearch} onSelect={setSelectedItem} onDemoShare={() => setShowShareSheet(true)} />
+                  )}
+                  {route === "folders" && (
+                    <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>setShowFolderSheet(true)} />
+                  )}
+                  {route === "profile" && (
+                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} />
+                  )}
+                </div>
+                <TabBar route={route} setRoute={setRoute} onSavePress={()=>{ setPrefillUrl(""); setShowSaveSheet(true); }} />
+
+                {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); setPrefillUrl("https://wired.com/future-of-pkm"); setShowSaveSheet(true); }} />}
+                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={(i)=>{ addItem(i); setShowSaveSheet(false); }} />}
+                {showFolderSheet && <FolderSheet onClose={()=>setShowFolderSheet(false)} onCreate={(n,c)=>{ addFolder(n,c); setShowFolderSheet(false); }} />}
+                {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusBar() {
+  return (
+    <div className="status-bar status-bar-desktop mono" style={{ color: T.ink }}>
+      <div>9:41</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <IconSignal size={14} />
+        <IconWifi size={14} />
+        <IconBattery size={16} />
+      </div>
+    </div>
+  );
+}
+
+function HomeScreen({ folders, items, activeFolder, setActiveFolder, folderCounts, search, setSearch, onSelect, onDemoShare }) {
+  const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
+  return (
+    <div className="scroll" style={{ height: "100%" }}>
+      <div style={{ padding: "16px 20px 8px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: T.ink, display: "flex", alignItems: "center", justifyContent: "center", color: T.paper }}>
+              <IconBookmark size={13} stroke={2} fill={T.paper} />
+            </div>
+            <div className="serif" style={{ fontSize: 22, fontWeight: 500 }}>SAVI</div>
+          </div>
+          <button onClick={onDemoShare} className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 12px", borderRadius: 999, border: `1px solid ${T.line}`, color: T.inkSoft }}>
+            Demo share
+          </button>
+        </div>
+        <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>
+          {activeFolder === "f-all" ? "Your library" : "Folder"}
+        </div>
+        <h1 className="serif" style={{ fontSize: 42, lineHeight: 1.02, margin: 0, marginBottom: 8, color: T.ink }}>{activeFolderName}</h1>
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
+          {items.length} {items.length === 1 ? "item" : "items"}
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 20px 16px" }}>
+        <div style={{ position: "relative" }}>
+          <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.inkMute, pointerEvents: "none", display: "flex" }}>
+            <IconSearch size={15} />
+          </div>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{ width: "100%", borderRadius: 12, padding: "10px 12px 10px 40px", fontSize: 14, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+        </div>
+      </div>
+
+      <div style={{ padding: "0 20px 20px" }}>
+        <div className="scroll" style={{ display: "flex", gap: 8, overflowX: "auto", overflowY: "hidden", paddingBottom: 4, margin: "0 -20px", padding: "0 20px" }}>
+          {folders.map(f => {
+            const active = f.id === activeFolder;
+            return (
+              <button key={f.id} onClick={()=>setActiveFolder(f.id)} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 12, whiteSpace: "nowrap", background: active ? T.ink : "transparent", color: active ? T.paper : T.inkSoft, border: `1px solid ${active ? T.ink : T.line}` }}>
+                {f.system ? <IconSparkles size={11} /> : <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />}
+                <span>{f.name}</span>
+                <span className="mono" style={{ fontSize: 9, opacity: 0.6 }}>{folderCounts[f.id] ?? 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+        {items.length === 0 ? (
+          <EmptyState search={search} />
+        ) : (
+          items.map((item, idx) => <ItemCard key={item.id} item={item} onClick={()=>onSelect(item)} delay={idx * 30} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ search }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 16px", textAlign: "center" }}>
+      <div style={{ width: 56, height: 56, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: T.inkMute }}>
+        <IconSearch size={20} />
+      </div>
+      <div className="serif" style={{ fontSize: 24, marginBottom: 4, color: T.ink }}>Nothing here</div>
+      <div style={{ fontSize: 12, maxWidth: 240, color: T.inkSoft }}>{search ? `No matches for "${search}"` : "Save something to start your library"}</div>
+    </div>
+  );
+}
+
+function ItemCard({ item, onClick, delay }) {
+  return (
+    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", textAlign: "left", borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s" }}>
+      <div style={{ display: "flex", gap: 12, padding: 14 }}>
+        <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 12, background: `${item.color}18`, border: `1px solid ${item.color}28`, display: "flex", alignItems: "center", justifyContent: "center", color: item.color }}>
+          {typeIconFor(item.type, { size: 18, stroke: 1.5 })}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{item.type}</div>
+            <div className="mono" style={{ fontSize: 10, flexShrink: 0, color: T.inkMute }}>{relativeTime(item.savedAt)}</div>
+          </div>
+          <div className="clamp2" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, marginBottom: 4, color: T.ink }}>{item.title}</div>
+          <div className="clamp1" style={{ fontSize: 11.5, lineHeight: 1.3, color: T.inkSoft }}>{item.description}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+            <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{item.source}</div>
+            {item.tags.length > 0 && (
+              <>
+                <div style={{ width: 2, height: 2, borderRadius: "50%", background: T.inkMute }} />
+                <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute }}>{item.tags.slice(0, 2).map(t => `#${t}`).join(" ")}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FoldersScreen({ folders, folderCounts, onOpen, onNew }) {
+  return (
+    <div className="scroll anim-fade" style={{ height: "100%" }}>
+      <div style={{ padding: "16px 20px 12px" }}>
+        <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Organized by topic</div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
+          <div className="serif" style={{ fontSize: 42, lineHeight: 1.02, color: T.ink }}>Folders</div>
+          <button onClick={onNew} style={{ width: 36, height: 36, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconFolderPlus size={15} />
+          </button>
+        </div>
+      </div>
+      <div style={{ padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {folders.map((f, idx) => (
+          <button key={f.id} onClick={()=>onOpen(f.id)} className="anim-slide" style={{ animationDelay: `${idx * 35}ms`, textAlign: "left", padding: 16, borderRadius: 16, aspectRatio: "1 / 1", display: "flex", flexDirection: "column", justifyContent: "space-between", background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s" }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: f.system ? T.ink : `${f.color}20`, border: f.system ? "none" : `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {f.system ? <IconSparkles size={16} stroke={2} /> : <div style={{ width: 16, height: 16, borderRadius: 5, background: f.color }} />}
+              {f.system && <span style={{ display: "none" }}></span>}
+            </div>
+            <div>
+              <div className="serif" style={{ fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: T.ink }}>{f.name}</div>
+              <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({ itemCount, folderCount }) {
+  const clearData = () => {
+    if (confirm("Clear all saves and start over?")) {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.reload();
+    }
+  };
+  return (
+    <div className="scroll anim-fade" style={{ height: "100%" }}>
+      <div style={{ padding: "16px 20px 24px" }}>
+        <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Account</div>
+        <div className="serif" style={{ fontSize: 42, lineHeight: 1.02, marginBottom: 24, color: T.ink }}>Your library</div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24, padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconUser size={20} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 500, color: T.ink }}>You</div>
+            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginTop: 2 }}>Building your digital legacy</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+          <div style={{ padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+            <div className="serif" style={{ fontSize: 40, lineHeight: 1, color: T.ink }}>{itemCount}</div>
+            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Items saved</div>
+          </div>
+          <div style={{ padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+            <div className="serif" style={{ fontSize: 40, lineHeight: 1, color: T.ink }}>{folderCount}</div>
+            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Folders</div>
+          </div>
+        </div>
+
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, padding: "0 4px", color: T.inkMute }}>Storage</div>
+        <div style={{ padding: 16, borderRadius: 16, marginBottom: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <div style={{ fontSize: 14, color: T.ink }}>Local device</div>
+            <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>saved</div>
+          </div>
+          <div style={{ fontSize: 11.5, color: T.inkSoft }}>Your library persists on this device. Clearing browser data will erase it.</div>
+        </div>
+
+        <button onClick={clearData} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, marginBottom: 24, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+          Reset prototype
+        </button>
+
+        <div style={{ padding: 16, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
+          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, color: T.accent }}>Prototype</div>
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: T.inkSoft }}>Web version of SAVI. The native iOS app would add the Share Extension, cross-device sync, and system gestures.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TabBar({ route, setRoute, onSavePress }) {
+  const TabButton = ({ active, onClick, IconComp, label, disabled }) => (
+    <button onClick={onClick} disabled={disabled} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "4px 0", color: active ? T.ink : disabled ? T.lineSoft : T.inkMute }}>
+      <IconComp size={17} stroke={active ? 2.2 : 1.7} />
+      <span className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
+    </button>
+  );
+
+  return (
+    <div style={{ position: "relative", background: T.paper, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", padding: "8px 24px 24px", borderTop: `1px solid ${T.lineSoft}`, background: `${T.paper}f5`, backdropFilter: "blur(12px)" }}>
+        <TabButton active={route === "home"} onClick={()=>setRoute("home")} IconComp={IconHome} label="Library" />
+        <TabButton active={route === "folders"} onClick={()=>setRoute("folders")} IconComp={IconGrid} label="Folders" />
+        <button onClick={onSavePress} style={{ width: 48, height: 48, borderRadius: 16, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px -6px rgba(28,26,23,0.35)" }}>
+          <IconPlus size={20} stroke={2.2} />
+        </button>
+        <TabButton active={false} onClick={()=>{}} IconComp={IconSearch} label="Search" disabled />
+        <TabButton active={route === "profile"} onClick={()=>setRoute("profile")} IconComp={IconUser} label="You" />
+      </div>
+      <div style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)", width: 120, height: 5, borderRadius: 999, background: T.ink, opacity: 0.85 }} />
+    </div>
+  );
+}
+
+function SaveSheet({ initialUrl, folders, onClose, onSave }) {
+  const [step, setStep] = useState(initialUrl ? 2 : 1);
+  const [url, setUrl] = useState(initialUrl || "");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [folderId, setFolderId] = useState(folders.find(f => !f.system)?.id || "f-read");
+  const [tags, setTags] = useState("");
+  const [type, setType] = useState("article");
+
+  // Auto-prefill if opened with a URL
+  useEffect(() => {
+    if (initialUrl) {
+      const host = initialUrl.replace(/^https?:\/\//, "").split("/")[0].replace("www.", "");
+      const guess = host.split(".")[0];
+      setTitle(`Saved from ${guess}`);
+      setDescription("Add your own notes about this save.");
+      setTags(guess);
+    }
+  }, [initialUrl]);
+
+  const analyze = () => {
+    if (!url.trim()) return;
+    const host = url.replace(/^https?:\/\//, "").split("/")[0].replace("www.", "");
+    const guess = host.split(".")[0];
+    if (!title) setTitle(`Saved from ${guess}`);
+    if (!description) setDescription("Add your own notes about this save.");
+    if (!tags) setTags(guess);
+    setStep(2);
+  };
+
+  const submit = () => {
+    const folder = folders.find(f => f.id === folderId);
+    onSave({
+      title: title.trim() || "Untitled save",
+      description: description.trim(),
+      url: url.trim(),
+      source: url.replace(/^https?:\/\//, "").split("/")[0].replace("www.", "") || "manual",
+      type, folderId,
+      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+      color: folder?.color || T.accent,
+    });
+  };
+
+  return (
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center", flexShrink: 0 }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", flexShrink: 0 }}>
+          <button onClick={step === 1 ? onClose : () => setStep(1)} style={{ fontSize: 14, color: T.inkSoft }}>{step === 1 ? "Cancel" : "Back"}</button>
+          <div className="serif" style={{ fontSize: 18, color: T.ink }}>{step === 1 ? "New save" : "Review"}</div>
+          <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{step}/2</div>
+        </div>
+
+        <div className="scroll" style={{ padding: "0 20px 20px" }}>
+          {step === 1 ? (
+            <div style={{ padding: "12px 0" }}>
+              <Label>Paste URL</Label>
+              <input autoFocus value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter" && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
+                <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
+                <span>Tip: install the "Save to SAVI" Shortcut on your iPhone to save with one tap from any app's share sheet. (Requires the Apple Shortcuts app.)</span>
+              </div>
+              <button onClick={analyze} disabled={!url.trim()} style={{ width: "100%", marginTop: 20, padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: url.trim() ? 1 : 0.3 }}>
+                Continue
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "8px 0" }}>
+              <Field label="Title"><input value={title} onChange={e=>setTitle(e.target.value)} style={inputStyle()} /></Field>
+              <Field label="Description"><textarea value={description} onChange={e=>setDescription(e.target.value)} rows={3} style={{ ...inputStyle(), resize: "none" }} /></Field>
+              <Field label="Type">
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["article", "video", "image", "link"].map(t => (
+                    <button key={t} onClick={()=>setType(t)} className="mono" style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: type === t ? T.ink : T.card, color: type === t ? T.paper : T.inkSoft, border: `1px solid ${type === t ? T.ink : T.lineSoft}` }}>{t}</button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Folder">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {folders.filter(f => !f.system).map(f => (
+                    <button key={f.id} onClick={()=>setFolderId(f.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 12, background: folderId === f.id ? T.paperDim : T.card, color: T.ink, border: `1px solid ${folderId === f.id ? T.line : T.lineSoft}`, textAlign: "left" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color, flexShrink: 0 }} />
+                      <span className="clamp1">{f.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Tags"><input value={tags} onChange={e=>setTags(e.target.value)} placeholder="design, inspiration" style={inputStyle()} /></Field>
+              <button onClick={submit} style={{ width: "100%", padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, marginTop: 8, background: T.ink, color: T.paper }}>Save to library</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FolderSheet({ onClose, onCreate }) {
+  const [name, setName] = useState("");
+  const [color, setColor] = useState(FOLDER_COLORS[0]);
+  return (
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", background: T.paper }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
+          <button onClick={onClose} style={{ fontSize: 14, color: T.inkSoft }}>Cancel</button>
+          <div className="serif" style={{ fontSize: 18, color: T.ink }}>New folder</div>
+          <div style={{ width: 48 }} />
+        </div>
+        <div style={{ padding: "0 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <Field label="Name"><input autoFocus value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter" && name.trim() && onCreate(name.trim(), color)} placeholder="e.g. Travel ideas" style={inputStyle()} /></Field>
+          <Field label="Color">
+            <div style={{ display: "flex", gap: 8 }}>
+              {FOLDER_COLORS.map(c => (
+                <button key={c} onClick={()=>setColor(c)} style={{ width: 36, height: 36, borderRadius: 12, background: c, outline: color === c ? `2px solid ${T.ink}` : "none", outlineOffset: 2 }} />
+              ))}
+            </div>
+          </Field>
+          <button onClick={()=>name.trim() && onCreate(name.trim(), color)} disabled={!name.trim()} style={{ width: "100%", padding: 14, borderRadius: 12, fontSize: 15, fontWeight: 500, background: T.ink, color: T.paper, opacity: name.trim() ? 1 : 0.3 }}>Create</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemSheet({ item, folders, onClose, onDelete }) {
+  const folder = folders.find(f => f.id === item.folderId);
+  return (
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ height: 112, position: "relative", flexShrink: 0, background: `${item.color}18` }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color }}>
+            {typeIconFor(item.type, { size: 38, stroke: 1.2 })}
+          </div>
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconX size={14} />
+          </button>
+          <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
+            {item.type}
+          </div>
+        </div>
+        <div className="scroll" style={{ padding: "16px 20px" }}>
+          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{item.source} · saved {relativeTime(item.savedAt)}</div>
+          <h2 className="serif" style={{ fontSize: 26, lineHeight: 1.2, marginBottom: 8, marginTop: 0, color: T.ink }}>{item.title}</h2>
+          <p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 12, color: T.inkSoft }}>{item.description}</p>
+          {folder && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 11, color: T.inkSoft }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: folder.color }} />
+              <span>in {folder.name}</span>
+            </div>
+          )}
+          {item.tags.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16 }}>
+              {item.tags.map(t => (
+                <span key={t} className="mono" style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>#{t}</span>
+              ))}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: `1px solid ${T.lineSoft}` }}>
+            <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
+              <IconArrowOut size={14} />Open source
+            </a>
+            <button onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+              <IconTrash size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IOSShareSheet({ onClose, onPickSavi }) {
+  const apps = [
+    { name: "SAVI", bg: T.ink, icon: <IconBookmark size={22} stroke={2} fill={T.paper} />, primary: true },
+    { name: "Messages", bg: "#34C759" },
+    { name: "Mail", bg: "#007AFF" },
+    { name: "Notes", bg: "#FFCC00" },
+    { name: "Copy", bg: "#8E8E93" },
+  ];
+  return (
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.4)" }} onClick={onClose}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", background: "rgba(245, 241, 234, 0.96)", backdropFilter: "blur(30px)" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding: "12px 0 8px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ margin: "0 16px 16px", padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 12, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+          <div style={{ width: 48, height: 48, borderRadius: 8, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconFile size={18} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="clamp1" style={{ fontSize: 13, fontWeight: 500, color: T.ink }}>The Future of PKM</div>
+            <div className="clamp1" style={{ fontSize: 11, color: T.inkSoft }}>wired.com</div>
+          </div>
+          <div style={{ color: T.inkMute }}><IconShare size={16} /></div>
+        </div>
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 20px 8px", color: T.inkMute }}>Share with app</div>
+        <div style={{ padding: "0 12px 12px", display: "flex", gap: 16, overflowX: "auto" }}>
+          {apps.map((app, i) => (
+            <button key={i} onClick={app.primary ? onPickSavi : undefined} style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 68, opacity: app.primary ? 1 : 0.4 }}>
+              <div style={{ width: 60, height: 60, borderRadius: 14, background: app.bg, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {app.icon || <div style={{ width: 24, height: 24, borderRadius: 4, background: "rgba(255,255,255,0.5)" }} />}
+              </div>
+              <div className="clamp1" style={{ fontSize: 10, color: T.ink, textAlign: "center", width: "100%" }}>{app.name}</div>
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose} style={{ margin: "0 16px 32px", width: "calc(100% - 32px)", padding: 14, borderRadius: 16, fontSize: 15, fontWeight: 500, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}` }}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// ============ shared helpers ============
+const inputStyle = () => ({ width: "100%", borderRadius: 8, padding: "10px 12px", fontSize: 13, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink });
+const Label = ({ children }) => <label className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, color: T.inkMute }}>{children}</label>;
+const Field = ({ label, children }) => <div><Label>{label}</Label>{children}</div>;
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
