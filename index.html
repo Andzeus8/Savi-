@@ -729,6 +729,7 @@ function App() {
   const [route, setRoute] = useState("home");
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [prefillUrl, setPrefillUrl] = useState("");
+  const [prefillFromClipboard, setPrefillFromClipboard] = useState(false);
   const [showFolderSheet, setShowFolderSheet] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -740,9 +741,10 @@ function App() {
     if (tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable) active.blur();
   };
 
-  const openSaveSheet = (nextUrl = "") => {
+  const openSaveSheet = (nextUrl = "", options = {}) => {
     dismissActiveField();
     setPrefillUrl(nextUrl);
+    setPrefillFromClipboard(Boolean(options.tryClipboard && !nextUrl));
     setShowSaveSheet(true);
   };
 
@@ -899,11 +901,11 @@ function App() {
                   )}
                 </div>
                 <div className="navigator-shell">
-                  <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet()} />
+                  <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet("", { tryClipboard: true })} />
                 </div>
 
                 {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
-                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
+                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
                 {showFolderSheet && <FolderSheet onClose={()=>setShowFolderSheet(false)} onCreate={(n,c)=>{ addFolder(n,c); setShowFolderSheet(false); }} />}
                 {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
               </div>
@@ -1193,7 +1195,7 @@ function TabBar({ route, setRoute, onSavePress }) {
   );
 }
 
-function SaveSheet({ initialUrl, folders, onClose, onSave }) {
+function SaveSheet({ initialUrl, prefillFromClipboard = false, folders, onClose, onSave }) {
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState("link");
   const [url, setUrl] = useState(initialUrl || "");
@@ -1206,6 +1208,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [analysisNote, setAnalysisNote] = useState("");
+  const [clipboardNote, setClipboardNote] = useState("");
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -1217,6 +1220,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   const autoAnalyzeTimerRef = useRef(null);
   const lastAutoSubmittedRef = useRef("");
   const analyzeRequestRef = useRef(0);
+  const clipboardAttemptedRef = useRef(false);
 
   const isTextEntry = (node) => node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable);
 
@@ -1233,12 +1237,40 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     setIsAnalyzing(false);
   };
 
+  const fillFromClipboard = async ({ auto = false } = {}) => {
+    if (!navigator.clipboard?.readText) {
+      if (!auto) setClipboardNote("Clipboard paste isn't available in this browser.");
+      return false;
+    }
+
+    try {
+      const rawText = (await navigator.clipboard.readText()).trim();
+      if (!rawText) {
+        if (!auto) setClipboardNote("Your clipboard looks empty right now.");
+        return false;
+      }
+
+      const normalized = normalizeUrl(rawText);
+      setClipboardNote(auto ? "Pulled the latest thing from your clipboard." : "Pasted from your clipboard.");
+      setUrl(rawText);
+
+      if (hostFromUrl(normalized)) {
+        analyze(rawText);
+      }
+      return true;
+    } catch {
+      if (!auto) setClipboardNote("iOS blocked clipboard access here. Paste once manually and SAVI will keep going.");
+      return false;
+    }
+  };
+
   const switchMode = (nextMode) => {
     if (nextMode === inputMode) return;
     cancelAnalyze();
     setInputMode(nextMode);
     setStep(1);
     setAnalysisNote("");
+    setClipboardNote("");
     setShowAdvanced(false);
     if (nextMode === "link") {
       setSelectedFile(null);
@@ -1339,6 +1371,12 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   }, [initialUrl]);
 
   useEffect(() => {
+    if (!prefillFromClipboard || clipboardAttemptedRef.current || initialUrl || inputMode !== "link") return;
+    clipboardAttemptedRef.current = true;
+    fillFromClipboard({ auto: true });
+  }, [prefillFromClipboard, initialUrl, inputMode]);
+
+  useEffect(() => {
     if (inputMode !== "link" || step !== 1 || initialUrl || isAnalyzing) return;
     const normalized = normalizeUrl(url);
     if (!normalized || !hostFromUrl(normalized) || normalized === lastAutoSubmittedRef.current) return;
@@ -1435,6 +1473,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
   };
 
   const handlePaste = () => {
+    setClipboardNote("Pasted from your clipboard.");
     window.setTimeout(() => {
       const pastedValue = urlInputRef.current?.value || "";
       const normalized = normalizeUrl(pastedValue);
@@ -1448,6 +1487,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     lastAutoSubmittedRef.current = "";
     setUrl("");
     setAnalysisNote("");
+    setClipboardNote("");
     setStep(1);
     window.setTimeout(() => {
       urlInputRef.current?.focus({ preventScroll: true });
@@ -1466,6 +1506,7 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
     setDescription("");
     setTags("");
     setAnalysisNote("");
+    setClipboardNote("");
     setStep(1);
     setShowAdvanced(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1535,9 +1576,19 @@ function SaveSheet({ initialUrl, folders, onClose, onSave }) {
                       )}
                     </div>
                   </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10 }}>
+                    <button onClick={() => fillFromClipboard()} style={{ padding: "9px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}` }}>
+                      Use clipboard
+                    </button>
+                    {clipboardNote && (
+                      <div className="mono" style={{ flex: 1, textAlign: "right", fontSize: 10, color: T.inkMute }}>
+                        {clipboardNote}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 16, fontSize: 11.5, padding: 12, borderRadius: 12, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.inkSoft }}>
                     <div style={{ color: T.accent, flexShrink: 0, marginTop: 2 }}><IconSparkles size={13} /></div>
-                    <span>Paste a link and SAVI will continue automatically, then pick the title, thumbnail, and folder for you.</span>
+                    <span>Tap plus and SAVI will try your clipboard first, then keep going automatically once it sees a real link.</span>
                   </div>
                 </>
               ) : (
