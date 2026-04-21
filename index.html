@@ -136,38 +136,6 @@ const ASSET_DB_VERSION = 1;
 const ASSET_STORE = "assets";
 const T = { paper: "#F5F1EA", paperDim: "#EBE6DD", ink: "#1C1A17", inkSoft: "#5C574F", inkMute: "#8F8A80", line: "#D9D3C7", lineSoft: "#E6E0D4", accent: "#C8553D", card: "#FFFFFF" };
 
-const SEED_FOLDERS = [
-  { id: "f-all", name: "All Saves", system: true },
-  { id: "f-personal", name: "Personal", color: "#8B7EC8" },
-  { id: "f-hacks", name: "Life Hacks", color: "#D4A574" },
-  { id: "f-health", name: "Health & Wellness", color: "#7A9B76" },
-  { id: "f-finance", name: "Finance & Money", color: "#6B8E7F" },
-  { id: "f-career", name: "Career & Work", color: "#5C7A99" },
-  { id: "f-read", name: "Read Later", color: "#C8553D" },
-  { id: "f-design", name: "Design", color: "#588B8B" },
-  { id: "f-research", name: "Research", color: "#B8860B" },
-  { id: "f-recipes", name: "Recipes", color: "#A0522D" },
-  { id: "f-travel", name: "Travel", color: "#DD8452" },
-];
-
-const SEED_ITEMS = [
-  { id: "i1", title: "Letter to my future self", description: "A 30-day journaling practice that changed how I think about time.", url: "https://medium.com/letter-future-self", source: "medium.com", type: "article", folderId: "f-personal", tags: ["reflection", "journaling", "growth"], savedAt: Date.now() - 3600000 * 2, color: "#8B7EC8" },
-  { id: "i2", title: "20 things I wish I learned earlier", description: "Practical wisdom from someone who figured it out the hard way.", url: "https://youtube.com/watch?v=wisdom", source: "youtube.com", type: "video", folderId: "f-hacks", tags: ["tips", "wisdom", "life"], savedAt: Date.now() - 3600000 * 8, color: "#D4A574" },
-  { id: "i3", title: "The 7-minute morning stretch routine", description: "A full-body mobility flow that takes less time than making coffee.", url: "https://nytimes.com/well/morning-stretch", source: "nytimes.com", type: "article", folderId: "f-health", tags: ["stretching", "morning", "routine"], savedAt: Date.now() - 3600000 * 18, color: "#7A9B76" },
-  { id: "i4", title: "How to automate your savings", description: "Set it and forget it: the framework that builds wealth on autopilot.", url: "https://iwillteachyoutoberich.com/automate", source: "iwillteachyoutoberich.com", type: "article", folderId: "f-finance", tags: ["saving", "automation", "finance"], savedAt: Date.now() - 3600000 * 26, color: "#6B8E7F" },
-  { id: "i5", title: "Negotiating your first raise", description: "The scripts, research, and mindset that get you paid what you're worth.", url: "https://hbr.org/negotiating-raise", source: "hbr.org", type: "article", folderId: "f-career", tags: ["career", "negotiation", "salary"], savedAt: Date.now() - 3600000 * 48, color: "#5C7A99" },
-  { id: "i6", title: "The Future of Personal Knowledge Management", description: "How we'll organize information over the next decade — from static bookmarks to living libraries.", url: "https://wired.com/pkm-future", source: "wired.com", type: "article", folderId: "f-read", tags: ["productivity", "future", "knowledge"], savedAt: Date.now() - 3600000 * 72, color: "#C8553D" },
-  { id: "i7", title: "Swiss Poster Design Archive", description: "500 iconic posters from 1950–1980, digitized and searchable.", url: "https://behance.net/swiss-posters", source: "behance.net", type: "image", folderId: "f-design", tags: ["design", "posters", "typography"], savedAt: Date.now() - 3600000 * 96, color: "#588B8B" },
-  { id: "i8", title: "Why Neural Nets Work: A Visual Essay", description: "Interactive explainer walking through backprop with hand-drawn illustrations.", url: "https://distill.pub/neural-viz", source: "distill.pub", type: "article", folderId: "f-research", tags: ["ml", "ai", "viz"], savedAt: Date.now() - 3600000 * 120, color: "#B8860B" },
-  { id: "i9", title: "One-Pot Miso Butter Pasta", description: "15-minute weeknight dinner — umami bomb, single pan.", url: "https://cooking.nytimes.com/miso-pasta", source: "cooking.nytimes.com", type: "article", folderId: "f-recipes", tags: ["recipe", "dinner", "quick"], savedAt: Date.now() - 3600000 * 150, color: "#A0522D" },
-  { id: "i10", title: "Hidden gems in Lisbon", description: "Beyond the tram stops: neighborhoods, miradouros, and the best pastéis in town.", url: "https://cntraveler.com/lisbon", source: "cntraveler.com", type: "article", folderId: "f-travel", tags: ["lisbon", "travel", "portugal"], savedAt: Date.now() - 3600000 * 200, color: "#DD8452" },
-];
-
-const FOLDER_COLORS = ["#C8553D", "#588B8B", "#D4A574", "#7A9B76", "#8B7EC8", "#DD8452", "#5C7A99", "#6B8E7F"];
-const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
-const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
-const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
-const PREVIEWABLE_MIME_TYPES = ["application/pdf", "application/json"];
 const svgCoverDataUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 const PRESET_FOLDER_COVERS = [
   {
@@ -248,7 +216,141 @@ const PRESET_FOLDER_COVERS = [
       </g>
     </svg>`),
   },
+  {
+    id: "ledger",
+    name: "Ledger",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#102a1f"/>
+      <g opacity="0.82">
+        <rect x="68" y="86" width="136" height="308" rx="18" fill="#1f5c45"/>
+        <rect x="238" y="136" width="126" height="258" rx="18" fill="#2d7d5b">
+          <animate attributeName="y" values="136;116;136" dur="7s" repeatCount="indefinite"/>
+          <animate attributeName="height" values="258;278;258" dur="7s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="400" y="176" width="126" height="218" rx="18" fill="#57a773">
+          <animate attributeName="y" values="176;152;176" dur="6s" repeatCount="indefinite"/>
+          <animate attributeName="height" values="218;242;218" dur="6s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="562" y="116" width="96" height="278" rx="18" fill="#90be6d">
+          <animate attributeName="y" values="116;144;116" dur="8s" repeatCount="indefinite"/>
+          <animate attributeName="height" values="278;250;278" dur="8s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+      <path d="M60 356 H660" stroke="#d7f5d0" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+    </svg>`),
+  },
+  {
+    id: "notebook",
+    name: "Notebook",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#f3ead8"/>
+      <rect x="118" y="52" width="484" height="376" rx="28" fill="#fffdf8" stroke="#d7cbb6" stroke-width="6"/>
+      <g stroke="#d2c5af" stroke-width="2">
+        <path d="M170 130 H548"/><path d="M170 182 H548"/><path d="M170 234 H548"/><path d="M170 286 H548"/><path d="M170 338 H548"/>
+      </g>
+      <path d="M186 92 V388" stroke="#dd6b4d" stroke-width="6" stroke-linecap="round"/>
+      <path d="M290 150 H468" stroke="#2d3142" stroke-width="12" stroke-linecap="round" opacity="0.82">
+        <animate attributeName="d" values="M290 150 H468;M264 150 H494;M290 150 H468" dur="6s" repeatCount="indefinite"/>
+      </path>
+      <path d="M238 206 H516" stroke="#6b705c" stroke-width="12" stroke-linecap="round" opacity="0.68">
+        <animate attributeName="d" values="M238 206 H516;M260 206 H494;M238 206 H516" dur="7.5s" repeatCount="indefinite"/>
+      </path>
+      <path d="M290 260 H430" stroke="#b56576" stroke-width="12" stroke-linecap="round" opacity="0.62">
+        <animate attributeName="d" values="M290 260 H430;M312 260 H454;M290 260 H430" dur="5.5s" repeatCount="indefinite"/>
+      </path>
+    </svg>`),
+  },
+  {
+    id: "citrus",
+    name: "Citrus",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#fff4da"/>
+      <circle cx="178" cy="172" r="108" fill="#ffb703"/>
+      <circle cx="178" cy="172" r="88" fill="#ffd166"/>
+      <g stroke="#fff4da" stroke-width="8">
+        <path d="M178 84 V260"/><path d="M90 172 H266"/><path d="M112 106 L244 238"/><path d="M112 238 L244 106"/>
+      </g>
+      <circle cx="492" cy="266" r="138" fill="#fb8500">
+        <animate attributeName="cy" values="266;246;266" dur="7s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="492" cy="266" r="112" fill="#ffb703"/>
+      <g stroke="#fff4da" stroke-width="10">
+        <path d="M492 154 V378"/><path d="M380 266 H604"/><path d="M412 186 L572 346"/><path d="M412 346 L572 186"/>
+      </g>
+    </svg>`),
+  },
+  {
+    id: "atlas",
+    name: "Atlas",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#f6efe0"/>
+      <path d="M96 124 C192 52 306 52 404 118 C514 190 620 164 658 94 V386 C570 438 470 438 354 376 C238 314 136 314 62 370 V118 C82 128 88 128 96 124 Z" fill="#d9c7a6"/>
+      <path d="M150 160 C240 112 322 124 392 192 C456 254 538 258 614 218" fill="none" stroke="#7a8c65" stroke-width="14" stroke-linecap="round">
+        <animate attributeName="d" values="M150 160 C240 112 322 124 392 192 C456 254 538 258 614 218;M150 176 C226 118 330 112 404 182 C470 244 548 248 614 206;M150 160 C240 112 322 124 392 192 C456 254 538 258 614 218" dur="8s" repeatCount="indefinite"/>
+      </path>
+      <circle cx="238" cy="200" r="18" fill="#dd6b4d"/>
+      <circle cx="418" cy="264" r="18" fill="#dd6b4d">
+        <animate attributeName="cy" values="264;246;264" dur="5.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="546" cy="184" r="18" fill="#dd6b4d"/>
+      <path d="M238 200 L418 264 L546 184" stroke="#dd6b4d" stroke-width="6" stroke-dasharray="12 12" fill="none" opacity="0.9"/>
+    </svg>`),
+  },
+  {
+    id: "studio",
+    name: "Studio",
+    image: svgCoverDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480">
+      <rect width="720" height="480" fill="#12131f"/>
+      <rect x="84" y="82" width="206" height="316" rx="26" fill="#ff7b54">
+        <animate attributeName="x" values="84;102;84" dur="7.5s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="250" y="126" width="210" height="272" rx="28" fill="#ffd166" opacity="0.92">
+        <animate attributeName="y" values="126;108;126" dur="6.5s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="438" y="92" width="198" height="306" rx="28" fill="#4cc9f0" opacity="0.9">
+        <animate attributeName="x" values="438;418;438" dur="8.5s" repeatCount="indefinite"/>
+      </rect>
+      <circle cx="356" cy="240" r="58" fill="#12131f" opacity="0.88"/>
+      <circle cx="356" cy="240" r="34" fill="#f6f4ef">
+        <animate attributeName="r" values="34;44;34" dur="5.5s" repeatCount="indefinite"/>
+      </circle>
+    </svg>`),
+  },
 ];
+const PRESET_FOLDER_COVER_MAP = Object.fromEntries(PRESET_FOLDER_COVERS.map((cover) => [cover.id, cover.image]));
+
+const SEED_FOLDERS = [
+  { id: "f-all", name: "All Saves", system: true },
+  { id: "f-personal", name: "Personal", color: "#8B7EC8", image: PRESET_FOLDER_COVER_MAP.petals },
+  { id: "f-hacks", name: "Life Hacks", color: "#D4A574", image: PRESET_FOLDER_COVER_MAP.studio },
+  { id: "f-health", name: "Health & Wellness", color: "#7A9B76", image: PRESET_FOLDER_COVER_MAP.aurora },
+  { id: "f-finance", name: "Finance & Money", color: "#6B8E7F", image: PRESET_FOLDER_COVER_MAP.ledger },
+  { id: "f-career", name: "Career & Work", color: "#5C7A99", image: PRESET_FOLDER_COVER_MAP.grid },
+  { id: "f-read", name: "Read Later", color: "#C8553D", image: PRESET_FOLDER_COVER_MAP.notebook },
+  { id: "f-design", name: "Design", color: "#588B8B", image: PRESET_FOLDER_COVER_MAP.studio },
+  { id: "f-research", name: "Research", color: "#B8860B", image: PRESET_FOLDER_COVER_MAP.grid },
+  { id: "f-recipes", name: "Recipes", color: "#A0522D", image: PRESET_FOLDER_COVER_MAP.citrus },
+  { id: "f-travel", name: "Travel", color: "#DD8452", image: PRESET_FOLDER_COVER_MAP.atlas },
+];
+
+const SEED_ITEMS = [
+  { id: "i1", title: "Letter to my future self", description: "A 30-day journaling practice that changed how I think about time.", url: "https://medium.com/letter-future-self", source: "medium.com", type: "article", folderId: "f-personal", tags: ["reflection", "journaling", "growth"], savedAt: Date.now() - 3600000 * 2, color: "#8B7EC8" },
+  { id: "i2", title: "20 things I wish I learned earlier", description: "Practical wisdom from someone who figured it out the hard way.", url: "https://youtube.com/watch?v=wisdom", source: "youtube.com", type: "video", folderId: "f-hacks", tags: ["tips", "wisdom", "life"], savedAt: Date.now() - 3600000 * 8, color: "#D4A574" },
+  { id: "i3", title: "The 7-minute morning stretch routine", description: "A full-body mobility flow that takes less time than making coffee.", url: "https://nytimes.com/well/morning-stretch", source: "nytimes.com", type: "article", folderId: "f-health", tags: ["stretching", "morning", "routine"], savedAt: Date.now() - 3600000 * 18, color: "#7A9B76" },
+  { id: "i4", title: "How to automate your savings", description: "Set it and forget it: the framework that builds wealth on autopilot.", url: "https://iwillteachyoutoberich.com/automate", source: "iwillteachyoutoberich.com", type: "article", folderId: "f-finance", tags: ["saving", "automation", "finance"], savedAt: Date.now() - 3600000 * 26, color: "#6B8E7F" },
+  { id: "i5", title: "Negotiating your first raise", description: "The scripts, research, and mindset that get you paid what you're worth.", url: "https://hbr.org/negotiating-raise", source: "hbr.org", type: "article", folderId: "f-career", tags: ["career", "negotiation", "salary"], savedAt: Date.now() - 3600000 * 48, color: "#5C7A99" },
+  { id: "i6", title: "The Future of Personal Knowledge Management", description: "How we'll organize information over the next decade — from static bookmarks to living libraries.", url: "https://wired.com/pkm-future", source: "wired.com", type: "article", folderId: "f-read", tags: ["productivity", "future", "knowledge"], savedAt: Date.now() - 3600000 * 72, color: "#C8553D" },
+  { id: "i7", title: "Swiss Poster Design Archive", description: "500 iconic posters from 1950–1980, digitized and searchable.", url: "https://behance.net/swiss-posters", source: "behance.net", type: "image", folderId: "f-design", tags: ["design", "posters", "typography"], savedAt: Date.now() - 3600000 * 96, color: "#588B8B" },
+  { id: "i8", title: "Why Neural Nets Work: A Visual Essay", description: "Interactive explainer walking through backprop with hand-drawn illustrations.", url: "https://distill.pub/neural-viz", source: "distill.pub", type: "article", folderId: "f-research", tags: ["ml", "ai", "viz"], savedAt: Date.now() - 3600000 * 120, color: "#B8860B" },
+  { id: "i9", title: "One-Pot Miso Butter Pasta", description: "15-minute weeknight dinner — umami bomb, single pan.", url: "https://cooking.nytimes.com/miso-pasta", source: "cooking.nytimes.com", type: "article", folderId: "f-recipes", tags: ["recipe", "dinner", "quick"], savedAt: Date.now() - 3600000 * 150, color: "#A0522D" },
+  { id: "i10", title: "Hidden gems in Lisbon", description: "Beyond the tram stops: neighborhoods, miradouros, and the best pastéis in town.", url: "https://cntraveler.com/lisbon", source: "cntraveler.com", type: "article", folderId: "f-travel", tags: ["lisbon", "travel", "portugal"], savedAt: Date.now() - 3600000 * 200, color: "#DD8452" },
+];
+
+const FOLDER_COLORS = ["#C8553D", "#588B8B", "#D4A574", "#7A9B76", "#8B7EC8", "#DD8452", "#5C7A99", "#6B8E7F"];
+const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
+const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
+const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
+const PREVIEWABLE_MIME_TYPES = ["application/pdf", "application/json"];
 
 const normalizeUrl = (value) => {
   const raw = (value || "").trim();
@@ -273,6 +375,22 @@ const domainGuess = (value) => hostFromUrl(value).split(".")[0] || "";
 const dedupe = (values) => [...new Set(values.filter(Boolean))];
 const clampText = (value = "", limit = 180) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
 const normalizeFilename = (name = "") => name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+const SEED_FOLDER_LOOKUP = Object.fromEntries(SEED_FOLDERS.map((folder) => [folder.id, folder]));
+const withSeededFolderDefaults = (folders = []) => {
+  const nextFolders = Array.isArray(folders) ? folders : [];
+  const merged = nextFolders.map((folder) => {
+    const seed = SEED_FOLDER_LOOKUP[folder.id];
+    if (!seed) return folder;
+    return {
+      ...seed,
+      ...folder,
+      color: folder.color === undefined ? seed.color : folder.color,
+      image: folder.image === undefined ? (seed.image || "") : folder.image,
+    };
+  });
+  const seen = new Set(merged.map((folder) => folder.id));
+  return [...merged, ...SEED_FOLDERS.filter((folder) => !seen.has(folder.id))];
+};
 const fileExtensionFromName = (name = "") => {
   const match = name.toLowerCase().match(/\.([a-z0-9]+)$/i);
   return match?.[1] || "";
@@ -813,7 +931,7 @@ const isValidBackup = (backup) => {
 // ============ APP ============
 function App() {
   const saved = loadState();
-  const [folders, setFolders] = useState(saved?.folders || SEED_FOLDERS);
+  const [folders, setFolders] = useState(withSeededFolderDefaults(saved?.folders));
   const [items, setItems] = useState(saved?.items || SEED_ITEMS);
   const [activeFolder, setActiveFolder] = useState("f-all");
   const [search, setSearch] = useState("");
@@ -940,7 +1058,7 @@ function App() {
         });
       }
 
-      setFolders(parsed.folders);
+      setFolders(withSeededFolderDefaults(parsed.folders));
       setItems(parsed.items);
       setActiveFolder("f-all");
       setRoute("home");
@@ -1171,20 +1289,48 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
       <div style={{ padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         {folders.map((f, idx) => (
           <div key={f.id} className="anim-slide" style={{ animationDelay: `${idx * 35}ms`, position: "relative" }}>
-            <button onClick={()=>onOpen(f.id)} style={{ width: "100%", textAlign: "left", padding: 16, borderRadius: 16, aspectRatio: "1 / 1", display: "flex", flexDirection: "column", justifyContent: "space-between", background: f.image ? `center / cover no-repeat url(${f.image}), ${T.card}` : T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", position: "relative" }}>
-              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.44) 100%)" }} />}
-              <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: f.system ? T.ink : f.image ? "rgba(255,255,255,0.84)" : `${f.color}20`, border: f.system ? "none" : `1px solid ${f.image ? "rgba(255,255,255,0.35)" : `${f.color}30`}`, display: "flex", alignItems: "center", justifyContent: "center", color: f.image ? T.ink : "inherit" }}>
-                  {f.system ? <IconSparkles size={16} stroke={2} /> : f.image ? <IconImage size={16} /> : <div style={{ width: 16, height: 16, borderRadius: 5, background: f.color }} />}
-                </div>
-              </div>
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div className="serif" style={{ fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: f.image ? T.paper : T.ink }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: f.image ? "rgba(245,241,234,0.84)" : T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
+            <button
+              onClick={()=>onOpen(f.id)}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                padding: 14,
+                borderRadius: 20,
+                aspectRatio: "1 / 1",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                background: f.image
+                  ? `center / cover no-repeat url(${f.image}), ${T.card}`
+                  : f.system
+                    ? "linear-gradient(160deg, #1f1b17 0%, #373029 100%)"
+                    : `linear-gradient(155deg, ${f.color}24 0%, ${T.card} 68%)`,
+                border: `1px solid ${f.image ? "rgba(217,211,199,0.55)" : T.lineSoft}`,
+                boxShadow: "0 20px 34px -28px rgba(28,26,23,0.6)",
+                transition: "transform 0.12s",
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.04) 0%, rgba(28,26,23,0.1) 38%, rgba(28,26,23,0.58) 100%)" }} />}
+              <div style={{ position: "relative", zIndex: 1, minHeight: 24 }} />
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  borderRadius: 16,
+                  padding: "12px 12px 10px",
+                  background: f.image ? "rgba(20,18,16,0.34)" : f.system ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.72)",
+                  border: f.image ? "1px solid rgba(255,255,255,0.16)" : `1px solid ${f.system ? "rgba(255,255,255,0.12)" : "rgba(217,211,199,0.72)"}`,
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <div className="serif" style={{ fontSize: 21, lineHeight: 1.15, marginBottom: 4, color: f.image || f.system ? T.paper : T.ink }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: f.image ? "rgba(245,241,234,0.82)" : f.system ? "rgba(245,241,234,0.72)" : T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
               </div>
             </button>
             {!f.system && (
-              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 34, height: 34, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.9)" : T.paper, color: T.ink, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 18px -16px rgba(28,26,23,0.65)" }}>
+              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 30, height: 30, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0.94)", color: T.ink, border: `1px solid ${f.image ? "rgba(255,255,255,0.16)" : T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 18px -18px rgba(28,26,23,0.8)", backdropFilter: "blur(12px)" }}>
                 <IconEdit size={14} />
               </button>
             )}
@@ -1887,6 +2033,8 @@ function FolderSheet({ folder, onClose, onSave }) {
   const [imageNote, setImageNote] = useState("");
   const [isReadingImage, setIsReadingImage] = useState(false);
   const imageInputRef = useRef(null);
+  const activePreset = PRESET_FOLDER_COVERS.find((cover) => cover.image === image);
+  const coverLabel = image ? (activePreset ? `${activePreset.name} motion cover` : "Custom cover") : "Solid color";
 
   const openImagePicker = () => {
     imageInputRef.current?.click();
@@ -1957,15 +2105,20 @@ function FolderSheet({ folder, onClose, onSave }) {
         </div>
         <div style={{ padding: "0 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
           <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
-          <div style={{ borderRadius: 18, overflow: "hidden", minHeight: 140, background: image ? `center / cover no-repeat url(${image}), ${color}22` : `${color}22`, border: `1px solid ${T.lineSoft}`, position: "relative" }}>
-            <div style={{ position: "absolute", inset: 0, background: image ? "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.36) 100%)" : "none" }} />
+          <div style={{ borderRadius: 20, overflow: "hidden", minHeight: 146, background: image ? `center / cover no-repeat url(${image}), ${color}22` : `linear-gradient(160deg, ${color}26 0%, ${T.card} 100%)`, border: `1px solid ${T.lineSoft}`, position: "relative", boxShadow: "0 18px 30px -28px rgba(28,26,23,0.7)" }}>
+            <div style={{ position: "absolute", inset: 0, background: image ? "linear-gradient(180deg, rgba(28,26,23,0.04) 0%, rgba(28,26,23,0.12) 34%, rgba(28,26,23,0.46) 100%)" : "none" }} />
             <div style={{ position: "relative", zIndex: 1, padding: 18, minHeight: 140, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: image ? "rgba(255,255,255,0.88)" : T.card, display: "flex", alignItems: "center", justifyContent: "center", color: T.ink }}>
-                {image ? <IconImage size={18} /> : <div style={{ width: 18, height: 18, borderRadius: 6, background: color }} />}
+              <div>
+                <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 10px", borderRadius: 999, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: image ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.78)", color: image ? T.paper : T.inkSoft, border: image ? "1px solid rgba(255,255,255,0.16)" : `1px solid ${T.lineSoft}`, backdropFilter: "blur(10px)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: image ? "rgba(255,255,255,0.88)" : color }} />
+                  {coverLabel}
+                </div>
               </div>
               <div>
                 <div className="serif" style={{ fontSize: 28, lineHeight: 1.05, color: image ? T.paper : T.ink }}>{name.trim() || "Folder cover"}</div>
-                <div className="mono" style={{ marginTop: 6, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: image ? "rgba(245,241,234,0.84)" : T.inkMute }}>{image ? "Custom image" : "Solid color"}</div>
+                <div style={{ marginTop: 6, fontSize: 11.5, color: image ? "rgba(245,241,234,0.84)" : T.inkMute }}>
+                  {image ? "Upload one, paste one, or pick a motion cover below." : "Start with color, then layer in a cover if you want."}
+                </div>
               </div>
             </div>
           </div>
