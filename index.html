@@ -129,6 +129,7 @@ const IconShare = p => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle c
 const IconUpload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />;
 const IconDownload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />;
 const IconEdit = p => <Icon {...p} d={<><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></>} />;
+const IconPin = p => <Icon {...p} d={<><path d="M12 21s-6-5.4-6-11a6 6 0 1 1 12 0c0 5.6-6 11-6 11Z"/><circle cx="12" cy="10" r="2.5"/></>} />;
 // ============ CONSTANTS ============
 const STORAGE_KEY = "savi_v1";
 const ASSET_DB_NAME = "savi_assets";
@@ -551,6 +552,7 @@ const extractFileMetadata = async (file, folders) => {
     extension,
     file.type.split("/")[0],
     type === "image" ? "photo" : "",
+    type === "file" ? "document" : "",
   ]);
   let thumbnail = "";
   let description = `${describeFileKind(file)} from your device • ${sizeLabel}`;
@@ -609,7 +611,9 @@ const downloadBlob = ({ blob, name, openInNewTab = false }) => {
 
 const inferTypeFromUrl = (value) => {
   const normalized = normalizeUrl(value).toLowerCase();
+  if (/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.apple\.com/.test(normalized)) return "place";
   if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/.test(normalized)) return "image";
+  if (/\.(pdf|docx?|pptx?|xlsx?)(\?|$)/.test(normalized)) return "file";
   if (/\.(mp4|mov|m4v|webm)(\?|$)/.test(normalized)) return "video";
   if (/youtube\.com|youtu\.be|vimeo\.com|tiktok\.com/.test(normalized)) return "video";
   return "article";
@@ -617,11 +621,56 @@ const inferTypeFromUrl = (value) => {
 
 const inferTypeFromMetadata = (metadata, value) => {
   const haystack = `${metadata?.publisher || ""} ${metadata?.provider || ""} ${value || ""}`.toLowerCase();
+  if (/google maps|apple maps|maps\.google|maps\.apple|place/.test(haystack)) return "place";
   if (metadata?.type === "video" || /youtube|youtu\.be|vimeo|tiktok/.test(haystack)) return "video";
   if (metadata?.type === "photo" || metadata?.type === "image") return "image";
+  if (metadata?.type === "rich" && /map|location|place/.test(haystack)) return "place";
   if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/.test((value || "").toLowerCase())) return "image";
   return inferTypeFromUrl(value);
 };
+
+const titleize = (value = "") => value
+  .replace(/[_-]+/g, " ")
+  .replace(/\s+/g, " ")
+  .trim()
+  .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const displayTypeLabel = (type = "") => ({
+  article: "Article",
+  video: "Video",
+  image: "Image",
+  file: "File",
+  place: "Place",
+  link: "Link",
+  all: "All types",
+}[type] || titleize(type || "link"));
+
+const sourceProfileForValue = (value = "", fallbackSource = "") => {
+  const raw = `${value || ""} ${fallbackSource || ""}`.trim();
+  const normalized = raw.toLowerCase();
+  const host = hostFromUrl(value || fallbackSource);
+  const normalizedHost = host.toLowerCase();
+
+  if (!normalized && !normalizedHost) return { key: "web", label: "Web" };
+  if (normalized.includes("device") || normalizedHost === "device") return { key: "device", label: "Device" };
+  if (/instagram/.test(normalized) || /(^|\.)instagram\.com$/.test(normalizedHost)) return { key: "instagram", label: "Instagram" };
+  if (/youtube|youtu\.be/.test(normalized) || /(^|\.)youtube\.com$|(^|\.)youtu\.be$|(^|\.)youtube-nocookie\.com$/.test(normalizedHost)) return { key: "youtube", label: "YouTube" };
+  if (/tiktok/.test(normalized) || /(^|\.)tiktok\.com$/.test(normalizedHost)) return { key: "tiktok", label: "TikTok" };
+  if (/google maps|maps\.apple|apple maps|goo\.gl\/maps|maps\.app\.goo\.gl/.test(normalized) || /(^|\.)google\.[^.]+$|(^|\.)maps\.apple\.com$/.test(normalizedHost) && /maps|place/.test(normalized)) return { key: "maps", label: "Maps" };
+  if (/pinterest/.test(normalized) || /(^|\.)pinterest\./.test(normalizedHost)) return { key: "pinterest", label: "Pinterest" };
+  if (/reddit/.test(normalized) || /(^|\.)reddit\.com$/.test(normalizedHost)) return { key: "reddit", label: "Reddit" };
+  if (/twitter| x\.com|^x$/.test(normalized) || /(^|\.)twitter\.com$|(^|\.)x\.com$/.test(normalizedHost)) return { key: "x", label: "X" };
+  if (/spotify/.test(normalized) || /(^|\.)spotify\.com$/.test(normalizedHost)) return { key: "spotify", label: "Spotify" };
+  if (/behance/.test(normalized) || /(^|\.)behance\.net$/.test(normalizedHost)) return { key: "behance", label: "Behance" };
+  if (/dribbble/.test(normalized) || /(^|\.)dribbble\.com$/.test(normalizedHost)) return { key: "dribbble", label: "Dribbble" };
+  if (normalizedHost) {
+    const root = normalizedHost.split(".").slice(-2, -1)[0] || normalizedHost.split(".")[0];
+    return { key: root || "web", label: titleize(root || "Web") };
+  }
+  return { key: titleize(normalized).toLowerCase() || "web", label: titleize(normalized) || "Web" };
+};
+
+const sourceProfileForItem = (item) => sourceProfileForValue(item?.url || item?.source || "", item?.source || "");
 
 const sanitizeText = (value = "") => value.replace(/\[(.*?)\]\(.*?\)/g, "$1").replace(/\s+/g, " ").trim();
 
@@ -836,7 +885,13 @@ const fetchLinkMetadata = async (rawUrl, folders) => {
   );
 
   const type = inferTypeFromMetadata(metadata, normalizedUrl);
-  const tags = dedupe([domain, metadata.publisher && metadata.publisher.toLowerCase().replace(/\s+/g, "-")]);
+  const sourceProfile = sourceProfileForValue(normalizedUrl, metadata.source || source);
+  const tags = dedupe([
+    domain,
+    metadata.publisher && metadata.publisher.toLowerCase().replace(/\s+/g, "-"),
+    sourceProfile.key !== domain ? sourceProfile.key : "",
+    type === "place" ? "location" : "",
+  ]);
   const folderId = guessFolderId({ ...metadata, url: normalizedUrl, source }, folders);
   const fallbackTitle = metadata.title || (domain ? `Saved from ${domain}` : "Untitled save");
   const fallbackDescription = metadata.description || "";
@@ -846,7 +901,7 @@ const fetchLinkMetadata = async (rawUrl, folders) => {
     title: fallbackTitle,
     description: fallbackDescription,
     url: normalizedUrl,
-    source: metadata.source || source,
+    source: metadata.source || sourceProfile.label || source,
     type,
     tags,
     folderId,
@@ -860,6 +915,7 @@ const typeIconFor = (type, props) => {
   if (type === "video") return <IconFilm {...P} />;
   if (type === "image") return <IconImage {...P} />;
   if (type === "file") return <IconFile {...P} />;
+  if (type === "place") return <IconPin {...P} />;
   return <IconLink {...P} />;
 };
 
@@ -934,6 +990,9 @@ function App() {
   const [folders, setFolders] = useState(withSeededFolderDefaults(saved?.folders));
   const [items, setItems] = useState(saved?.items || SEED_ITEMS);
   const [activeFolder, setActiveFolder] = useState("f-all");
+  const [browseMode, setBrowseMode] = useState("folders");
+  const [activeType, setActiveType] = useState("all");
+  const [activeSource, setActiveSource] = useState("all");
   const [search, setSearch] = useState("");
   const [route, setRoute] = useState("home");
   const [showSaveSheet, setShowSaveSheet] = useState(false);
@@ -1000,26 +1059,54 @@ function App() {
 
   const visibleItems = useMemo(() => {
     let list = items;
-    if (activeFolder !== "f-all") list = list.filter(i => i.folderId === activeFolder);
+    if (browseMode === "folders" && activeFolder !== "f-all") list = list.filter(i => i.folderId === activeFolder);
+    if (browseMode === "types" && activeType !== "all") list = list.filter(i => (i.type || "link") === activeType);
+    if (browseMode === "sources" && activeSource !== "all") list = list.filter(i => sourceProfileForItem(i).key === activeSource);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(i =>
-        i.title.toLowerCase().includes(q) ||
-        i.description.toLowerCase().includes(q) ||
-        i.tags.some(t => t.toLowerCase().includes(q)) ||
-        i.source.toLowerCase().includes(q) ||
+        (i.title || "").toLowerCase().includes(q) ||
+        (i.description || "").toLowerCase().includes(q) ||
+        (i.tags || []).some(t => t.toLowerCase().includes(q)) ||
+        (i.source || "").toLowerCase().includes(q) ||
+        sourceProfileForItem(i).label.toLowerCase().includes(q) ||
         (i.assetName || "").toLowerCase().includes(q) ||
         (i.assetMime || "").toLowerCase().includes(q)
       );
     }
     return list.sort((a,b) => b.savedAt - a.savedAt);
-  }, [items, activeFolder, search]);
+  }, [items, activeFolder, activeSource, activeType, browseMode, search]);
 
   const folderCounts = useMemo(() => {
     const counts = { "f-all": items.length };
     folders.forEach(f => { if (!f.system) counts[f.id] = items.filter(i => i.folderId === f.id).length; });
     return counts;
   }, [items, folders]);
+
+  const typeCounts = useMemo(() => {
+    const counts = { all: items.length };
+    items.forEach((item) => {
+      const key = item.type || "link";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [items]);
+
+  const sourceCounts = useMemo(() => {
+    const counts = { all: items.length };
+    items.forEach((item) => {
+      const key = sourceProfileForItem(item).key;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [items]);
+
+  const sourceOptions = useMemo(() => (
+    Object.entries(sourceCounts)
+      .filter(([key]) => key !== "all")
+      .map(([key, count]) => ({ key, count, label: sourceProfileForValue(key, key).label }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+  ), [sourceCounts]);
 
   const exportBackup = async () => {
     const payload = await buildBackupPayload(folders, items);
@@ -1061,6 +1148,9 @@ function App() {
       setFolders(withSeededFolderDefaults(parsed.folders));
       setItems(parsed.items);
       setActiveFolder("f-all");
+      setBrowseMode("folders");
+      setActiveType("all");
+      setActiveSource("all");
       setRoute("home");
       setSelectedItem(null);
       setShowSaveSheet(false);
@@ -1130,10 +1220,38 @@ function App() {
               <div className="app">
                 <div className="app-main">
                   {route === "home" && (
-                    <HomeScreen folders={folders} items={visibleItems} activeFolder={activeFolder} setActiveFolder={setActiveFolder} folderCounts={folderCounts} search={search} setSearch={setSearch} onSelect={setSelectedItem} onDemoShare={() => setShowShareSheet(true)} />
+                    <HomeScreen
+                      folders={folders}
+                      items={visibleItems}
+                      activeFolder={activeFolder}
+                      setActiveFolder={setActiveFolder}
+                      browseMode={browseMode}
+                      setBrowseMode={setBrowseMode}
+                      activeType={activeType}
+                      setActiveType={setActiveType}
+                      activeSource={activeSource}
+                      setActiveSource={setActiveSource}
+                      folderCounts={folderCounts}
+                      typeCounts={typeCounts}
+                      sourceCounts={sourceCounts}
+                      sourceOptions={sourceOptions}
+                      search={search}
+                      setSearch={setSearch}
+                      onSelect={setSelectedItem}
+                      onDemoShare={() => setShowShareSheet(true)}
+                    />
                   )}
                   {route === "folders" && (
-                    <FoldersScreen folders={folders} folderCounts={folderCounts} onOpen={(id)=>{ setActiveFolder(id); setRoute("home"); }} onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }} onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }} />
+                    <FoldersScreen
+                      folders={folders}
+                      folderCounts={folderCounts}
+                      onOpen={(id)=>{ setBrowseMode("folders"); setActiveFolder(id); setRoute("home"); }}
+                      onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }}
+                      onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }}
+                      onViewTopics={()=>{ setBrowseMode("folders"); setActiveFolder("f-all"); setRoute("home"); }}
+                      onViewTypes={()=>{ setBrowseMode("types"); setActiveType("all"); setRoute("home"); }}
+                      onViewSources={()=>{ setBrowseMode("sources"); setActiveSource("all"); setRoute("home"); }}
+                    />
                   )}
                   {route === "profile" && (
                     <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
@@ -1170,8 +1288,13 @@ function App() {
   );
 }
 
-function HomeScreen({ folders, items, activeFolder, setActiveFolder, folderCounts, search, setSearch, onSelect, onDemoShare }) {
+function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onDemoShare }) {
   const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
+  const activeSourceLabel = sourceOptions.find((option) => option.key === activeSource)?.label || (activeSource === "all" ? "All Apps" : titleize(activeSource));
+  const heroEyebrow = browseMode === "folders" ? (activeFolder === "f-all" ? "Your library" : "Folder") : browseMode === "types" ? "Content type" : "Source app";
+  const heroTitle = browseMode === "folders" ? activeFolderName : browseMode === "types" ? displayTypeLabel(activeType) : activeSourceLabel;
+  const heroCount = items.length;
+
   return (
     <div className="scroll" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 8px" }}>
@@ -1187,15 +1310,31 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, folderCount
           </button>
         </div>
         <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>
-          {activeFolder === "f-all" ? "Your library" : "Folder"}
+          {heroEyebrow}
         </div>
-        <h1 className="serif" style={{ fontSize: 42, lineHeight: 1.02, margin: 0, marginBottom: 8, color: T.ink }}>{activeFolderName}</h1>
+        <h1 className="serif" style={{ fontSize: 42, lineHeight: 1.02, margin: 0, marginBottom: 8, color: T.ink }}>{heroTitle}</h1>
         <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
-          {items.length} {items.length === 1 ? "item" : "items"}
+          {heroCount} {heroCount === 1 ? "item" : "items"}
         </div>
       </div>
 
       <div style={{ padding: "20px 20px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+          {[
+            { key: "folders", label: "Folders" },
+            { key: "types", label: "Types" },
+            { key: "sources", label: "Apps" },
+          ].map((option) => (
+            <button
+              key={option.key}
+              onClick={() => setBrowseMode(option.key)}
+              className="mono"
+              style={{ padding: "10px 8px", borderRadius: 12, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", background: browseMode === option.key ? T.ink : T.paperDim, color: browseMode === option.key ? T.paper : T.inkSoft, border: `1px solid ${browseMode === option.key ? T.ink : T.lineSoft}` }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.inkMute, pointerEvents: "none", display: "flex" }}>
             <IconSearch size={15} />
@@ -1206,13 +1345,31 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, folderCount
 
       <div style={{ padding: "0 20px 20px" }}>
         <div className="scroll" style={{ display: "flex", gap: 8, overflowX: "auto", overflowY: "hidden", paddingBottom: 4, margin: "0 -20px", padding: "0 20px" }}>
-          {folders.map(f => {
+          {browseMode === "folders" && folders.map(f => {
             const active = f.id === activeFolder;
             return (
               <button key={f.id} onClick={()=>setActiveFolder(f.id)} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 12, whiteSpace: "nowrap", background: active ? T.ink : "transparent", color: active ? T.paper : T.inkSoft, border: `1px solid ${active ? T.ink : T.line}` }}>
                 {f.system ? <IconSparkles size={11} /> : <div style={{ width: 8, height: 8, borderRadius: 2, background: f.color }} />}
                 <span>{f.name}</span>
                 <span className="mono" style={{ fontSize: 9, opacity: 0.6 }}>{folderCounts[f.id] ?? 0}</span>
+              </button>
+            );
+          })}
+          {browseMode === "types" && ["all", "article", "video", "image", "file", "place", "link"].filter((key) => typeCounts[key] > 0 || key === "all").map((key) => {
+            const active = key === activeType;
+            return (
+              <button key={key} onClick={()=>setActiveType(key)} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 12, whiteSpace: "nowrap", background: active ? T.ink : "transparent", color: active ? T.paper : T.inkSoft, border: `1px solid ${active ? T.ink : T.line}` }}>
+                <span>{displayTypeLabel(key)}</span>
+                <span className="mono" style={{ fontSize: 9, opacity: 0.6 }}>{typeCounts[key] ?? 0}</span>
+              </button>
+            );
+          })}
+          {browseMode === "sources" && [{ key: "all", label: "All apps", count: sourceCounts.all || 0 }, ...sourceOptions.slice(0, 10)].map((option) => {
+            const active = option.key === activeSource;
+            return (
+              <button key={option.key} onClick={()=>setActiveSource(option.key)} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 12, whiteSpace: "nowrap", background: active ? T.ink : "transparent", color: active ? T.paper : T.inkSoft, border: `1px solid ${active ? T.ink : T.line}` }}>
+                <span>{option.label}</span>
+                <span className="mono" style={{ fontSize: 9, opacity: 0.6 }}>{option.count}</span>
               </button>
             );
           })}
@@ -1243,6 +1400,7 @@ function EmptyState({ search }) {
 }
 
 function ItemCard({ item, onClick, delay }) {
+  const sourceProfile = sourceProfileForItem(item);
   return (
     <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", textAlign: "left", borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s" }}>
       <div style={{ display: "flex", gap: 12, padding: 14 }}>
@@ -1254,17 +1412,17 @@ function ItemCard({ item, onClick, delay }) {
         </div>
         <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{item.type}</div>
+            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{displayTypeLabel(item.type)}</div>
             <div className="mono" style={{ fontSize: 10, flexShrink: 0, color: T.inkMute }}>{relativeTime(item.savedAt)}</div>
           </div>
           <div className="clamp2" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, marginBottom: 4, color: T.ink }}>{item.title}</div>
           <div className="clamp1" style={{ fontSize: 11.5, lineHeight: 1.3, color: T.inkSoft }}>{item.description}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-            <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{item.source}</div>
-            {item.tags.length > 0 && (
+            <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{sourceProfile.label}</div>
+            {(item.tags || []).length > 0 && (
               <>
                 <div style={{ width: 2, height: 2, borderRadius: "50%", background: T.inkMute }} />
-                <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute }}>{item.tags.slice(0, 2).map(t => `#${t}`).join(" ")}</div>
+                <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute }}>{(item.tags || []).slice(0, 2).join(" · ")}</div>
               </>
             )}
           </div>
@@ -1274,7 +1432,7 @@ function ItemCard({ item, onClick, delay }) {
   );
 }
 
-function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
+function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit, onViewTopics, onViewTypes, onViewSources }) {
   return (
     <div className="scroll anim-fade" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 12px" }}>
@@ -1284,6 +1442,17 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
           <button onClick={onNew} style={{ width: 36, height: 36, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconFolderPlus size={15} />
           </button>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+          {[
+            { label: "Topics", onClick: onViewTopics },
+            { label: "Types", onClick: onViewTypes },
+            { label: "Apps", onClick: onViewSources },
+          ].map((option) => (
+            <button key={option.label} onClick={option.onClick} className="mono" style={{ padding: "8px 12px", borderRadius: 999, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
       <div style={{ padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1489,6 +1658,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState("link");
   const [url, setUrl] = useState(initialUrl || "");
+  const [source, setSource] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [folderId, setFolderId] = useState(folders.find(f => !f.system)?.id || "f-read");
@@ -1505,6 +1675,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   const [dragActive, setDragActive] = useState(false);
   const sheetRef = useRef(null);
   const scrollRef = useRef(null);
+  const advancedRef = useRef(null);
   const urlInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const autoAnalyzeTimerRef = useRef(null);
@@ -1565,12 +1736,14 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     if (nextMode === "link") {
       setSelectedFile(null);
       setThumbnail("");
+      setSource("");
       setType("article");
       if (fileInputRef.current) fileInputRef.current.value = "";
       window.setTimeout(() => {
         urlInputRef.current?.focus({ preventScroll: true });
       }, 90);
     } else {
+      setSource("Device");
       setType("file");
     }
   };
@@ -1597,6 +1770,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
       setUrl(normalized);
       setTitle(resolvedTitle);
       setDescription(resolvedDescription);
+      setSource(metadata.source || sourceProfileForValue(normalized, metadata.source || "").label);
       setType(metadata.type || "article");
       setThumbnail(metadata.thumbnail || "");
       if (metadata.folderId) setFolderId(metadata.folderId);
@@ -1607,6 +1781,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
       if (requestId !== analyzeRequestRef.current) return;
       const fallbackDomain = domainGuess(normalized);
       setUrl(normalized);
+      setSource(sourceProfileForValue(normalized).label);
       setTitle(`Saved from ${fallbackDomain}`);
       setDescription("Add your own notes about this save.");
       setTags(fallbackDomain);
@@ -1633,6 +1808,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
       if (requestId !== analyzeRequestRef.current) return;
       setTitle(metadata.title);
       setDescription(metadata.description);
+      setSource(metadata.source || "Device");
       setType(metadata.type || "file");
       setThumbnail(metadata.thumbnail || "");
       if (metadata.folderId) setFolderId(metadata.folderId);
@@ -1643,6 +1819,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
       if (requestId !== analyzeRequestRef.current) return;
       setTitle(titleFromFilename(file.name));
       setDescription(`${describeFileKind(file)} from your device • ${formatBytes(file.size)}`);
+      setSource("Device");
       setType(inferTypeFromFile(file));
       setThumbnail("");
       setTags(dedupe(["upload", fileExtensionFromName(file.name)]).join(", "));
@@ -1657,6 +1834,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     if (initialUrl) {
       setInputMode("link");
       setUrl(initialUrl);
+      setSource(sourceProfileForValue(initialUrl).label);
       if (autoAnalyzeInitial) {
         analyze(initialUrl);
       } else {
@@ -1670,6 +1848,11 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     clipboardAttemptedRef.current = true;
     fillFromClipboard({ auto: true });
   }, [prefillFromClipboard, initialUrl, inputMode]);
+
+  useEffect(() => {
+    if (!showAdvanced) return;
+    window.setTimeout(() => ensureVisible(advancedRef.current), 120);
+  }, [showAdvanced]);
 
   useEffect(() => {
     if (inputMode !== "link" || step !== 1 || initialUrl || isAnalyzing) return;
@@ -1755,7 +1938,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
         title: title.trim() || "Untitled save",
         description: description.trim(),
         url: normalizeUrl(url.trim()),
-        source: hostFromUrl(url.trim()) || "manual",
+        source: source || sourceProfileForValue(url.trim(), hostFromUrl(url.trim()) || "manual").label,
         type,
         folderId,
         tags: nextTags,
@@ -1781,6 +1964,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     cancelAnalyze();
     lastAutoSubmittedRef.current = "";
     setUrl("");
+    setSource("");
     setAnalysisNote("");
     setClipboardNote("");
     setStep(1);
@@ -1797,6 +1981,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     cancelAnalyze();
     setSelectedFile(null);
     setThumbnail("");
+    setSource("");
     setTitle("");
     setDescription("");
     setTags("");
@@ -1823,6 +2008,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   };
 
   const activeFolder = folders.find(f => f.id === folderId);
+  const activeSourceProfile = inputMode === "file" ? sourceProfileForValue("device", source || "device") : sourceProfileForValue(url, source || "");
   const loadingTitle = inputMode === "file" ? "Reading your file, preview, and folder" : "Pulling your title, description, and tags";
   const loadingBody = inputMode === "file"
     ? "SAVI is checking the file name, type, and preview so it can sort this into the right folder for you."
@@ -1970,10 +2156,13 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                     {selectedFile.name} • {formatBytes(selectedFile.size)}
                   </div>
                 )}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-                  <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
-                    {type}
-                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                    <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
+                    {displayTypeLabel(type)}
+                    </div>
+                    <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
+                      {activeSourceProfile.label}
+                    </div>
                   {activeFolder && (
                     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: activeFolder.color || T.accent }} />
@@ -1982,7 +2171,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                   )}
                   {tags.split(",").map(t => t.trim()).filter(Boolean).slice(0, 2).map(tag => (
                     <div key={tag} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "5px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft }}>
-                      #{tag}
+                      {tag}
                     </div>
                   ))}
                 </div>
@@ -1991,16 +2180,37 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                 </button>
               </div>
               <button onClick={()=>setShowAdvanced(v => !v)} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
-                {showAdvanced ? "Hide options" : "More options"}
+                {showAdvanced ? "Hide detail editor" : "Edit tags, folder, and type"}
               </button>
               {showAdvanced && (
-                <>
+                <div ref={advancedRef} style={{ display: "flex", flexDirection: "column", gap: 16, scrollMarginTop: 20 }}>
+                  <div style={{ padding: 14, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+                    <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, color: T.inkMute }}>
+                      Detail editor
+                    </div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.45, color: T.inkSoft }}>
+                      Fine-tune where this save lives, which type it should use, and which tags make it easy to find later.
+                    </div>
+                  </div>
                   <Field label="Title"><input value={title} onChange={e=>setTitle(e.target.value)} style={inputStyle()} /></Field>
                   <Field label="Description"><textarea value={description} onChange={e=>setDescription(e.target.value)} rows={3} style={{ ...inputStyle(), resize: "none" }} /></Field>
+                  <Field label="Source">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 12, background: T.card, border: `1px solid ${T.lineSoft}` }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{activeSourceProfile.label}</div>
+                        <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: 2 }}>
+                          SAVI will use this app/source label in your library view.
+                        </div>
+                      </div>
+                      <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
+                        auto
+                      </div>
+                    </div>
+                  </Field>
                   <Field label="Type">
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {["article", "video", "image", "file", "link"].map(t => (
-                        <button key={t} onClick={()=>setType(t)} className="mono" style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: type === t ? T.ink : T.card, color: type === t ? T.paper : T.inkSoft, border: `1px solid ${type === t ? T.ink : T.lineSoft}` }}>{t}</button>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                      {["article", "video", "image", "file", "place", "link"].map(t => (
+                        <button key={t} onClick={()=>setType(t)} className="mono" style={{ padding: "8px 0", borderRadius: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: type === t ? T.ink : T.card, color: type === t ? T.paper : T.inkSoft, border: `1px solid ${type === t ? T.ink : T.lineSoft}` }}>{displayTypeLabel(t)}</button>
                       ))}
                     </div>
                   </Field>
@@ -2015,7 +2225,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                     </div>
                   </Field>
                   <Field label="Tags"><input value={tags} onChange={e=>setTags(e.target.value)} placeholder="design, inspiration" style={inputStyle()} /></Field>
-                </>
+                </div>
               )}
             </div>
           )}
@@ -2175,6 +2385,7 @@ function FolderSheet({ folder, onClose, onSave }) {
 
 function ItemSheet({ item, folders, onClose, onDelete }) {
   const folder = folders.find(f => f.id === item.folderId);
+  const sourceProfile = sourceProfileForItem(item);
   const [isOpeningAsset, setIsOpeningAsset] = useState(false);
   const hasLocalAsset = Boolean(item.assetId);
 
@@ -2213,11 +2424,11 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
             <IconX size={14} />
           </button>
           <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
-            {item.type}
+            {displayTypeLabel(item.type)}
           </div>
         </div>
         <div className="scroll" style={{ padding: "16px 20px" }}>
-          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{item.source} · saved {relativeTime(item.savedAt)}</div>
+          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
           <h2 className="serif" style={{ fontSize: 26, lineHeight: 1.2, marginBottom: 8, marginTop: 0, color: T.ink }}>{item.title}</h2>
           <p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 12, color: T.inkSoft }}>{item.description}</p>
           {hasLocalAsset && (
@@ -2237,10 +2448,10 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
               <span>in {folder.name}</span>
             </div>
           )}
-          {item.tags.length > 0 && (
+          {(item.tags || []).length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16 }}>
-              {item.tags.map(t => (
-                <span key={t} className="mono" style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>#{t}</span>
+              {(item.tags || []).map(t => (
+                <span key={t} className="mono" style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>{t}</span>
               ))}
             </div>
           )}
