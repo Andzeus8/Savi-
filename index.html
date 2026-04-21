@@ -145,6 +145,9 @@ const IconUpload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 
 const IconDownload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />;
 const IconEdit = p => <Icon {...p} d={<><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></>} />;
 const IconPin = p => <Icon {...p} d={<><path d="M12 21s-6-5.4-6-11a6 6 0 1 1 12 0c0 5.6-6 11-6 11Z"/><circle cx="12" cy="10" r="2.5"/></>} />;
+const IconLock = p => <Icon {...p} d={<><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></>} />;
+const IconNewspaper = p => <Icon {...p} d={<><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="8" y1="8" x2="17" y2="8"/><line x1="8" y1="12" x2="17" y2="12"/><line x1="8" y1="16" x2="14" y2="16"/><rect x="5.5" y="7.5" width="1.5" height="8" rx="0.75"/></>} />;
+const IconPlayCircle = p => <Icon {...p} d={<><circle cx="12" cy="12" r="9"/><path d="M10 8.8v6.4l5.4-3.2Z" fill="currentColor" stroke="none"/></>} />;
 const IconCamera = p => <Icon {...p} d={<><rect x="3" y="5" width="18" height="14" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.2" cy="8.8" r="1"/></>} />;
 const IconMusicNote = p => <Icon {...p} d={<><path d="M10 18V7.2l9-2.2v10.4"/><circle cx="7" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></>} />;
 const IconGlobe = p => <Icon {...p} d={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></>} />;
@@ -387,47 +390,51 @@ const PRESET_FOLDER_COVER_MAP = Object.fromEntries(PRESET_FOLDER_COVERS.map((cov
 
 const SEED_FOLDERS = [
   { id: "f-all", name: "All Saves", system: true },
-  { id: "f-personal", name: "Personal", color: "#8B7EC8", image: PRESET_FOLDER_COVER_MAP.petals },
-  { id: "f-hacks", name: "Life Hacks", color: "#D4A574", image: PRESET_FOLDER_COVER_MAP.studio },
-  { id: "f-health", name: "Health & Wellness", color: "#7A9B76", image: PRESET_FOLDER_COVER_MAP.aurora },
-  { id: "f-finance", name: "Finance & Money", color: "#6B8E7F", image: PRESET_FOLDER_COVER_MAP.ledger },
-  { id: "f-career", name: "Career & Work", color: "#5C7A99", image: PRESET_FOLDER_COVER_MAP.grid },
-  { id: "f-read", name: "Read Later", color: "#C8553D", image: PRESET_FOLDER_COVER_MAP.notebook },
-  { id: "f-design", name: "Design", color: "#588B8B", image: PRESET_FOLDER_COVER_MAP.studio },
-  { id: "f-research", name: "Research", color: "#B8860B", image: PRESET_FOLDER_COVER_MAP.grid },
-  { id: "f-recipes", name: "Recipes", color: "#A0522D", image: PRESET_FOLDER_COVER_MAP.citrus },
-  { id: "f-travel", name: "Travel", color: "#DD8452", image: PRESET_FOLDER_COVER_MAP.atlas },
+  { id: "f-wtf", name: "WTF Videos", color: "#FF5E5B", image: "https://source.unsplash.com/featured/900x900/?neon,party" },
+  { id: "f-science", name: "Mind-Blowing Science", color: "#4ECDC4", image: "https://source.unsplash.com/featured/900x900/?space,science" },
+  { id: "f-hacks", name: "Life Hacks", color: "#FFB703", image: "https://source.unsplash.com/featured/900x900/?lightbulb,ideas" },
+  { id: "f-business", name: "Business & Career", color: "#3A86FF", image: "https://source.unsplash.com/featured/900x900/?office,business" },
+  { id: "f-private-vault", name: "Private Vault", color: "#6D597A", image: "https://source.unsplash.com/featured/900x900/?vault,lock" },
+  { id: "f-must-watch", name: "Must Watch", color: "#E63946", image: "https://source.unsplash.com/featured/900x900/?cinema,screen" },
+  { id: "f-must-read", name: "Must Read", color: "#9C6644", image: "https://source.unsplash.com/featured/900x900/?books,reading" },
+  { id: "f-must-do", name: "Must Do", color: "#06D6A0", image: "https://source.unsplash.com/featured/900x900/?adventure,checklist" },
+  { id: "f-recipes", name: "Recipes & Food", color: "#F77F00", image: "https://source.unsplash.com/featured/900x900/?food,plate" },
+  { id: "f-travel", name: "Travel & Places", color: "#2A9D8F", image: "https://source.unsplash.com/featured/900x900/?travel,globe" },
+  { id: "f-design", name: "Design Inspo", color: "#B5179E", image: "https://source.unsplash.com/featured/900x900/?design,art" },
+  { id: "f-research", name: "Research", color: "#577590", image: "https://source.unsplash.com/featured/900x900/?laboratory,research" },
 ];
 
 const SEED_ITEMS = [
-  { id: "i1", title: "Never Gonna Give You Up", description: "The internet's most famous music video and still one of YouTube's most recognizable links.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", source: "YouTube", type: "video", folderId: "f-personal", tags: ["music", "internet classic", "pop"], thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", savedAt: Date.now() - 3600000 * 2, color: "#8B7EC8" },
-  { id: "i2", title: "TED: How Great Leaders Inspire Action", description: "Simon Sinek's classic talk on purpose-led leadership and communicating the why before the what.", url: "https://www.youtube.com/watch?v=8jPQjjsBbIc", source: "YouTube", type: "video", folderId: "f-career", tags: ["leadership", "talk", "career"], thumbnail: "https://i.ytimg.com/vi/8jPQjjsBbIc/hqdefault.jpg", savedAt: Date.now() - 3600000 * 5, color: "#5C7A99" },
-  { id: "i3", title: "10-Minute Morning Yoga", description: "A short routine from Yoga With Adriene for loosening up shoulders, hips, and back before the day starts.", url: "https://www.youtube.com/watch?v=v7AYKMP6rOE", source: "YouTube", type: "video", folderId: "f-health", tags: ["yoga", "morning", "routine"], thumbnail: "https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg", savedAt: Date.now() - 3600000 * 9, color: "#7A9B76" },
-  { id: "i4", title: "Sunday desk reset with a 10-minute cleanup loop", description: "A quick TikTok productivity reset that makes messy desks feel manageable instead of overwhelming.", url: "https://www.tiktok.com/@thatpracticalmom/video/7203818217758301486", source: "TikTok", type: "video", folderId: "f-hacks", tags: ["desk setup", "cleanup", "productivity"], thumbnail: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 14, color: "#D4A574" },
-  { id: "i5", title: "15-minute creamy lemon pasta", description: "Fast stovetop pasta with bright lemon, parmesan, and pantry ingredients in classic TikTok recipe format.", url: "https://www.tiktok.com/@feelgoodfoodie/video/7212745259820164395", source: "TikTok", type: "video", folderId: "f-recipes", tags: ["recipe", "pasta", "weeknight"], thumbnail: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 18, color: "#A0522D" },
-  { id: "i6", title: "Muted editorial poster carousel", description: "An Instagram design post full of layered typography, soft neutrals, and poster layout ideas worth saving.", url: "https://www.instagram.com/p/C9n6oKfS0L8/", source: "Instagram", type: "image", folderId: "f-design", tags: ["poster", "branding", "layout"], thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 22, color: "#588B8B" },
-  { id: "i7", title: "Lisbon golden-hour rooftop guide", description: "Travel photos and short notes on miradouros, tram views, and late-evening spots across Lisbon.", url: "https://www.instagram.com/p/C8vLa4XPD8Y/", source: "Instagram", type: "image", folderId: "f-travel", tags: ["lisbon", "travel", "city guide"], thumbnail: "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 30, color: "#DD8452" },
-  { id: "i8", title: "Five habits that make your mornings feel easier", description: "A wellness carousel focused on walking, sleep light, hydration, and making routines feel less rigid.", url: "https://www.instagram.com/p/C7RdfYwP2mP/", source: "Instagram", type: "image", folderId: "f-health", tags: ["habits", "wellness", "mindset"], thumbnail: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 38, color: "#7A9B76" },
-  { id: "i9", title: "LPT: build a reset ritual you can do in under 15 minutes", description: "A practical Reddit discussion on making household resets small enough that you actually repeat them.", url: "https://www.reddit.com/r/LifeProTips/comments/18w7b0d/lpt_build_a_reset_ritual_you_can_do_in_under_15/", source: "Reddit", type: "article", folderId: "f-hacks", tags: ["lifeprotips", "routine", "home systems"], thumbnail: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 44, color: "#D4A574" },
-  { id: "i10", title: "r/MachineLearning discussion: attention papers that aged well", description: "A thread collecting standout transformer papers, visual explainers, and follow-up reading from the community.", url: "https://www.reddit.com/r/MachineLearning/comments/16s3g8a/d_attention_papers_that_aged_well/", source: "Reddit", type: "article", folderId: "f-research", tags: ["ml", "transformers", "papers"], thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 52, color: "#B8860B" },
-  { id: "i11", title: "Simple rules for automating payday money moves", description: "A short X thread on routing cash into bills, investing, and a buffer account before you can spend it.", url: "https://x.com/ramit/status/1733162024178774160", source: "X", type: "article", folderId: "f-finance", tags: ["budgeting", "automation", "cash flow"], thumbnail: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 58, color: "#6B8E7F" },
-  { id: "i12", title: "Interview prep prompts for your next big role", description: "A concise X thread with better prompts for stories, metrics, and leadership examples before interviews.", url: "https://x.com/shreyas/status/1762159207779418569", source: "X", type: "article", folderId: "f-career", tags: ["interviews", "career", "storytelling"], thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 66, color: "#5C7A99" },
-  { id: "i13", title: "Lilia Restaurant", description: "Popular Williamsburg restaurant saved as a place for a future NYC food crawl.", url: "https://www.google.com/maps/place/Lilia/@40.717318,-73.961538,17z/", source: "Google Maps", type: "place", folderId: "f-recipes", tags: ["restaurant", "nyc", "italian", "location"], thumbnail: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 74, color: "#A0522D" },
-  { id: "i14", title: "Eiffel Tower", description: "A classic landmark save for a Paris itinerary, with the map link ready to open directly from the library.", url: "https://www.google.com/maps/place/Eiffel+Tower/@48.8583701,2.2922926,17z/", source: "Google Maps", type: "place", folderId: "f-travel", tags: ["paris", "landmark", "travel", "location"], thumbnail: "https://upload.wikimedia.org/wikipedia/commons/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg", savedAt: Date.now() - 3600000 * 82, color: "#DD8452" },
-  { id: "i15", title: "Reuters: Nvidia unveils next wave of AI infrastructure", description: "A straight-news save on chips, enterprise demand, and what the next hardware cycle means for AI builders.", url: "https://www.reuters.com/technology/artificial-intelligence/", source: "Reuters", type: "article", folderId: "f-read", tags: ["news", "ai", "business"], thumbnail: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 96, color: "#C8553D" },
-  { id: "i16", title: "BBC: Why cities are redesigning streets for people", description: "An urban life and mobility piece on calmer streets, walking culture, and better public space design.", url: "https://www.bbc.com/future/article/20240214-how-cities-are-redesigning-streets-for-people", source: "BBC", type: "article", folderId: "f-read", tags: ["news", "cities", "urban design"], thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 108, color: "#C8553D" },
-  { id: "i17", title: "New York Times: The new rules of getting work done", description: "A long-read on focus, meetings, and the reality of knowledge work after years of hybrid experimentation.", url: "https://www.nytimes.com/2024/01/01/business/productivity-work-advice.html", source: "New York Times", type: "article", folderId: "f-read", tags: ["news", "productivity", "work"], thumbnail: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 120, color: "#C8553D" },
-  { id: "i18", title: "IRS W-4 Form", description: "The latest employee withholding certificate PDF saved for tax paperwork and onboarding tasks.", url: "https://www.irs.gov/pub/irs-pdf/fw4.pdf", source: "IRS", type: "file", folderId: "f-finance", tags: ["pdf", "taxes", "forms"], thumbnail: "https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 136, color: "#6B8E7F" },
-  { id: "i19", title: "Harvard College Resume and Cover Letter Guide", description: "A polished PDF reference for tightening bullets, structure, and story before job applications.", url: "https://careerservices.fas.harvard.edu/files/ocs/files/hes-resume-cover-letter-guide.pdf", source: "Harvard", type: "file", folderId: "f-career", tags: ["pdf", "resume", "job search"], thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 152, color: "#5C7A99" },
-  { id: "i20", title: "Attention Is All You Need (PDF)", description: "The original transformer paper saved for quick reference, rereads, and citation hunting.", url: "https://arxiv.org/pdf/1706.03762.pdf", source: "arXiv", type: "file", folderId: "f-research", tags: ["pdf", "transformers", "research"], thumbnail: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 168, color: "#B8860B" },
-  { id: "i21", title: "Blinding Lights", description: "A go-to pop track saved into SAVI as a Spotify link for mood, playlists, and memory jogging.", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b", source: "Spotify", type: "link", folderId: "f-personal", tags: ["music", "spotify", "favorites"], thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 182, color: "#8B7EC8" },
-  { id: "i22", title: "Deep Focus", description: "Spotify's popular concentration playlist saved for work sprints and quiet reading sessions.", url: "https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ", source: "Spotify", type: "link", folderId: "f-health", tags: ["focus", "playlist", "music"], thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 196, color: "#7A9B76" },
-  { id: "i23", title: "Editorial poster system with layered type", description: "A Pinterest pin for dramatic serif headlines, asymmetric grids, and art-direction references.", url: "https://www.pinterest.com/pin/765893480350668658/", source: "Pinterest", type: "image", folderId: "f-design", tags: ["pinterest", "poster", "editorial"], thumbnail: "https://images.unsplash.com/photo-1524749292158-7540c2494485?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 210, color: "#588B8B" },
-  { id: "i24", title: "Warm minimalist kitchen pin", description: "A kitchen inspiration pin with creamy woods, soft stone, and a layout worth borrowing for home ideas.", url: "https://www.pinterest.com/pin/118641771424861809/", source: "Pinterest", type: "image", folderId: "f-recipes", tags: ["kitchen", "interiors", "pinterest"], thumbnail: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 224, color: "#A0522D" },
-  { id: "i25", title: "Are.na", description: "A clean web bookmark for visual thinking, link collections, and building research channels outside the feed.", url: "https://www.are.na/", source: "Are.na", type: "link", folderId: "f-personal", tags: ["bookmark", "tools", "curation"], thumbnail: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 238, color: "#8B7EC8" },
+  { id: "i1", title: "Never Gonna Give You Up", description: "The immortal Rickroll: internet history, maximum whiplash, and still one of the most recognizable YouTube links on the planet.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", source: "YouTube", type: "video", folderId: "f-wtf", tags: ["viral", "music", "internet classic"], thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", savedAt: Date.now() - 3600000 * 2, color: "#FF5E5B" },
+  { id: "i2", title: "How Great Leaders Inspire Action", description: "Simon Sinek's classic TED talk on purpose-first leadership, influence, and why the strongest brands lead with belief.", url: "https://www.youtube.com/watch?v=8jPQjjsBbIc", source: "YouTube", type: "video", folderId: "f-business", tags: ["leadership", "career", "communication"], thumbnail: "https://i.ytimg.com/vi/8jPQjjsBbIc/hqdefault.jpg", savedAt: Date.now() - 3600000 * 5, color: "#3A86FF" },
+  { id: "i3", title: "10-Minute Morning Yoga", description: "A simple Yoga With Adriene session that makes it easier to actually stretch before the day gets away from you.", url: "https://www.youtube.com/watch?v=v7AYKMP6rOE", source: "YouTube", type: "video", folderId: "f-must-watch", tags: ["wellness", "stretching", "routine"], thumbnail: "https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg", savedAt: Date.now() - 3600000 * 8, color: "#E63946" },
+  { id: "i4", title: "Pocket-sized desk reset trick", description: "A TikTok productivity save about resetting your desk in micro-steps so it actually happens instead of becoming a whole project.", url: "https://www.tiktok.com/@thatpracticalmom/video/7203818217758301486", source: "TikTok", type: "video", folderId: "f-hacks", tags: ["productivity", "desk setup", "cleaning"], thumbnail: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 12, color: "#FFB703" },
+  { id: "i5", title: "15-minute creamy lemon pasta", description: "A fast TikTok recipe that hits all the weeknight priorities: one pan, bright flavor, and barely any cleanup.", url: "https://www.tiktok.com/@feelgoodfoodie/video/7212745259820164395", source: "TikTok", type: "video", folderId: "f-recipes", tags: ["recipe", "pasta", "quick dinner"], thumbnail: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 16, color: "#F77F00" },
+  { id: "i6", title: "Muted editorial poster carousel", description: "An Instagram design post with layered serif type, warm neutrals, and art-direction ideas worth borrowing later.", url: "https://www.instagram.com/p/C9n6oKfS0L8/", source: "Instagram", type: "image", folderId: "f-design", tags: ["poster", "editorial", "branding"], thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 20, color: "#B5179E" },
+  { id: "i7", title: "Lisbon rooftop sunset roundup", description: "An Instagram travel post collecting lookouts, tram views, and the kind of spots you want to remember once you're actually there.", url: "https://www.instagram.com/p/C8vLa4XPD8Y/", source: "Instagram", type: "image", folderId: "f-travel", tags: ["lisbon", "travel", "sunset"], thumbnail: "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 24, color: "#2A9D8F" },
+  { id: "i8", title: "LPT: make your reset ritual too small to fail", description: "A Reddit save about using tiny recurring resets instead of waiting for huge motivation spikes.", url: "https://www.reddit.com/r/LifeProTips/comments/18w7b0d/lpt_build_a_reset_ritual_you_can_do_in_under_15/", source: "Reddit", type: "article", folderId: "f-hacks", tags: ["lifeprotips", "routine", "systems"], thumbnail: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 30, color: "#FFB703" },
+  { id: "i9", title: "Attention papers that still feel fresh", description: "A Reddit thread collecting standout transformer papers, explainers, and follow-up reading from the ML crowd.", url: "https://www.reddit.com/r/MachineLearning/comments/16s3g8a/d_attention_papers_that_aged_well/", source: "Reddit", type: "article", folderId: "f-research", tags: ["machine learning", "papers", "transformers"], thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 36, color: "#577590" },
+  { id: "i10", title: "Automate payday before lifestyle creep wins", description: "An X post worth saving because it explains a clean flow for moving income into bills, buffer, and investing without overthinking.", url: "https://x.com/ramit/status/1733162024178774160", source: "X", type: "article", folderId: "f-business", tags: ["money", "automation", "planning"], thumbnail: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 42, color: "#3A86FF" },
+  { id: "i11", title: "Story prompts before your next interview", description: "A concise X thread about prepping better examples, metrics, and leadership stories before high-stakes interviews.", url: "https://x.com/shreyas/status/1762159207779418569", source: "X", type: "article", folderId: "f-business", tags: ["interviews", "career", "storytelling"], thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 48, color: "#3A86FF" },
+  { id: "i12", title: "Lilia Restaurant", description: "A Williamsburg restaurant save for a future New York food crawl, straight from Google Maps.", url: "https://www.google.com/maps/place/Lilia/@40.717318,-73.961538,17z/", source: "Google Maps", type: "place", folderId: "f-recipes", tags: ["restaurant", "nyc", "italian", "location"], thumbnail: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 54, color: "#F77F00" },
+  { id: "i13", title: "Eiffel Tower", description: "Saved as a place so the Paris landmark is one tap away when planning what to do on the ground.", url: "https://www.google.com/maps/place/Eiffel+Tower/@48.8583701,2.2922926,17z/", source: "Google Maps", type: "place", folderId: "f-travel", tags: ["paris", "landmark", "travel", "location"], thumbnail: "https://upload.wikimedia.org/wikipedia/commons/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg", savedAt: Date.now() - 3600000 * 60, color: "#2A9D8F" },
+  { id: "i14", title: "Mirror bacteria could be a radical departure from known life", description: "A CNN science save on why researchers are warning about mirror-life experiments and synthetic biology risks.", url: "https://amp.cnn.com/cnn/2024/12/16/science/mirror-bacteria-research-risks", source: "CNN", type: "article", folderId: "f-science", tags: ["science", "biology", "future"], thumbnail: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 68, color: "#4ECDC4" },
+  { id: "i15", title: "Why cities are redesigning streets for people", description: "A BBC-style urban design and mobility piece on calmer streets, better walking culture, and more livable neighborhoods.", url: "https://www.bbc.com/future/article/20240214-how-cities-are-redesigning-streets-for-people", source: "BBC", type: "article", folderId: "f-must-read", tags: ["cities", "urbanism", "mobility"], thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 76, color: "#9C6644" },
+  { id: "i16", title: "The new rules of getting work done", description: "A New York Times-style productivity read on focus, meetings, and what knowledge work looks like now.", url: "https://www.nytimes.com/2024/01/01/business/productivity-work-advice.html", source: "New York Times", type: "article", folderId: "f-must-read", tags: ["productivity", "work", "longread"], thumbnail: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 84, color: "#9C6644" },
+  { id: "i17", title: "Passport Book Renewal Form DS-82", description: "A real PDF form saved into the vault for travel paperwork and identity-document logistics.", url: "https://travel.state.gov/content/dam/passports/forms-fees/Passport%20Book%20Renewal%20Form%20DS-82.pdf", source: "U.S. State Dept", type: "file", folderId: "f-private-vault", tags: ["pdf", "passport", "documents"], thumbnail: "https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 92, color: "#6D597A" },
+  { id: "i18", title: "Harvard Resume & Cover Letter Guide", description: "A polished PDF to revisit before rewriting bullets, tightening stories, and applying for stronger roles.", url: "https://careerservices.fas.harvard.edu/files/ocs/files/hes-resume-cover-letter-guide.pdf", source: "Harvard", type: "file", folderId: "f-business", tags: ["pdf", "resume", "job search"], thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 100, color: "#3A86FF" },
+  { id: "i19", title: "Blinding Lights", description: "A Spotify track save for when you want a fast mood reset or need to remember a song that always works.", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b", source: "Spotify", type: "link", folderId: "f-must-watch", tags: ["music", "favorites", "spotify"], thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 108, color: "#E63946" },
+  { id: "i20", title: "Deep Focus", description: "Spotify's high-rotation concentration playlist, saved for reading sessions and work sprints.", url: "https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ", source: "Spotify", type: "link", folderId: "f-must-do", tags: ["playlist", "focus", "work"], thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 116, color: "#06D6A0" },
+  { id: "i21", title: "Layered serif poster system", description: "A Pinterest save with dramatic type, asymmetry, and enough styling ideas to restart an entire moodboard.", url: "https://www.pinterest.com/pin/765893480350668658/", source: "Pinterest", type: "image", folderId: "f-design", tags: ["pinterest", "poster", "art direction"], thumbnail: "https://images.unsplash.com/photo-1524749292158-7540c2494485?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 124, color: "#B5179E" },
+  { id: "i22", title: "Warm minimalist kitchen", description: "A Pinterest interiors save with creamy woods, subtle stone, and a kitchen palette worth stealing for future spaces.", url: "https://www.pinterest.com/pin/118641771424861809/", source: "Pinterest", type: "image", folderId: "f-recipes", tags: ["kitchen", "interiors", "food space"], thumbnail: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 132, color: "#F77F00" },
+  { id: "i23", title: "Are.na", description: "A generic website bookmark for collecting references, ideas, and web fragments outside of the algorithmic feed.", url: "https://www.are.na/", source: "Web", type: "link", folderId: "f-must-read", tags: ["bookmark", "curation", "tools"], thumbnail: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 140, color: "#9C6644" },
+  { id: "i24", title: "JWST Pillars image", description: "A direct image URL saved because the colors and scale feel impossible in the best way.", url: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80", source: "Web", type: "image", folderId: "f-science", tags: ["space", "image", "astronomy"], thumbnail: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 148, color: "#4ECDC4" },
+  { id: "i25", title: "Monochrome interior composition", description: "A direct image save for layout, tone, and how to make a room feel editorial instead of generic.", url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80", source: "Web", type: "image", folderId: "f-design", tags: ["interior", "composition", "image"], thumbnail: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 156, color: "#B5179E" },
+  { id: "i26", title: "Attention Is All You Need", description: "The original transformer paper, saved as a PDF for quick reference and deep re-reads.", url: "https://arxiv.org/pdf/1706.03762.pdf", source: "arXiv", type: "file", folderId: "f-research", tags: ["pdf", "transformers", "research"], thumbnail: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 164, color: "#577590" },
+  { id: "i27", title: "Five museums to hit in one rainy afternoon", description: "A compact city-planning save that feels more like a doable itinerary than a someday dream board.", url: "https://www.google.com/maps/search/museums+in+lisbon/", source: "Google Maps", type: "place", folderId: "f-must-do", tags: ["museums", "itinerary", "maps", "location"], thumbnail: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 172, color: "#06D6A0" },
 ];
 
-const FOLDER_COLORS = ["#C8553D", "#588B8B", "#D4A574", "#7A9B76", "#8B7EC8", "#DD8452", "#5C7A99", "#6B8E7F"];
+const FOLDER_COLORS = ["#FF5E5B", "#4ECDC4", "#FFB703", "#3A86FF", "#6D597A", "#E63946", "#9C6644", "#06D6A0", "#F77F00", "#2A9D8F", "#B5179E", "#577590"];
 const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
@@ -457,6 +464,19 @@ const dedupe = (values) => [...new Set(values.filter(Boolean))];
 const clampText = (value = "", limit = 180) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
 const normalizeFilename = (name = "") => name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
 const SEED_FOLDER_LOOKUP = Object.fromEntries(SEED_FOLDERS.map((folder) => [folder.id, folder]));
+const LEGACY_FOLDER_ID_MAP = {
+  "f-personal": "f-private-vault",
+  "f-hacks": "f-hacks",
+  "f-health": "f-must-do",
+  "f-finance": "f-business",
+  "f-career": "f-business",
+  "f-read": "f-must-read",
+  "f-design": "f-design",
+  "f-research": "f-research",
+  "f-recipes": "f-recipes",
+  "f-travel": "f-travel",
+};
+const LEGACY_SEED_FOLDER_IDS = ["f-personal", "f-hacks", "f-health", "f-finance", "f-career", "f-read", "f-design", "f-research", "f-recipes", "f-travel"];
 const withSeededFolderDefaults = (folders = []) => {
   const nextFolders = Array.isArray(folders) ? folders : [];
   const merged = nextFolders.map((folder) => {
@@ -868,11 +888,11 @@ const sourceVisualForKey = (key = "web") => ({
 const sourceVisualForProfile = (profile) => sourceVisualForKey(profile?.key || "web");
 const typeVisualForKey = (type = "link") => ({
   all: { bg: "#1C1A17", fg: "#F5F1EA", icon: (size) => <IconSparkles size={size} stroke={2.05} /> },
-  article: { bg: "#EFE7DB", fg: "#6F5940", icon: (size) => <IconFile size={size} stroke={2.05} /> },
-  video: { bg: "#F5DDD7", fg: "#A54B39", icon: (size) => <IconFilm size={size} stroke={2.05} /> },
+  article: { bg: "#EFE7DB", fg: "#6F5940", icon: (size) => <IconNewspaper size={size} stroke={2.05} /> },
+  video: { bg: "#F5DDD7", fg: "#A54B39", icon: (size) => <IconPlayCircle size={size} stroke={2.05} /> },
   image: { bg: "#DDEDEC", fg: "#2C7370", icon: (size) => <IconImage size={size} stroke={2.05} /> },
   file: { bg: "#E1E6F2", fg: "#465F88", icon: (size) => <IconFile size={size} stroke={2.05} /> },
-  place: { bg: "#E3F1E6", fg: "#2E8B57", icon: (size) => <IconMapFold size={size} stroke={2.05} /> },
+  place: { bg: "#E3F1E6", fg: "#2E8B57", icon: (size) => <IconPin size={size} stroke={2.05} /> },
   link: { bg: "#ECE7F2", fg: "#6E5B8E", icon: (size) => <IconLink size={size} stroke={2.05} /> },
 }[type] || { bg: "#ECE7F2", fg: "#6E5B8E", icon: (size) => <IconLink size={size} stroke={2.05} /> });
 
@@ -1012,16 +1032,18 @@ const mergeMetadata = (...sources) => {
 };
 
 const folderKeywordMap = {
-  personal: ["personal", "self", "journal", "journaling", "reflection", "mindset", "future self", "diary"],
+  "wtf videos": ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "omg"],
+  "mind blowing science": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe"],
   "life hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut"],
-  "health wellness": ["health", "wellness", "fitness", "workout", "stretch", "mobility", "sleep", "nutrition", "mental health", "meditation"],
-  "finance money": ["finance", "money", "budget", "saving", "savings", "invest", "investing", "wealth", "bank", "tax"],
-  "career work": ["career", "work", "job", "resume", "salary", "raise", "manager", "leadership", "interview", "professional"],
-  "read later": ["article", "essay", "read later", "longread", "bookmark"],
-  design: ["design", "ux", "ui", "typography", "brand", "branding", "poster", "visual", "dribbble", "behance"],
-  research: ["research", "study", "paper", "science", "analysis", "ai", "ml", "neural", "academic", "arxiv"],
-  recipes: ["recipe", "cook", "cooking", "dinner", "lunch", "breakfast", "food", "pasta", "meal", "kitchen"],
-  travel: ["travel", "trip", "city guide", "hotel", "flight", "itinerary", "vacation", "destination", "lisbon"],
+  "business career": ["career", "work", "job", "resume", "salary", "raise", "manager", "leadership", "interview", "professional", "business", "money", "finance", "budget", "tax", "strategy"],
+  "private vault": ["private", "vault", "id", "passport", "insurance", "document", "license", "bank", "secure", "card", "personal file", "statement"],
+  "must watch": ["watch later", "must watch", "video", "clip", "youtube", "tiktok", "watchlist", "trailer"],
+  "must read": ["article", "essay", "read later", "longread", "bookmark", "newsletter", "news"],
+  "must do": ["try", "visit", "todo", "to do", "bucket list", "trip", "places", "itinerary", "adventure", "walking", "museum", "plan"],
+  "recipes food": ["recipe", "cook", "cooking", "dinner", "lunch", "breakfast", "food", "pasta", "meal", "kitchen", "restaurant"],
+  "travel places": ["travel", "city guide", "hotel", "flight", "vacation", "destination", "maps", "landmark", "paris", "lisbon", "place"],
+  "design inspo": ["design", "ux", "ui", "typography", "brand", "branding", "poster", "visual", "dribbble", "behance", "moodboard", "interior"],
+  research: ["research", "study", "paper", "analysis", "ai", "ml", "neural", "academic", "arxiv", "transformers", "experiment"],
 };
 
 const scoreFolder = (folder, haystack) => {
@@ -1040,9 +1062,18 @@ const scoreFolder = (folder, haystack) => {
 };
 
 const guessFolderId = (metadata, folders) => {
-  const uploadFallback = folders.find(f => f.id === "f-personal" || f.name.toLowerCase() === "personal");
-  const linkFallback = folders.find(f => f.id === "f-read" || f.name.toLowerCase() === "read later");
-  const fallback = metadata.filename || metadata.assetName ? (uploadFallback || linkFallback || folders.find(f => !f.system)) : (linkFallback || uploadFallback || folders.find(f => !f.system));
+  const uploadFallback = folders.find(f => f.id === "f-private-vault" || f.name.toLowerCase() === "private vault");
+  const linkFallback = folders.find(f => f.id === "f-must-read" || f.name.toLowerCase() === "must read");
+  const actionFallback = folders.find(f => f.id === "f-must-do" || f.name.toLowerCase() === "must do");
+  const placeFallback = folders.find(f => f.id === "f-travel" || f.name.toLowerCase() === "travel places");
+  const mediaFallback = folders.find(f => f.id === "f-must-watch" || f.name.toLowerCase() === "must watch");
+  const fallback = metadata.filename || metadata.assetName
+    ? (uploadFallback || linkFallback || folders.find(f => !f.system))
+    : metadata.type === "place"
+      ? (actionFallback || placeFallback || linkFallback || folders.find(f => !f.system))
+      : metadata.type === "video"
+        ? (mediaFallback || linkFallback || folders.find(f => !f.system))
+        : (linkFallback || actionFallback || uploadFallback || folders.find(f => !f.system));
   const haystack = sanitizeText([
     metadata.title,
     metadata.description,
@@ -1066,6 +1097,23 @@ const guessFolderId = (metadata, folders) => {
     }
   });
   return best?.id || "";
+};
+const normalizeSavedState = (state) => {
+  if (!state || typeof state !== "object") return null;
+  const rawFolders = Array.isArray(state.folders) ? state.folders : [];
+  const rawItems = Array.isArray(state.items) ? state.items : [];
+  const customFolders = rawFolders.filter(folder => !LEGACY_SEED_FOLDER_IDS.includes(folder.id) && !SEED_FOLDER_LOOKUP[folder.id]);
+  const nextFolders = withSeededFolderDefaults(customFolders);
+  const nextItems = rawItems.map((item) => {
+    const legacyTarget = LEGACY_FOLDER_ID_MAP[item.folderId];
+    let nextFolderId = item.folderId;
+    if (legacyTarget) nextFolderId = legacyTarget;
+    if (!nextFolders.some(folder => folder.id === nextFolderId)) {
+      nextFolderId = guessFolderId(item, nextFolders) || nextFolders.find(folder => !folder.system)?.id || "f-must-read";
+    }
+    return { ...item, folderId: nextFolderId };
+  });
+  return { ...state, folders: nextFolders, items: nextItems };
 };
 
 const fetchLinkMetadata = async (rawUrl, folders) => {
@@ -1121,11 +1169,11 @@ const fetchLinkMetadata = async (rawUrl, folders) => {
 
 const typeIconFor = (type, props) => {
   const P = { size: 18, stroke: 1.5, ...props };
-  if (type === "article") return <IconFile {...P} />;
-  if (type === "video") return <IconFilm {...P} />;
+  if (type === "article") return <IconNewspaper {...P} />;
+  if (type === "video") return <IconPlayCircle {...P} />;
   if (type === "image") return <IconImage {...P} />;
   if (type === "file") return <IconFile {...P} />;
-  if (type === "place") return <IconMapFold {...P} />;
+  if (type === "place") return <IconPin {...P} />;
   return <IconLink {...P} />;
 };
 
@@ -1196,8 +1244,8 @@ const isValidBackup = (backup) => {
 
 // ============ APP ============
 function App() {
-  const saved = loadState();
-  const [folders, setFolders] = useState(withSeededFolderDefaults(saved?.folders));
+  const saved = normalizeSavedState(loadState());
+  const [folders, setFolders] = useState(saved?.folders || withSeededFolderDefaults([]));
   const [items, setItems] = useState(saved?.items || SEED_ITEMS);
   const [activeFolder, setActiveFolder] = useState("f-all");
   const [browseMode, setBrowseMode] = useState("folders");
@@ -1355,8 +1403,9 @@ function App() {
         });
       }
 
-      setFolders(withSeededFolderDefaults(parsed.folders));
-      setItems(parsed.items);
+      const normalized = normalizeSavedState(parsed);
+      setFolders(normalized?.folders || withSeededFolderDefaults([]));
+      setItems(normalized?.items || []);
       setActiveFolder("f-all");
       setBrowseMode("folders");
       setActiveType("all");
@@ -1698,7 +1747,7 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
               style={{
                 width: "100%",
                 textAlign: "left",
-                padding: 14,
+                padding: 16,
                 borderRadius: 20,
                 aspectRatio: "1 / 1",
                 display: "flex",
@@ -1716,21 +1765,30 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
                 position: "relative",
               }}
             >
-              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.04) 0%, rgba(28,26,23,0.1) 38%, rgba(28,26,23,0.58) 100%)" }} />}
-              <div style={{ position: "relative", zIndex: 1, minHeight: 24 }} />
+              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.22) 34%, rgba(28,26,23,0.82) 100%)" }} />}
+              <div style={{ position: "relative", zIndex: 1, minHeight: 18, display: "flex", justifyContent: "flex-start" }}>
+                {!f.system && (
+                  <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 999, background: "rgba(20,18,16,0.34)", border: "1px solid rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(10px)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    <span style={{ width: 7, height: 7, borderRadius: 999, background: f.color, boxShadow: "0 0 0 2px rgba(255,255,255,0.14)" }} />
+                    {folderCounts[f.id] ?? 0} saved
+                  </div>
+                )}
+              </div>
               <div
                 style={{
                   position: "relative",
                   zIndex: 1,
-                  borderRadius: 16,
-                  padding: "12px 12px 10px",
-                  background: f.image ? "rgba(20,18,16,0.34)" : f.system ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.72)",
-                  border: f.image ? "1px solid rgba(255,255,255,0.16)" : `1px solid ${f.system ? "rgba(255,255,255,0.12)" : "rgba(217,211,199,0.72)"}`,
+                  borderRadius: 18,
+                  padding: "14px 14px 12px",
+                  background: f.image ? "linear-gradient(180deg, rgba(16,14,12,0.18) 0%, rgba(16,14,12,0.46) 100%)" : f.system ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.72)",
+                  border: f.image ? "1px solid rgba(255,255,255,0.14)" : `1px solid ${f.system ? "rgba(255,255,255,0.12)" : "rgba(217,211,199,0.72)"}`,
                   backdropFilter: "blur(10px)",
                 }}
               >
-                <div className="serif" style={{ fontSize: 21, lineHeight: 1.15, marginBottom: 4, color: f.image || f.system ? T.paper : T.ink }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: f.image ? "rgba(245,241,234,0.82)" : f.system ? "rgba(245,241,234,0.72)" : T.inkMute }}>{folderCounts[f.id] ?? 0} items</div>
+                <div className="serif" style={{ fontSize: 22, lineHeight: 1.08, marginBottom: 6, color: f.image || f.system ? "#FFFFFF" : T.ink, textShadow: f.image ? "0 10px 28px rgba(0,0,0,0.28)" : "none" }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: f.image ? "rgba(255,255,255,0.82)" : f.system ? "rgba(245,241,234,0.72)" : T.inkMute }}>
+                  {folderCounts[f.id] ?? 0} items
+                </div>
               </div>
             </button>
             {!f.system && (
@@ -1902,7 +1960,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   const [source, setSource] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [folderId, setFolderId] = useState(folders.find(f => !f.system)?.id || "f-read");
+  const [folderId, setFolderId] = useState(folders.find(f => f.id === "f-must-read")?.id || folders.find(f => !f.system)?.id || "f-must-read");
   const [tags, setTags] = useState("");
   const [type, setType] = useState("article");
   const [thumbnail, setThumbnail] = useState("");
@@ -2255,6 +2313,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   };
 
   const activeFolder = folders.find(f => f.id === folderId);
+  const privateVaultFolder = folders.find(f => f.id === "f-private-vault");
   const activeSourceProfile = inputMode === "file" ? sourceProfileForValue("device", source || "device") : sourceProfileForValue(url, source || "");
   const loadingTitle = inputMode === "file" ? "Reading your file, preview, and folder" : "Pulling your title, description, and tags";
   const loadingBody = inputMode === "file"
@@ -2401,6 +2460,32 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                 <div style={{ fontSize: 11.5, lineHeight: 1.45, color: T.inkSoft, marginBottom: 12 }}>
                   Save now if this looks right. If not, open the detail editor to adjust the folder, app, type, or tags.
                 </div>
+                {privateVaultFolder && (
+                  <button
+                    onClick={() => {
+                      setFolderId(privateVaultFolder.id);
+                      setTags((prev) => dedupe([...prev.split(",").map(tag => tag.trim()).filter(Boolean), "private", "secure"]).join(", "));
+                    }}
+                    style={{
+                      width: "100%",
+                      marginBottom: 12,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: `1px solid ${folderId === privateVaultFolder.id ? privateVaultFolder.color : T.lineSoft}`,
+                      background: folderId === privateVaultFolder.id ? `${privateVaultFolder.color}18` : T.paperDim,
+                      color: folderId === privateVaultFolder.id ? T.ink : T.inkSoft,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <IconLock size={14} />
+                    {folderId === privateVaultFolder.id ? "Saving to Private Vault" : "Quick move to Private Vault"}
+                  </button>
+                )}
                 {inputMode === "file" && selectedFile && (
                   <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute, marginBottom: 12 }}>
                     {selectedFile.name} • {formatBytes(selectedFile.size)}
