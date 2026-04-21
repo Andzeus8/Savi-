@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="SAVI" />
@@ -10,7 +10,8 @@
 <title>SAVI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper: #F5F1EA;
@@ -27,12 +28,12 @@
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body, #root { height: 100%; }
-  html, body { margin: 0; padding: 0; overflow: hidden; background: var(--paper); color: var(--ink); font-family: 'Inter', system-ui, -apple-system, sans-serif; overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
+  html, body { margin: 0; padding: 0; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "SF Pro Text", "Avenir Next", system-ui, -apple-system, sans-serif; overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
   body {
     height: 100%;
   }
   .serif { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.015em; }
-  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .mono { font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace; }
 
   /* App container — fullscreen on mobile, phone-frame on desktop */
   .stage { height: 100dvh; min-height: 100dvh; display: flex; align-items: stretch; justify-content: center; background: var(--paper); overflow: hidden; }
@@ -40,13 +41,15 @@
     .stage {
       align-items: center;
       padding: 32px;
-      background: linear-gradient(180deg, #EDE6D9 0%, #DDD4C2 100%);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 28%),
+        linear-gradient(180deg, #EDE6D9 0%, #DDD4C2 100%);
     }
-    .frame-wrap { width: 390px; height: 844px; position: relative; }
-    .bezel { position: absolute; inset: 0; border-radius: 55px; padding: 3px; background: linear-gradient(145deg, #3a3733 0%, #1a1815 50%, #3a3733 100%); box-shadow: 0 40px 80px -20px rgba(60,50,40,0.35), 0 0 0 2px rgba(255,255,255,0.04); }
-    .bezel-inner { width: 100%; height: 100%; border-radius: 52px; padding: 2px; background: #000; }
-    .screen { width: 100%; height: 100%; border-radius: 50px; overflow: hidden; position: relative; background: var(--paper); }
-    .notch { position: absolute; left: 50%; transform: translateX(-50%); top: 8px; width: 110px; height: 30px; background: #000; border-radius: 999px; z-index: 50; pointer-events: none; }
+    .frame-wrap { width: min(480px, calc(100vw - 64px)); height: min(900px, calc(100dvh - 64px)); position: relative; }
+    .bezel { position: absolute; inset: 0; border-radius: 34px; padding: 0; background: transparent; box-shadow: 0 36px 80px -30px rgba(60,50,40,0.38); }
+    .bezel-inner { width: 100%; height: 100%; border-radius: 34px; padding: 0; background: transparent; }
+    .screen { width: 100%; height: 100%; border-radius: 34px; overflow: hidden; position: relative; background: var(--paper); border: 1px solid rgba(255,255,255,0.55); }
+    .notch { display: none; }
   }
   @media (max-width: 499px) {
     .frame-wrap { width: 100%; height: 100dvh; min-height: 100dvh; }
@@ -56,7 +59,7 @@
   }
 
   .app { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; position: relative; }
-  @media (min-width: 500px) { .app { height: 844px; min-height: 0; } }
+  @media (min-width: 500px) { .app { height: 100%; min-height: 0; } }
   .app-main { flex: 1; min-height: 0; position: relative; overflow: hidden; padding-bottom: var(--navigator-offset); }
   .navigator-shell { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; pointer-events: none; }
   .navigator-shell > * { pointer-events: auto; box-shadow: 0 -12px 24px -22px rgba(28,26,23,0.45); }
@@ -64,14 +67,26 @@
     .navigator-shell { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; }
   }
   /* Scroll areas */
-  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; }
+  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; scrollbar-gutter: stable both-edges; }
   .scroll::-webkit-scrollbar { display: none; }
 
   /* Buttons */
   button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
   button:active { transform: scale(0.985); }
   input, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  button, a, input, textarea { transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background-color 140ms ease, opacity 140ms ease; }
+  button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
   input:focus, textarea:focus { outline: none; border-color: var(--ink) !important; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(200, 85, 61, 0.22);
+    outline-offset: 2px;
+  }
+  @media (hover: hover) {
+    button:hover:not(:disabled), a:hover {
+      box-shadow: 0 12px 20px -18px rgba(28,26,23,0.5);
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+  }
 
   /* Animations */
   @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -1219,10 +1234,11 @@ function App() {
               <div className="notch" />
               <div className="app">
                 <div className="app-main">
-                  {route === "home" && (
+                  {(route === "home" || route === "search") && (
                     <HomeScreen
                       folders={folders}
                       items={visibleItems}
+                      searchMode={route === "search"}
                       activeFolder={activeFolder}
                       setActiveFolder={setActiveFolder}
                       browseMode={browseMode}
@@ -1248,9 +1264,6 @@ function App() {
                       onOpen={(id)=>{ setBrowseMode("folders"); setActiveFolder(id); setRoute("home"); }}
                       onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }}
                       onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }}
-                      onViewTopics={()=>{ setBrowseMode("folders"); setActiveFolder("f-all"); setRoute("home"); }}
-                      onViewTypes={()=>{ setBrowseMode("types"); setActiveType("all"); setRoute("home"); }}
-                      onViewSources={()=>{ setBrowseMode("sources"); setActiveSource("all"); setRoute("home"); }}
                     />
                   )}
                   {route === "profile" && (
@@ -1288,12 +1301,21 @@ function App() {
   );
 }
 
-function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onDemoShare }) {
+function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onDemoShare }) {
   const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
   const activeSourceLabel = sourceOptions.find((option) => option.key === activeSource)?.label || (activeSource === "all" ? "All Apps" : titleize(activeSource));
-  const heroEyebrow = browseMode === "folders" ? (activeFolder === "f-all" ? "Your library" : "Folder") : browseMode === "types" ? "Content type" : "Source app";
-  const heroTitle = browseMode === "folders" ? activeFolderName : browseMode === "types" ? displayTypeLabel(activeType) : activeSourceLabel;
+  const heroEyebrow = searchMode ? "Search" : browseMode === "folders" ? (activeFolder === "f-all" ? "Your library" : "Folder") : browseMode === "types" ? "Content type" : "App";
+  const heroTitle = searchMode ? "Find anything" : browseMode === "folders" ? activeFolderName : browseMode === "types" ? displayTypeLabel(activeType) : activeSourceLabel;
   const heroCount = items.length;
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchMode) return;
+    const timer = window.setTimeout(() => {
+      searchInputRef.current?.focus({ preventScroll: true });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [searchMode]);
 
   return (
     <div className="scroll" style={{ height: "100%" }}>
@@ -1305,15 +1327,15 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode,
             </div>
             <div className="serif" style={{ fontSize: 22, fontWeight: 500 }}>SAVI</div>
           </div>
-          <button onClick={onDemoShare} className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 12px", borderRadius: 999, border: `1px solid ${T.line}`, color: T.inkSoft }}>
-            Demo share
+          <button onClick={onDemoShare} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "8px 12px", borderRadius: 999, border: `1px solid ${T.line}`, color: T.inkSoft }}>
+            Try share flow
           </button>
         </div>
-        <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>
           {heroEyebrow}
         </div>
         <h1 className="serif" style={{ fontSize: 42, lineHeight: 1.02, margin: 0, marginBottom: 8, color: T.ink }}>{heroTitle}</h1>
-        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
+        <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
           {heroCount} {heroCount === 1 ? "item" : "items"}
         </div>
       </div>
@@ -1339,7 +1361,7 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode,
           <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.inkMute, pointerEvents: "none", display: "flex" }}>
             <IconSearch size={15} />
           </div>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{ width: "100%", borderRadius: 12, padding: "10px 12px 10px 40px", fontSize: 14, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+          <input aria-label="Search your library" ref={searchInputRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder={searchMode ? "Search titles, tags, apps, and notes..." : "Search..."} style={{ width: "100%", borderRadius: 12, padding: "10px 12px 10px 40px", fontSize: 14, background: T.paperDim, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
         </div>
       </div>
 
@@ -1364,7 +1386,7 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode,
               </button>
             );
           })}
-          {browseMode === "sources" && [{ key: "all", label: "All apps", count: sourceCounts.all || 0 }, ...sourceOptions.slice(0, 10)].map((option) => {
+          {browseMode === "sources" && [{ key: "all", label: "All apps", count: sourceCounts.all || 0 }, ...sourceOptions].map((option) => {
             const active = option.key === activeSource;
             return (
               <button key={option.key} onClick={()=>setActiveSource(option.key)} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 12, whiteSpace: "nowrap", background: active ? T.ink : "transparent", color: active ? T.paper : T.inkSoft, border: `1px solid ${active ? T.ink : T.line}` }}>
@@ -1378,7 +1400,7 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode,
 
       <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
         {items.length === 0 ? (
-          <EmptyState search={search} />
+          <EmptyState search={search} searchMode={searchMode} browseMode={browseMode} activeFolderName={activeFolderName} activeSourceLabel={activeSourceLabel} activeType={activeType} />
         ) : (
           items.map((item, idx) => <ItemCard key={item.id} item={item} onClick={()=>onSelect(item)} delay={idx * 30} />)
         )}
@@ -1387,14 +1409,32 @@ function HomeScreen({ folders, items, activeFolder, setActiveFolder, browseMode,
   );
 }
 
-function EmptyState({ search }) {
+function EmptyState({ search, searchMode = false, browseMode = "folders", activeFolderName = "All Saves", activeSourceLabel = "All Apps", activeType = "all" }) {
+  const title = search
+    ? "No matches yet"
+    : searchMode
+      ? "Search your library"
+      : browseMode === "folders"
+        ? `No saves in ${activeFolderName}`
+        : browseMode === "types"
+          ? `No ${displayTypeLabel(activeType).toLowerCase()} saves yet`
+          : `No saves from ${activeSourceLabel}`;
+  const description = search
+    ? `Nothing matched "${search}" across folders, tags, apps, or notes.`
+    : searchMode
+      ? "Try a title, folder, app, or tag to find something quickly."
+      : browseMode === "folders"
+        ? "Save something new or switch folders to browse another part of your library."
+        : browseMode === "types"
+          ? "Try another content type or save something in this format."
+          : "Try another app filter or save content from that app first.";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 16px", textAlign: "center" }}>
       <div style={{ width: 56, height: 56, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: T.inkMute }}>
         <IconSearch size={20} />
       </div>
-      <div className="serif" style={{ fontSize: 24, marginBottom: 4, color: T.ink }}>Nothing here</div>
-      <div style={{ fontSize: 12, maxWidth: 240, color: T.inkSoft }}>{search ? `No matches for "${search}"` : "Save something to start your library"}</div>
+      <div className="serif" style={{ fontSize: 24, marginBottom: 4, color: T.ink }}>{title}</div>
+      <div style={{ fontSize: 12.5, maxWidth: 260, lineHeight: 1.5, color: T.inkSoft }}>{description}</div>
     </div>
   );
 }
@@ -1412,17 +1452,17 @@ function ItemCard({ item, onClick, delay }) {
         </div>
         <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{displayTypeLabel(item.type)}</div>
-            <div className="mono" style={{ fontSize: 10, flexShrink: 0, color: T.inkMute }}>{relativeTime(item.savedAt)}</div>
+            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{displayTypeLabel(item.type)}</div>
+            <div className="mono" style={{ fontSize: 11, flexShrink: 0, color: T.inkMute }}>{relativeTime(item.savedAt)}</div>
           </div>
           <div className="clamp2" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, marginBottom: 4, color: T.ink }}>{item.title}</div>
           <div className="clamp1" style={{ fontSize: 11.5, lineHeight: 1.3, color: T.inkSoft }}>{item.description}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-            <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{sourceProfile.label}</div>
+            <div className="mono" style={{ fontSize: 11, color: T.inkMute }}>{sourceProfile.label}</div>
             {(item.tags || []).length > 0 && (
               <>
                 <div style={{ width: 2, height: 2, borderRadius: "50%", background: T.inkMute }} />
-                <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute }}>{(item.tags || []).slice(0, 2).join(" · ")}</div>
+                <div className="mono clamp1" style={{ fontSize: 11, color: T.inkMute }}>{(item.tags || []).slice(0, 2).join(" · ")}</div>
               </>
             )}
           </div>
@@ -1432,27 +1472,16 @@ function ItemCard({ item, onClick, delay }) {
   );
 }
 
-function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit, onViewTopics, onViewTypes, onViewSources }) {
+function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
   return (
     <div className="scroll anim-fade" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 12px" }}>
         <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Organized by topic</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
           <div className="serif" style={{ fontSize: 42, lineHeight: 1.02, color: T.ink }}>Folders</div>
-          <button onClick={onNew} style={{ width: 36, height: 36, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button aria-label="Create a new folder" onClick={onNew} style={{ width: 40, height: 40, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconFolderPlus size={15} />
           </button>
-        </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-          {[
-            { label: "Topics", onClick: onViewTopics },
-            { label: "Types", onClick: onViewTypes },
-            { label: "Apps", onClick: onViewSources },
-          ].map((option) => (
-            <button key={option.label} onClick={option.onClick} className="mono" style={{ padding: "8px 12px", borderRadius: 999, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
-              {option.label}
-            </button>
-          ))}
         </div>
       </div>
       <div style={{ padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1499,7 +1528,7 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit, onViewTop
               </div>
             </button>
             {!f.system && (
-              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 30, height: 30, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0.94)", color: T.ink, border: `1px solid ${f.image ? "rgba(255,255,255,0.16)" : T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 18px -18px rgba(28,26,23,0.8)", backdropFilter: "blur(12px)" }}>
+              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 36, height: 36, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0.94)", color: T.ink, border: `1px solid ${f.image ? "rgba(255,255,255,0.16)" : T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 18px -18px rgba(28,26,23,0.8)", backdropFilter: "blur(12px)" }}>
                 <IconEdit size={14} />
               </button>
             )}
@@ -1560,7 +1589,7 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   return (
     <div className="scroll anim-fade" style={{ height: "100%" }}>
       <div style={{ padding: "16px 20px 24px" }}>
-        <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Account</div>
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Account</div>
         <div className="serif" style={{ fontSize: 42, lineHeight: 1.02, marginBottom: 24, color: T.ink }}>Your library</div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24, padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
@@ -1569,26 +1598,26 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
           </div>
           <div>
             <div style={{ fontWeight: 500, color: T.ink }}>You</div>
-            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginTop: 2 }}>Building your digital legacy</div>
+            <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginTop: 2 }}>Building your digital legacy</div>
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
           <div style={{ padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
             <div className="serif" style={{ fontSize: 40, lineHeight: 1, color: T.ink }}>{itemCount}</div>
-            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Items saved</div>
+            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Items saved</div>
           </div>
           <div style={{ padding: 16, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
             <div className="serif" style={{ fontSize: 40, lineHeight: 1, color: T.ink }}>{folderCount}</div>
-            <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Folders</div>
+            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 8, color: T.inkMute }}>Folders</div>
           </div>
         </div>
 
-        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, padding: "0 4px", color: T.inkMute }}>Storage</div>
+        <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, padding: "0 4px", color: T.inkMute }}>Storage</div>
         <div style={{ padding: 16, borderRadius: 16, marginBottom: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
             <div style={{ fontSize: 14, color: T.ink }}>Local device</div>
-            <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>saved</div>
+            <div className="mono" style={{ fontSize: 12, color: T.inkSoft }}>saved</div>
           </div>
           <div style={{ fontSize: 11.5, color: T.inkSoft }}>Your library, uploaded files, and image previews persist on this device. Clearing browser data will erase it.</div>
         </div>
@@ -1596,7 +1625,7 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
         <div style={{ padding: 16, borderRadius: 16, marginBottom: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 8 }}>
             <div style={{ fontSize: 14, color: T.ink }}>Backup</div>
-            <div className="mono" style={{ fontSize: 11, color: T.inkSoft }}>json</div>
+            <div className="mono" style={{ fontSize: 12, color: T.inkSoft }}>json</div>
           </div>
           <div style={{ fontSize: 11.5, lineHeight: 1.5, color: T.inkSoft }}>
             Export your folders, saves, and uploaded files to a backup file, then restore that file later on any device running SAVI.
@@ -1617,9 +1646,15 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
           )}
         </div>
 
-        <button onClick={clearData} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, marginBottom: 24, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
-          Reset prototype
-        </button>
+        <div style={{ marginBottom: 24, padding: 16, borderRadius: 16, background: "#FFF6F2", border: "1px solid rgba(200,85,61,0.18)" }}>
+          <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, color: T.accent }}>Danger zone</div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.5, color: T.inkSoft, marginBottom: 12 }}>
+            Resetting clears the prototype on this device, including saves, uploads, and local previews.
+          </div>
+          <button onClick={clearData} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.paper, color: T.accent, border: "1px solid rgba(200,85,61,0.24)" }}>
+            Reset prototype
+          </button>
+        </div>
 
         <div style={{ padding: 16, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
           <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, color: T.accent }}>Prototype</div>
@@ -1634,7 +1669,7 @@ function TabBar({ route, setRoute, onSavePress }) {
   const TabButton = ({ active, onClick, IconComp, label, disabled }) => (
     <button onClick={onClick} disabled={disabled} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "4px 0", color: active ? T.ink : disabled ? T.lineSoft : T.inkMute }}>
       <IconComp size={17} stroke={active ? 2.2 : 1.7} />
-      <span className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
+      <span className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
     </button>
   );
 
@@ -1643,10 +1678,10 @@ function TabBar({ route, setRoute, onSavePress }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", padding: `8px 24px calc(24px + env(safe-area-inset-bottom))`, borderTop: `1px solid ${T.lineSoft}`, background: `${T.paper}f5`, backdropFilter: "blur(12px)" }}>
         <TabButton active={route === "home"} onClick={()=>setRoute("home")} IconComp={IconHome} label="Library" />
         <TabButton active={route === "folders"} onClick={()=>setRoute("folders")} IconComp={IconGrid} label="Folders" />
-        <button onClick={onSavePress} style={{ width: 48, height: 48, borderRadius: 16, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px -6px rgba(28,26,23,0.35)" }}>
+        <button aria-label="Add a new save" onClick={onSavePress} style={{ width: 52, height: 52, borderRadius: 18, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px -6px rgba(28,26,23,0.35)" }}>
           <IconPlus size={20} stroke={2.2} />
         </button>
-        <TabButton active={false} onClick={()=>{}} IconComp={IconSearch} label="Search" disabled />
+        <TabButton active={route === "search"} onClick={()=>setRoute("search")} IconComp={IconSearch} label="Search" />
         <TabButton active={route === "profile"} onClick={()=>setRoute("profile")} IconComp={IconUser} label="You" />
       </div>
       <div style={{ position: "absolute", bottom: "calc(6px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", width: 120, height: 5, borderRadius: 999, background: T.ink, opacity: 0.85 }} />
@@ -1696,6 +1731,12 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     analyzeRequestRef.current += 1;
     if (autoAnalyzeTimerRef.current) window.clearTimeout(autoAnalyzeTimerRef.current);
     setIsAnalyzing(false);
+  };
+  const hasDraft = Boolean(selectedFile || url.trim() || title.trim() || description.trim() || tags.trim() || thumbnail || step === 2);
+  const requestClose = () => {
+    if (isSaving) return;
+    if (hasDraft && !confirm("Discard this draft?")) return;
+    onClose();
   };
 
   const fillFromClipboard = async ({ auto = false } = {}) => {
@@ -2015,11 +2056,11 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
     : "Wizard hands at work on the metadata. If the paste looked wrong, tap the x and try again.";
 
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={onClose}>
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={requestClose}>
       <div ref={sheetRef} className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: keyboardInset ? `calc(100% - ${keyboardInset + 8}px)` : "85%", transition: "max-height 180ms ease" }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center", flexShrink: 0 }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", flexShrink: 0 }}>
-          <button onClick={step === 1 ? onClose : () => setStep(1)} style={{ fontSize: 14, color: T.inkSoft }}>{step === 1 ? "Cancel" : "Back"}</button>
+          <button onClick={step === 1 ? requestClose : () => setStep(1)} style={{ fontSize: 14, color: T.inkSoft }}>{step === 1 ? "Cancel" : "Back"}</button>
           <div className="serif" style={{ fontSize: 18, color: T.ink }}>{step === 1 ? "New save" : "Review"}</div>
           {step === 1 ? (
             <div className="mono" style={{ fontSize: 10, color: T.inkMute }}>{step}/2</div>
@@ -2049,9 +2090,9 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                   <Label>Paste URL</Label>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ position: "relative", flex: 1 }}>
-                      <input ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: url ? "12px 46px 12px 14px" : "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
+                      <input aria-label="Paste a URL to save" ref={urlInputRef} value={url} onChange={e=>setUrl(e.target.value)} onPaste={handlePaste} onKeyDown={e=>e.key==="Enter" && !isAnalyzing && analyze()} placeholder="https://..." style={{ width: "100%", borderRadius: 12, padding: url ? "12px 54px 12px 14px" : "12px 14px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink }} />
                       {url && (
-                        <button onClick={clearUrlInput} aria-label="Clear pasted link" style={{ position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)", width: 28, height: 28, borderRadius: 999, background: T.paperDim, color: T.inkSoft, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${T.lineSoft}` }}>
+                        <button onClick={clearUrlInput} aria-label="Clear pasted link" style={{ position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)", width: 34, height: 34, borderRadius: 999, background: T.paperDim, color: T.inkSoft, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${T.lineSoft}` }}>
                           <IconX size={12} />
                         </button>
                       )}
@@ -2143,13 +2184,16 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
               )}
               <div style={{ padding: 14, borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}` }}>
                 <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginBottom: 8 }}>
-                  Ready to save
+                  Quick save
                 </div>
                 <div className="serif clamp2" style={{ fontSize: 24, lineHeight: 1.2, color: T.ink, marginBottom: 10 }}>
                   {title || "Untitled save"}
                 </div>
                 <div className="clamp2" style={{ fontSize: 12.5, lineHeight: 1.45, color: T.inkSoft, marginBottom: 12 }}>
                   {description}
+                </div>
+                <div style={{ fontSize: 11.5, lineHeight: 1.45, color: T.inkSoft, marginBottom: 12 }}>
+                  Save now if this looks right. If not, open the detail editor to adjust the folder, app, type, or tags.
                 </div>
                 {inputMode === "file" && selectedFile && (
                   <div className="mono clamp1" style={{ fontSize: 10, color: T.inkMute, marginBottom: 12 }}>
@@ -2179,8 +2223,8 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                   {isSaving ? "Saving..." : "Save to library"}
                 </button>
               </div>
-              <button onClick={()=>setShowAdvanced(v => !v)} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12, fontWeight: 500, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
-                {showAdvanced ? "Hide detail editor" : "Edit tags, folder, and type"}
+              <button onClick={()=>setShowAdvanced(v => !v)} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+                {showAdvanced ? "Hide detail editor" : "Open detail editor"}
               </button>
               {showAdvanced && (
                 <div ref={advancedRef} style={{ display: "flex", flexDirection: "column", gap: 16, scrollMarginTop: 20 }}>
@@ -2189,17 +2233,17 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
                       Detail editor
                     </div>
                     <div style={{ fontSize: 12.5, lineHeight: 1.45, color: T.inkSoft }}>
-                      Fine-tune where this save lives, which type it should use, and which tags make it easy to find later.
+                      Fine-tune the folder, app, type, title, description, and tags before this goes into your library.
                     </div>
                   </div>
                   <Field label="Title"><input value={title} onChange={e=>setTitle(e.target.value)} style={inputStyle()} /></Field>
                   <Field label="Description"><textarea value={description} onChange={e=>setDescription(e.target.value)} rows={3} style={{ ...inputStyle(), resize: "none" }} /></Field>
-                  <Field label="Source">
+                  <Field label="App">
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 12, background: T.card, border: `1px solid ${T.lineSoft}` }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{activeSourceProfile.label}</div>
                         <div style={{ fontSize: 11.5, color: T.inkSoft, marginTop: 2 }}>
-                          SAVI will use this app/source label in your library view.
+                          SAVI uses this app label for browsing and filtering later.
                         </div>
                       </div>
                       <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>
@@ -2242,9 +2286,59 @@ function FolderSheet({ folder, onClose, onSave }) {
   const [imageUrl, setImageUrl] = useState("");
   const [imageNote, setImageNote] = useState("");
   const [isReadingImage, setIsReadingImage] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const imageInputRef = useRef(null);
+  const sheetRef = useRef(null);
+  const scrollRef = useRef(null);
   const activePreset = PRESET_FOLDER_COVERS.find((cover) => cover.image === image);
   const coverLabel = image ? (activePreset ? `${activePreset.name} motion cover` : "Custom cover") : "Solid color";
+  const initialName = folder?.name || "";
+  const initialColor = folder?.color || FOLDER_COLORS[0];
+  const initialImage = folder?.image || "";
+  const hasDraft = name.trim() !== initialName.trim() || color !== initialColor || image !== initialImage;
+
+  const ensureVisible = (node, behavior = "smooth") => {
+    if (!node || !scrollRef.current) return;
+    window.requestAnimationFrame(() => {
+      node.scrollIntoView({ block: "center", behavior });
+    });
+  };
+
+  const requestClose = () => {
+    if (hasDraft && !confirm("Discard these folder changes?")) return;
+    onClose();
+  };
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateKeyboardInset = () => {
+      const nextInset = Math.max(0, Math.round(window.innerHeight - (viewport.height + viewport.offsetTop)));
+      setKeyboardInset(nextInset);
+      const active = document.activeElement;
+      if (sheetRef.current?.contains(active) && (active?.tagName === "INPUT" || active?.tagName === "TEXTAREA" || active?.isContentEditable)) {
+        window.setTimeout(() => ensureVisible(active), 90);
+      }
+    };
+
+    updateKeyboardInset();
+    viewport.addEventListener("resize", updateKeyboardInset);
+    viewport.addEventListener("scroll", updateKeyboardInset);
+    window.addEventListener("orientationchange", updateKeyboardInset);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardInset);
+      viewport.removeEventListener("scroll", updateKeyboardInset);
+      window.removeEventListener("orientationchange", updateKeyboardInset);
+    };
+  }, []);
+
+  const handleFocusCapture = (event) => {
+    const node = event.target;
+    if (!node || (node.tagName !== "INPUT" && node.tagName !== "TEXTAREA" && !node.isContentEditable)) return;
+    window.setTimeout(() => ensureVisible(node), 120);
+  };
 
   const openImagePicker = () => {
     imageInputRef.current?.click();
@@ -2305,15 +2399,15 @@ function FolderSheet({ folder, onClose, onSave }) {
   };
 
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
-      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", background: T.paper }} onClick={e=>e.stopPropagation()}>
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={requestClose}>
+      <div ref={sheetRef} className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: keyboardInset ? `calc(100% - ${keyboardInset + 8}px)` : "85%", transition: "max-height 180ms ease" }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
-          <button onClick={onClose} style={{ fontSize: 14, color: T.inkSoft }}>Cancel</button>
+          <button onClick={requestClose} style={{ fontSize: 14, color: T.inkSoft }}>Cancel</button>
           <div className="serif" style={{ fontSize: 18, color: T.ink }}>{folder ? "Edit folder" : "New folder"}</div>
           <div style={{ width: 48 }} />
         </div>
-        <div style={{ padding: "0 20px 32px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div ref={scrollRef} className="scroll" style={{ padding: "0 20px 32px", display: "flex", flexDirection: "column", gap: 16 }} onFocusCapture={handleFocusCapture}>
           <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
           <div style={{ borderRadius: 20, overflow: "hidden", minHeight: 146, background: image ? `center / cover no-repeat url(${image}), ${color}22` : `linear-gradient(160deg, ${color}26 0%, ${T.card} 100%)`, border: `1px solid ${T.lineSoft}`, position: "relative", boxShadow: "0 18px 30px -28px rgba(28,26,23,0.7)" }}>
             <div style={{ position: "absolute", inset: 0, background: image ? "linear-gradient(180deg, rgba(28,26,23,0.04) 0%, rgba(28,26,23,0.12) 34%, rgba(28,26,23,0.46) 100%)" : "none" }} />
@@ -2344,7 +2438,7 @@ function FolderSheet({ folder, onClose, onSave }) {
           </div>
           <Field label="Paste image, GIF, or URL">
             <div style={{ display: "flex", gap: 8 }}>
-              <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} onPaste={handleImagePaste} placeholder="Paste an image, GIF, or URL" style={{ ...inputStyle(), flex: 1 }} />
+              <input aria-label="Paste a folder cover image or GIF URL" value={imageUrl} onChange={e=>setImageUrl(e.target.value)} onPaste={handleImagePaste} placeholder="Paste an image, GIF, or URL" style={{ ...inputStyle(), flex: 1 }} />
               <button onClick={applyImageUrl} style={{ padding: "0 14px", borderRadius: 10, background: T.ink, color: T.paper, fontSize: 12, fontWeight: 600 }}>
                 Use
               </button>
@@ -2372,7 +2466,7 @@ function FolderSheet({ folder, onClose, onSave }) {
           <Field label="Color">
             <div style={{ display: "flex", gap: 8 }}>
               {FOLDER_COLORS.map(c => (
-                <button key={c} onClick={()=>setColor(c)} style={{ width: 36, height: 36, borderRadius: 12, background: c, outline: color === c ? `2px solid ${T.ink}` : "none", outlineOffset: 2 }} />
+                <button aria-label={`Choose folder color ${c}`} key={c} onClick={()=>setColor(c)} style={{ width: 40, height: 40, borderRadius: 12, background: c, outline: color === c ? `2px solid ${T.ink}` : "none", outlineOffset: 2 }} />
               ))}
             </div>
           </Field>
@@ -2411,7 +2505,7 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
   };
 
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }} onClick={onClose}>
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }}>
       <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
         <div style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
@@ -2420,7 +2514,7 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
               {typeIconFor(item.type, { size: 38, stroke: 1.2 })}
             </div>
           </div>
-          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button aria-label="Close details" onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconX size={14} />
           </button>
           <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
@@ -2428,7 +2522,7 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
           </div>
         </div>
         <div className="scroll" style={{ padding: "16px 20px" }}>
-          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
+          <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
           <h2 className="serif" style={{ fontSize: 26, lineHeight: 1.2, marginBottom: 8, marginTop: 0, color: T.ink }}>{item.title}</h2>
           <p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 12, color: T.inkSoft }}>{item.description}</p>
           {hasLocalAsset && (
@@ -2463,10 +2557,10 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
               </button>
             ) : (
               <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
-                <IconArrowOut size={14} />Open source
+                <IconArrowOut size={14} />Open original
               </a>
             )}
-            <button onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+            <button aria-label="Delete this save" onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
               <IconTrash size={14} />
             </button>
           </div>
@@ -2485,9 +2579,14 @@ function IOSShareSheet({ onClose, onPickSavi }) {
     { name: "Copy", bg: "#8E8E93" },
   ];
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.4)" }} onClick={onClose}>
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.4)" }}>
       <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", background: "rgba(245, 241, 234, 0.96)", backdropFilter: "blur(30px)" }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding: "12px 0 8px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ margin: "0 16px 16px", display: "flex", justifyContent: "flex-end" }}>
+          <button aria-label="Close share flow" onClick={onClose} style={{ width: 38, height: 38, borderRadius: 999, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconX size={14} />
+          </button>
+        </div>
         <div style={{ margin: "0 16px 16px", padding: 12, borderRadius: 16, display: "flex", alignItems: "center", gap: 12, background: T.card, border: `1px solid ${T.lineSoft}` }}>
           <div style={{ width: 48, height: 48, borderRadius: 8, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconFile size={18} />
@@ -2501,7 +2600,7 @@ function IOSShareSheet({ onClose, onPickSavi }) {
         <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 20px 8px", color: T.inkMute }}>Share with app</div>
         <div style={{ padding: "0 12px 12px", display: "flex", gap: 16, overflowX: "auto" }}>
           {apps.map((app, i) => (
-            <button key={i} onClick={app.primary ? onPickSavi : undefined} style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 68, opacity: app.primary ? 1 : 0.4 }}>
+            <button aria-label={app.primary ? `Share to ${app.name}` : `${app.name} is unavailable in this demo`} key={i} onClick={app.primary ? onPickSavi : undefined} style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 68, opacity: app.primary ? 1 : 0.4 }}>
               <div style={{ width: 60, height: 60, borderRadius: 14, background: app.bg, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {app.icon || <div style={{ width: 24, height: 24, borderRadius: 4, background: "rgba(255,255,255,0.5)" }} />}
               </div>
@@ -2516,8 +2615,8 @@ function IOSShareSheet({ onClose, onPickSavi }) {
 }
 
 // ============ shared helpers ============
-const inputStyle = () => ({ width: "100%", borderRadius: 8, padding: "10px 12px", fontSize: 13, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink });
-const Label = ({ children }) => <label className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, color: T.inkMute }}>{children}</label>;
+const inputStyle = () => ({ width: "100%", minHeight: 44, borderRadius: 10, padding: "11px 12px", fontSize: 13.5, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink });
+const Label = ({ children }) => <label className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, color: T.inkMute }}>{children}</label>;
 const Field = ({ label, children }) => <div><Label>{label}</Label>{children}</div>;
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
