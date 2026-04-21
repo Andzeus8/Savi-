@@ -821,10 +821,12 @@ function App() {
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [prefillUrl, setPrefillUrl] = useState("");
   const [prefillFromClipboard, setPrefillFromClipboard] = useState(false);
+  const [prefillAutoAnalyze, setPrefillAutoAnalyze] = useState(true);
   const [showFolderSheet, setShowFolderSheet] = useState(false);
   const [editingFolderId, setEditingFolderId] = useState("");
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const launchClipboardCheckedRef = useRef(false);
 
   const dismissActiveField = () => {
     const active = document.activeElement;
@@ -837,6 +839,7 @@ function App() {
     dismissActiveField();
     setPrefillUrl(nextUrl);
     setPrefillFromClipboard(Boolean(options.tryClipboard && !nextUrl));
+    setPrefillAutoAnalyze(options.autoAnalyzeInitial ?? true);
     setShowSaveSheet(true);
   };
 
@@ -848,11 +851,32 @@ function App() {
   useEffect(() => {
     const incoming = getIncomingUrl();
     if (incoming) {
-      openSaveSheet(incoming);
+      openSaveSheet(incoming, { autoAnalyzeInitial: true });
       // clean url so refresh doesn't re-trigger
       try { window.history.replaceState({}, "", window.location.pathname); } catch {}
     }
   }, []);
+
+  useEffect(() => {
+    if (launchClipboardCheckedRef.current) return;
+    launchClipboardCheckedRef.current = true;
+
+    const incoming = getIncomingUrl();
+    if (incoming || showSaveSheet) return;
+    if (!window.isSecureContext || !navigator.clipboard?.readText) return;
+
+    const tryClipboardOnLaunch = async () => {
+      try {
+        const rawText = (await navigator.clipboard.readText()).trim();
+        if (!rawText) return;
+        const normalized = normalizeUrl(rawText);
+        if (!hostFromUrl(normalized)) return;
+        openSaveSheet(rawText, { autoAnalyzeInitial: false });
+      } catch {}
+    };
+
+    tryClipboardOnLaunch();
+  }, [showSaveSheet]);
 
   useEffect(() => { saveState({ folders, items }); }, [folders, items]);
 
@@ -1002,7 +1026,7 @@ function App() {
                 </div>
 
                 {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
-                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
+                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} autoAnalyzeInitial={prefillAutoAnalyze} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
                 {showFolderSheet && (
                   <FolderSheet
                     folder={folders.find(folder => folder.id === editingFolderId) || null}
@@ -1315,7 +1339,7 @@ function TabBar({ route, setRoute, onSavePress }) {
   );
 }
 
-function SaveSheet({ initialUrl, prefillFromClipboard = false, folders, onClose, onSave }) {
+function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitial = true, folders, onClose, onSave }) {
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState("link");
   const [url, setUrl] = useState(initialUrl || "");
@@ -1486,9 +1510,14 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, folders, onClose,
   useEffect(() => {
     if (initialUrl) {
       setInputMode("link");
-      analyze(initialUrl);
+      setUrl(initialUrl);
+      if (autoAnalyzeInitial) {
+        analyze(initialUrl);
+      } else {
+        setClipboardNote("Pulled a link from your clipboard.");
+      }
     }
-  }, [initialUrl]);
+  }, [initialUrl, autoAnalyzeInitial]);
 
   useEffect(() => {
     if (!prefillFromClipboard || clipboardAttemptedRef.current || initialUrl || inputMode !== "link") return;
