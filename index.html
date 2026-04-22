@@ -393,35 +393,29 @@ const PRESET_FOLDER_COVER_MAP = Object.fromEntries(PRESET_FOLDER_COVERS.map((cov
 const folderCover = (seed) => `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/600`;
 const DEFAULT_FOLDER_ORDER = [
   "f-private-vault",
-  "f-wtf",
-  "f-science",
-  "f-hacks",
-  "f-business",
-  "f-must-watch",
-  "f-must-read",
-  "f-must-do",
+  "f-growth",
+  "f-wtf-favorites",
+  "f-lmao",
+  "f-health",
   "f-recipes",
   "f-travel",
   "f-design",
   "f-research",
-  "f-music-memes",
+  "f-must-see",
   "f-all",
 ];
 const DEFAULT_FOLDER_ORDER_MAP = Object.fromEntries(DEFAULT_FOLDER_ORDER.map((id, index) => [id, index]));
 const SEED_FOLDERS = [
-  { id: "f-private-vault", name: "Private Vault", color: "#7567F8", image: "https://picsum.photos/seed/vault/800/600" },
-  { id: "f-wtf", name: "WTF Videos", color: "#FF6B6B", image: "https://picsum.photos/seed/funny/800/600" },
-  { id: "f-science", name: "Mind-Blowing Science", color: "#5B8DEF", image: "https://picsum.photos/seed/space/800/600" },
-  { id: "f-hacks", name: "Life Hacks", color: "#F4B740", image: "https://picsum.photos/seed/lightbulb/800/600" },
-  { id: "f-business", name: "Business & Career", color: "#4D7CF3", image: "https://picsum.photos/seed/office/800/600" },
-  { id: "f-must-watch", name: "Must Watch", color: "#FF7A59", image: "https://picsum.photos/seed/cinema/800/600" },
-  { id: "f-must-read", name: "Must Read", color: "#AA7BFF", image: "https://picsum.photos/seed/books/800/600" },
-  { id: "f-must-do", name: "Must Do", color: "#35C5A2", image: "https://picsum.photos/seed/adventure/800/600" },
-  { id: "f-recipes", name: "Recipes & Food", color: "#FF9F5A", image: "https://picsum.photos/seed/food/800/600" },
-  { id: "f-travel", name: "Travel & Places", color: "#2DB7A3", image: "https://picsum.photos/seed/travel/800/600" },
-  { id: "f-design", name: "Design Inspo", color: "#FF5C93", image: "https://picsum.photos/seed/design/800/600" },
-  { id: "f-research", name: "Research", color: "#7C8CF8", image: "https://picsum.photos/seed/science/800/600" },
-  { id: "f-music-memes", name: "Music & Memes", color: "#A855F7", image: "https://picsum.photos/seed/music/800/600" },
+  { id: "f-private-vault", name: "Private Vault", color: "#6C63FF", image: "https://picsum.photos/seed/lockvault/800/600" },
+  { id: "f-growth", name: "Growth Hacks", color: "#FF8A3D", image: "https://picsum.photos/seed/rocket/800/600" },
+  { id: "f-wtf-favorites", name: "WTF Favorites", color: "#5875FF", image: "https://picsum.photos/seed/galaxy/800/600" },
+  { id: "f-lmao", name: "LMAO", color: "#FF4D6D", image: "https://picsum.photos/seed/laugh/800/600" },
+  { id: "f-health", name: "Health Hacks", color: "#25C48C", image: "https://picsum.photos/seed/wellness/800/600" },
+  { id: "f-recipes", name: "Recipes & Food", color: "#FF9F43", image: "https://picsum.photos/seed/cooking/800/600" },
+  { id: "f-travel", name: "Travel & Places", color: "#18B7A0", image: "https://picsum.photos/seed/tropical/800/600" },
+  { id: "f-design", name: "Design Inspo", color: "#F15BB5", image: "https://picsum.photos/seed/minimal/800/600" },
+  { id: "f-research", name: "Research", color: "#6E68FF", image: "https://picsum.photos/seed/laboratory/800/600" },
+  { id: "f-must-see", name: "Must See", color: "#F7C948", image: "https://picsum.photos/seed/spotlight/800/600" },
   { id: "f-all", name: "All Saves", system: true, image: folderCover("library") },
 ];
 
@@ -431,19 +425,19 @@ const youtubeThumb = (videoId) => `https://img.youtube.com/vi/${videoId}/hqdefau
 const seedGroup = (defaults, items) => items.map((item) => ({ ...defaults, ...item }));
 
 const DEMO_ITEMS = [
-  ...seedGroup({ folderId: "f-wtf", source: "YouTube", type: "video" }, [
-    { title: "Numa Numa", description: "Gary Brolsma's webcam lip-sync artifact from the early internet that still feels impossible to explain to anyone born after autoplay.", url: "https://www.youtube.com/watch?v=KmtzQCSh6xk", thumbnail: youtubeThumb("KmtzQCSh6xk"), tags: ["viral", "internet classic", "nostalgia"] },
+  ...seedGroup({ folderId: "f-lmao", source: "YouTube", type: "video" }, [
+    { title: "Numa Numa", description: "Gary Brolsma's webcam lip-sync artifact from the early internet that still feels impossible to explain to anyone born after autoplay.", url: "https://www.youtube.com/watch?v=Cqd1Gvq-RBY", thumbnail: youtubeThumb("Cqd1Gvq-RBY"), tags: ["viral", "internet classic", "nostalgia"] },
     { title: "Charlie Bit My Finger", description: "The sibling chaos clip that became one of YouTube's defining eras in under a minute.", url: "https://www.youtube.com/watch?v=_OBlgSz8sSM", thumbnail: youtubeThumb("_OBlgSz8sSM"), tags: ["viral", "siblings", "classic"] },
     { title: "Keyboard Cat", description: "A perfect cutaway punchline and still one of the purest meme formats ever uploaded.", url: "https://www.youtube.com/watch?v=J---aiyznGQ", thumbnail: youtubeThumb("J---aiyznGQ"), tags: ["meme", "cat", "internet classic"] },
     { title: "David After Dentist", description: "Peak post-anesthesia confusion, immortalized forever by the early YouTube recommendation engine.", url: "https://www.youtube.com/watch?v=txqiwrbYGrs", thumbnail: youtubeThumb("txqiwrbYGrs"), tags: ["viral", "family", "comedy"] },
     { title: "Double Rainbow", description: "A genuine emotional reaction to weather that became a legendary reaction clip all on its own.", url: "https://www.youtube.com/watch?v=OQSNhk5ICTI", thumbnail: youtubeThumb("OQSNhk5ICTI"), tags: ["rainbow", "reaction", "internet"] },
-    { title: "Sneezing Baby Panda", description: "Eight seconds of perfect comedic timing that somehow defined an entire era of cute internet content.", url: "https://www.youtube.com/watch?v=FzRH3iTQPrk", thumbnail: youtubeThumb("FzRH3iTQPrk"), tags: ["panda", "cute", "viral"] },
+    { title: "Sneezing Baby Panda", description: "Eight seconds of perfect comedic timing that somehow defined an entire era of cute internet content.", url: "https://www.youtube.com/watch?v=bkIkKTxBci4", thumbnail: youtubeThumb("bkIkKTxBci4"), tags: ["panda", "cute", "viral"] },
     { title: "Evolution of Dance", description: "A one-man speedrun through decades of dance crazes before TikTok made that a genre.", url: "https://www.youtube.com/watch?v=dMH0bHeiRNg", thumbnail: youtubeThumb("dMH0bHeiRNg"), tags: ["dance", "viral", "throwback"] },
-    { title: "Dramatic Chipmunk", description: "The hard zoom, the music sting, the expression. Nothing about it should work this well and yet.", url: "https://www.youtube.com/watch?v=a1Y73sPHKxw", thumbnail: youtubeThumb("a1Y73sPHKxw"), tags: ["chipmunk", "reaction", "meme"] },
-    { title: "FailArmy Mega Fail Mix", description: "A maximalist stack of wipeouts, slips, and bad decisions made for doom-scrolling with friends.", url: "https://www.youtube.com/@FailArmy", thumbnail: picsumThumb("failarmy-mega-fail"), source: "YouTube", tags: ["fails", "funny", "compilation"] },
+    { title: "Dramatic Chipmunk", description: "The hard zoom, the music sting, the expression. Nothing about it should work this well and yet.", url: "https://www.youtube.com/watch?v=mfhBM_Yay6w", thumbnail: youtubeThumb("mfhBM_Yay6w"), tags: ["chipmunk", "reaction", "meme"] },
+    { title: "FailArmy Mega Fail Mix", description: "A maximalist stack of wipeouts, slips, and bad decisions made for doom-scrolling with friends.", url: "https://www.failarmy.com/", thumbnail: picsumThumb("failarmy-mega-fail"), source: "Web", tags: ["fails", "funny", "compilation"] },
     { title: "Never Gonna Give You Up", description: "The immortal Rickroll: internet history, maximum whiplash, and still the cleanest bait-and-switch in the library.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", thumbnail: youtubeThumb("dQw4w9WgXcQ"), tags: ["rickroll", "music", "internet classic"] },
   ]),
-  ...seedGroup({ folderId: "f-science", source: "Web", type: "article" }, [
+  ...seedGroup({ folderId: "f-wtf-favorites", source: "Web", type: "article" }, [
     { title: "Webb captures impossible-looking pillars of creation detail", description: "NASA's James Webb telescope delivers a sharper, deeper look at the dust structures that made space feel fake all over again.", url: "https://www.nasa.gov/universe/nasas-webb-takes-star-filled-portrait-of-pillars-of-creation/", thumbnail: picsumThumb("jwst-pillars"), tags: ["jwst", "nasa", "space"] },
     { title: "Starship flight test recap and why it matters", description: "A launch breakdown focused on reusable heavy lift, heat shielding, and the long game of getting serious mass off Earth.", url: "https://www.spacex.com/launches/mission/?missionId=starship-flight-test", thumbnail: picsumThumb("starship-flight"), tags: ["spacex", "rockets", "launch"] },
     { title: "How the first black hole image was stitched together", description: "The Event Horizon Telescope result explained without draining the wonder out of it.", url: "https://eventhorizontelescope.org/press-release-april-10-2019-astronomers-capture-first-image-black-hole", thumbnail: picsumThumb("black-hole-first-photo"), tags: ["black hole", "astronomy", "physics"] },
@@ -455,7 +449,7 @@ const DEMO_ITEMS = [
     { title: "Hubble's deep field still bends the brain", description: "A reminder of how much cosmic history was hiding inside what looked like a blank patch of night.", url: "https://science.nasa.gov/mission/hubble/science/universe-uncovered/hubble-deep-fields", thumbnail: picsumThumb("hubble-deep-field"), tags: ["hubble", "universe", "deep field"] },
     { title: "Webb finds carbon-rich chemistry on a distant world", description: "Another exoplanet atmosphere result that makes the universe feel much more populated and much stranger.", url: "https://science.nasa.gov/mission/webb/science-overview/", thumbnail: picsumThumb("jwst-exoplanet"), tags: ["exoplanet", "chemistry", "discovery"] },
   ]),
-  ...seedGroup({ folderId: "f-must-watch", source: "Web", type: "video" }, [
+  ...seedGroup({ folderId: "f-wtf-favorites", source: "Web", type: "video" }, [
     { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
     { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
     { title: "Tutankhamun tomb discovery timeline", description: "The treasure, the media frenzy, and how archaeology became global spectacle.", url: "https://www.history.com/articles/tutankhamen", thumbnail: picsumThumb("tutankhamun-tomb"), tags: ["tutankhamun", "egypt", "discovery"] },
@@ -464,10 +458,10 @@ const DEMO_ITEMS = [
     { title: "Sphinx water erosion theory in plain English", description: "One of those archaeology-adjacent arguments that instantly sends you down three more tabs.", url: "https://www.smithsonianmag.com/history/uncovering-secrets-of-great-sphinx-180952437/", thumbnail: picsumThumb("sphinx-erosion"), tags: ["sphinx", "erosion", "debate"] },
     { title: "Gobekli Tepe and the rewrite of early civilization", description: "A fascinating watch about ritual, agriculture, and the timeline getting rearranged.", url: "https://www.britannica.com/place/Gobekli-Tepe", thumbnail: picsumThumb("gobekli-tepe"), tags: ["archaeology", "civilization", "ancient"] },
     { title: "Nazca Lines from the air", description: "An ideal late-night mystery watch: giant geoglyphs, uncertain motives, and endless theory bait.", url: "https://whc.unesco.org/en/list/700/", thumbnail: picsumThumb("nazca-lines"), tags: ["nazca", "mystery", "peru"] },
-    { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.youtube.com/watch?v=8jPQjjsBbIc", source: "YouTube", thumbnail: picsumThumb("lost-civilizations-iceberg"), tags: ["iceberg", "history", "deep dive"] },
-    { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.youtube.com/watch?v=v7AYKMP6rOE", source: "YouTube", thumbnail: picsumThumb("temple-engineering-mysteries"), tags: ["temples", "engineering", "ancient"] },
+    { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.discovery.com/exploration/lost-cities-of-the-world", source: "Web", type: "article", thumbnail: picsumThumb("lost-civilizations-iceberg"), tags: ["iceberg", "history", "deep dive"] },
+    { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.smithsonianmag.com/history/how-great-pyramid-giza-was-built-180979146/", source: "Web", type: "article", thumbnail: picsumThumb("temple-engineering-mysteries"), tags: ["temples", "engineering", "ancient"] },
   ]),
-  ...seedGroup({ folderId: "f-hacks", source: "Web", type: "article" }, [
+  ...seedGroup({ folderId: "f-growth", source: "Web", type: "article" }, [
     { title: "How to use Claude like a real thinking partner", description: "A practical setup for long-context prompting, critique passes, and using models as editors instead of slot machines.", url: "https://www.anthropic.com/claude", thumbnail: picsumThumb("claude-ai-workflow"), tags: ["claude", "ai", "workflow"] },
     { title: "ChatGPT prompt engineering patterns worth saving", description: "Prompt structures that consistently produce better drafts, better summaries, and fewer weird surprises.", url: "https://platform.openai.com/docs/guides/prompt-engineering", thumbnail: picsumThumb("chatgpt-prompting"), tags: ["chatgpt", "prompts", "ai"] },
     { title: "AI productivity stack for solo operators", description: "A calmer workflow for research, writing, and follow-through without turning your day into an automation costume.", url: "https://www.notion.so/product/ai", thumbnail: picsumThumb("ai-productivity-stack"), tags: ["productivity", "automation", "ai"] },
@@ -479,8 +473,8 @@ const DEMO_ITEMS = [
     { title: "Browser extensions that earn their keep", description: "A curated mix of focus, capture, and tab cleanup tools without turning the toolbar into a junk drawer.", url: "https://chromewebstore.google.com/category/extensions", thumbnail: picsumThumb("browser-extensions"), tags: ["browser", "extensions", "workflow"] },
     { title: "Home organization hacks with zero Pinterest energy", description: "Simple resets, labels, bins, and defaults that make the room easier to maintain later.", url: "https://www.thespruce.com/home-organization-ideas-4154505", thumbnail: picsumThumb("home-organization"), tags: ["home", "organization", "systems"] },
   ]),
-  ...seedGroup({ folderId: "f-business", source: "Web", type: "article" }, [
-    { title: "Simon Sinek on starting with why", description: "Still one of the cleanest leadership frameworks for clarity, trust, and getting people to care.", url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action", thumbnail: picsumThumb("simon-sinek"), source: "YouTube", type: "video", tags: ["leadership", "communication", "management"] },
+  ...seedGroup({ folderId: "f-growth", source: "Web", type: "article" }, [
+    { title: "Simon Sinek on starting with why", description: "Still one of the cleanest leadership frameworks for clarity, trust, and getting people to care.", url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action", thumbnail: picsumThumb("simon-sinek"), source: "TED", type: "video", tags: ["leadership", "communication", "management"] },
     { title: "Y Combinator startup school notes to keep around", description: "Advice on momentum, distribution, and why clarity beats cleverness when you're actually building.", url: "https://www.startupschool.org/", thumbnail: picsumThumb("yc-startup-school"), tags: ["startup", "yc", "founders"] },
     { title: "Negotiation tactics that don't feel slimy", description: "Anchoring, silence, framing, and a few practical scripts to save before the next tense call.", url: "https://www.pon.harvard.edu/daily/negotiation-skills-daily/what-is-negotiation/", thumbnail: picsumThumb("negotiation-tactics"), tags: ["negotiation", "salary", "strategy"] },
     { title: "Resume bullet upgrades that actually matter", description: "Less buzzword paste, more evidence and scope. The kind of resume advice that improves the page immediately.", url: "https://careerservices.fas.harvard.edu/resources/create-a-strong-resume/", thumbnail: picsumThumb("resume-tips"), tags: ["resume", "job search", "career"] },
@@ -491,7 +485,7 @@ const DEMO_ITEMS = [
     { title: "Storytelling for interviews and promotions", description: "A save for turning vague achievements into memorable, specific leadership stories.", url: "https://www.themuse.com/advice/tell-me-about-yourself-interview-question-answer-examples", thumbnail: picsumThumb("career-storytelling"), tags: ["storytelling", "interviews", "growth"] },
     { title: "A sharper way to run your weekly review", description: "A business-oriented system for planning, follow-up, and not letting important tasks dissolve in chat threads.", url: "https://todoist.com/productivity-methods/weekly-review", thumbnail: picsumThumb("weekly-review"), tags: ["planning", "review", "execution"] },
   ]),
-  ...seedGroup({ folderId: "f-must-read", source: "Web", type: "article" }, [
+  ...seedGroup({ folderId: "f-must-see", source: "Web", type: "article" }, [
     { title: "Wait But Why: The AI Revolution", description: "Tim Urban's sprawling AI explainer that still does a great job making the stakes feel both funny and unsettling.", url: "https://waitbutwhy.com/2015/01/artificial-intelligence-revolution-1.html", thumbnail: picsumThumb("waitbutwhy-ai"), tags: ["ai", "longread", "tim urban"] },
     { title: "Lex Fridman interview notes worth revisiting", description: "A catch-all save for the best deep interview threads on technology, ambition, and how people actually think.", url: "https://lexfridman.com/podcast/", thumbnail: picsumThumb("lex-fridman"), tags: ["interviews", "podcast", "ideas"] },
     { title: "Wikipedia rabbit hole: Byzantine Empire", description: "One of those tabs that starts as a skim and ends with ten more tabs and a missing afternoon.", url: "https://en.wikipedia.org/wiki/Byzantine_Empire", thumbnail: picsumThumb("wikipedia-byzantine"), tags: ["wikipedia", "history", "rabbit hole"] },
@@ -503,7 +497,7 @@ const DEMO_ITEMS = [
     { title: "Wait But Why: Elon Musk and the scary future", description: "A classic long-form internet essay save for when you want big-arc technology framing.", url: "https://waitbutwhy.com/2017/04/neuralink.html", thumbnail: picsumThumb("waitbutwhy-future"), tags: ["future", "technology", "essay"] },
     { title: "Naval's readings on judgment", description: "A compact read on taste, leverage, and how to think more cleanly when the stakes go up.", url: "https://nav.al/judgment", thumbnail: picsumThumb("naval-judgment"), tags: ["judgment", "thinking", "wisdom"] },
   ]),
-  ...seedGroup({ folderId: "f-must-do", source: "Web", type: "link" }, [
+  ...seedGroup({ folderId: "f-must-see", source: "Web", type: "link" }, [
     { title: "48-hour Lisbon coffee crawl", description: "A neat city mission save with cafes, bookstores, and a route that actually fits into a weekend.", url: "https://www.google.com/maps/search/coffee+shops+in+lisbon/", source: "Google Maps", type: "place", thumbnail: picsumThumb("lisbon-coffee-crawl"), tags: ["coffee", "weekend", "itinerary"] },
     { title: "Try a pottery class this month", description: "A reminder that not every good hobby has to start as a five-year identity plan.", url: "https://www.eventbrite.com/d/online/pottery-class/", thumbnail: picsumThumb("pottery-class"), tags: ["hobby", "class", "offline"] },
     { title: "Grand Canyon south rim day map", description: "A place save for future trip planning when you want the viewpoints and logistics in one place.", url: "https://www.google.com/maps/place/Grand+Canyon+Village/", source: "Google Maps", type: "place", thumbnail: picsumThumb("grand-canyon-day"), tags: ["nature", "maps", "trip"] },
@@ -516,13 +510,13 @@ const DEMO_ITEMS = [
     { title: "Learn one new hosting recipe", description: "A practical action save for becoming the person who can pull dinner together when people actually show up.", url: "https://www.bbcgoodfood.com/recipes/category/dinner-party-collections", thumbnail: picsumThumb("hosting-recipe"), tags: ["hosting", "recipe", "todo"] },
   ]),
   ...seedGroup({ folderId: "f-recipes", source: "Web", type: "video" }, [
-    { title: "Gordon Ramsay's scrambled eggs", description: "The buttery slow-scramble method that people either become devoted to or immediately argue about.", url: "https://www.youtube.com/watch?v=PUP7U5vTMM0", source: "YouTube", thumbnail: youtubeThumb("PUP7U5vTMM0"), tags: ["breakfast", "eggs", "chef"] },
+    { title: "Gordon Ramsay's scrambled eggs", description: "The buttery slow-scramble method that people either become devoted to or immediately argue about.", url: "https://www.youtube.com/watch?v=VhJFyyukAzA", source: "YouTube", thumbnail: youtubeThumb("VhJFyyukAzA"), tags: ["breakfast", "eggs", "chef"] },
     { title: "Viral TikTok pasta, but actually worth it", description: "A save for the creamy baked pasta era that still lands on busy weeknights.", url: "https://www.tiktok.com/@feelgoodfoodie/video/7212745259820164395", source: "TikTok", thumbnail: picsumThumb("viral-tiktok-pasta"), tags: ["tiktok", "pasta", "viral"] },
     { title: "5-minute mug cake for emergencies", description: "The exact kind of snack knowledge you want available when the sweet tooth hits at 11:40 p.m.", url: "https://www.bbcgoodfood.com/recipes/microwave-mug-cake", thumbnail: picsumThumb("mug-cake"), tags: ["dessert", "quick", "microwave"] },
     { title: "Meal prep Sunday without hating your life", description: "A realistic weekly prep plan with enough flexibility to survive actual appetites and schedules.", url: "https://www.budgetbytes.com/meal-prep-101-a-beginners-guide/", thumbnail: picsumThumb("meal-prep-sunday"), tags: ["meal prep", "planning", "weekly"] },
     { title: "Air fryer hacks that save dinner", description: "A useful roundup for reheats, vegetables, and the kind of snack dinners nobody needs to apologize for.", url: "https://www.delish.com/cooking/g4711/air-fryer-recipes/", thumbnail: picsumThumb("air-fryer-hacks"), tags: ["air fryer", "dinner", "tips"] },
     { title: "Best pizza dough recipe to keep forever", description: "A serious dough save with enough detail to stop the trial-and-error spiral.", url: "https://www.seriouseats.com/basic-new-york-style-pizza-dough", thumbnail: picsumThumb("pizza-dough"), tags: ["pizza", "baking", "dough"] },
-    { title: "Babish: basics of bolognese", description: "A comfort-watch episode that doubles as an actual dinner plan.", url: "https://www.youtube.com/c/bingingwithbabish", source: "YouTube", thumbnail: picsumThumb("babish-bolognese"), tags: ["babish", "pasta", "video"] },
+    { title: "Babish: basics of bolognese", description: "A comfort-watch episode that doubles as an actual dinner plan.", url: "https://basicswithbabish.co/", source: "Web", thumbnail: picsumThumb("babish-bolognese"), tags: ["babish", "pasta", "video"] },
     { title: "Crispy sheet-pan chicken with lemon potatoes", description: "A low-chaos dinner save that looks like way more effort than it is.", url: "https://www.allrecipes.com/recipe/242352/greek-lemon-chicken-and-potatoes/", thumbnail: picsumThumb("sheet-pan-chicken"), tags: ["sheet pan", "dinner", "chicken"] },
     { title: "Ramen upgrade tricks for broke nights", description: "Exactly the kind of save you want when instant noodles need to feel like a choice, not a confession.", url: "https://www.seriouseats.com/instant-ramen-hacks", thumbnail: picsumThumb("ramen-hacks"), tags: ["ramen", "cheap eats", "hack"] },
     { title: "Best NYC pasta spots map", description: "A food-and-place save that turns one folder into dinner plans instantly.", url: "https://www.google.com/maps/search/pasta+restaurants+in+new+york/", source: "Google Maps", type: "place", thumbnail: picsumThumb("nyc-pasta-map"), tags: ["restaurant", "maps", "food"] },
@@ -542,7 +536,7 @@ const DEMO_ITEMS = [
   ...seedGroup({ folderId: "f-design", source: "Web", type: "image" }, [
     { title: "Dribbble best of 2024", description: "A high-signal save for interface polish, expressive illustration, and motion that doesn't feel defaulted.", url: "https://dribbble.com/tags/web_design", source: "Dribbble", thumbnail: picsumThumb("dribbble-best-2024"), tags: ["dribbble", "ui", "trend"] },
     { title: "Awwwards site of the day rabbit hole", description: "One tab turns into twenty when the layouts are this sharp and weird in the right ways.", url: "https://www.awwwards.com/websites/sites_of_the_day/", source: "Awwwards", thumbnail: picsumThumb("awwwards-sites"), tags: ["awwwards", "web design", "inspo"] },
-    { title: "Figma tutorial stack for better components", description: "A save for leveling up spacing, constraints, and design systems without another vague course wishlist.", url: "https://www.youtube.com/@Figma", source: "YouTube", type: "video", thumbnail: picsumThumb("figma-tutorials"), tags: ["figma", "components", "tutorial"] },
+    { title: "Figma tutorial stack for better components", description: "A save for leveling up spacing, constraints, and design systems without another vague course wishlist.", url: "https://help.figma.com/hc/en-us/articles/14563969806359-Guide-to-components-in-Figma", source: "Figma", type: "article", thumbnail: picsumThumb("figma-tutorials"), tags: ["figma", "components", "tutorial"] },
     { title: "Apple design principles refresh", description: "A useful skim whenever you want to reset your instincts toward clarity, hierarchy, and restraint.", url: "https://developer.apple.com/design/human-interface-guidelines/", source: "Apple", type: "article", thumbnail: picsumThumb("apple-design-principles"), tags: ["apple", "hig", "product design"] },
     { title: "Swiss poster systems worth stealing from", description: "Rigid grids, huge typography, and the kind of discipline that makes everything else look sleepy.", url: "https://www.pinterest.com/search/pins/?q=swiss%20poster%20design", source: "Pinterest", thumbnail: picsumThumb("swiss-posters"), tags: ["swiss", "poster", "typography"] },
     { title: "Minimal logo collection", description: "A save for marks that do less, read faster, and somehow feel more expensive because of it.", url: "https://www.behance.net/search/projects?search=minimal%20logo", source: "Behance", thumbnail: picsumThumb("minimal-logos"), tags: ["logo", "branding", "minimal"] },
@@ -575,7 +569,7 @@ const DEMO_ITEMS = [
     { title: "Emergency Contacts Sheet", description: "A calm little file with names, meds, allergies, and the numbers you never want to hunt down under stress.", url: "https://www.redcross.org/get-help/how-to-prepare-for-emergencies/make-a-plan.html", thumbnail: picsumThumb("emergency-contacts"), tags: ["emergency", "contacts", "preparedness"] },
     { title: "Vaccination Records", description: "A practical vault save for travel, school, and every form that suddenly wants proof.", url: "https://www.cdc.gov/vaccines-adults/recommended-vaccines/keeping-vaccine-records-up-to-date.html", thumbnail: picsumThumb("vaccination-records"), tags: ["health", "records", "pdf"] },
   ]),
-  ...seedGroup({ folderId: "f-music-memes", source: "Web", type: "link" }, [
+  ...seedGroup({ folderId: "f-lmao", source: "Web", type: "link" }, [
     { title: "Lo-fi Beats", description: "The classic Spotify background playlist for reading, journaling, and pretending you have your life organized.", url: "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn", source: "Spotify", thumbnail: picsumThumb("lofi-beats"), tags: ["spotify", "focus", "playlist"] },
     { title: "Workout Mix That Fixes the Morning", description: "A higher-BPM playlist save for when the day needs a harder reset than coffee alone can provide.", url: "https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP", source: "Spotify", thumbnail: picsumThumb("workout-mix"), tags: ["music", "workout", "playlist"] },
     { title: "90s nostalgia hits", description: "A reliable playlist for instant mood transport and a suspicious number of chorus-only memories.", url: "https://open.spotify.com/playlist/37i9dQZF1DXbTxeAdrVG2l", source: "Spotify", thumbnail: picsumThumb("90s-nostalgia"), tags: ["90s", "nostalgia", "playlist"] },
@@ -587,16 +581,67 @@ const DEMO_ITEMS = [
     { title: "All Star but it's everywhere", description: "A music meme rabbit hole save because Smash Mouth has somehow become a formatting language.", url: "https://www.youtube.com/watch?v=L_jWHffIx5E", source: "YouTube", type: "video", thumbnail: youtubeThumb("L_jWHffIx5E"), tags: ["music meme", "throwback", "internet"] },
     { title: "Never forget the vine era", description: "A short-form nostalgia archive for six-second comedic timing before everyone got algorithmically optimized.", url: "https://knowyourmeme.com/memes/subcultures/vine", thumbnail: picsumThumb("vine-era"), tags: ["vine", "short-form", "nostalgia"] },
   ]),
+  ...seedGroup({ folderId: "f-health", source: "Web", type: "article" }, [
+    { title: "CDC movement guide that doesn't overcomplicate exercise", description: "A practical baseline for moving more without turning wellness into a second job.", url: "https://www.cdc.gov/physical-activity-basics/index.html", thumbnail: picsumThumb("cdc-movement-guide"), tags: ["movement", "fitness", "basics"] },
+    { title: "Protein basics without gym-bro energy", description: "A clean nutrition explainer for eating enough protein without falling into supplement lore.", url: "https://nutritionsource.hsph.harvard.edu/what-should-you-eat/protein/", thumbnail: picsumThumb("protein-basics"), tags: ["protein", "nutrition", "food"] },
+    { title: "Caring for your mental health on regular weeks", description: "Useful self-maintenance ideas for stress, mood, and knowing when to slow down before burnout makes the choice for you.", url: "https://www.nimh.nih.gov/health/topics/caring-for-your-mental-health", thumbnail: picsumThumb("mental-health-care"), tags: ["mental health", "stress", "wellbeing"] },
+    { title: "Sleep hygiene checklist that actually helps mornings", description: "The boring but real levers that make sleep better when screens and schedules keep trying to win.", url: "https://www.cdc.gov/sleep/about/index.html", thumbnail: picsumThumb("sleep-hygiene"), tags: ["sleep", "recovery", "health"] },
+    { title: "Stress relievers that work in five minutes", description: "A low-drama list of fast resets for the kind of day that starts to spiral by lunch.", url: "https://www.mayoclinic.org/healthy-lifestyle/stress-management/in-depth/stress-relievers/art-20047257", thumbnail: picsumThumb("stress-relief"), tags: ["stress", "breathing", "reset"] },
+    { title: "Hydration basics without wellness myth soup", description: "A helpful reality check on water, sugary drinks, and what your body actually needs on a normal day.", url: "https://www.cdc.gov/healthy-weight-growth/water-healthy-drinks/index.html", thumbnail: picsumThumb("hydration-basics"), tags: ["hydration", "wellness", "habits"] },
+  ]),
 ];
+const DEMO_PRIORITY_TITLES = [
+  "How to use Claude like a real thinking partner",
+  "Insurance Card Photo",
+  "Numa Numa",
+  "Webb captures impossible-looking pillars of creation detail",
+  "Gordon Ramsay's scrambled eggs",
+  "Ancient Aliens: the wildest episode recap",
+  "Caring for your mental health on regular weeks",
+  "Pyramids of Giza",
+  "Dribbble best of 2024",
+  "GPT-4 Technical Report",
+  "WiFi Passwords Doc",
+  "Charlie Bit My Finger",
+  "Wait But Why: The AI Revolution",
+  "Classic meme compilation",
+  "Crispy sheet-pan chicken with lemon potatoes",
+];
+const buildSeedFeed = (items) => {
+  const pinned = [];
+  const usedIndexes = new Set();
+  DEMO_PRIORITY_TITLES.forEach((title) => {
+    const index = items.findIndex((item, itemIndex) => item.title === title && !usedIndexes.has(itemIndex));
+    if (index >= 0) {
+      pinned.push(items[index]);
+      usedIndexes.add(index);
+    }
+  });
 
-const SEED_ITEMS = DEMO_ITEMS.map((item, index) => ({
+  const buckets = DEFAULT_FOLDER_ORDER
+    .filter((folderId) => folderId !== "f-all")
+    .map((folderId) => [
+      folderId,
+      items.filter((item, itemIndex) => item.folderId === folderId && !usedIndexes.has(itemIndex)),
+    ]);
+
+  const mixed = [];
+  while (buckets.some(([, bucket]) => bucket.length)) {
+    buckets.forEach(([, bucket]) => {
+      if (bucket.length) mixed.push(bucket.shift());
+    });
+  }
+
+  return [...pinned, ...mixed];
+};
+const SEED_ITEMS = buildSeedFeed(DEMO_ITEMS).map((item, index) => ({
   id: `i${index + 1}`,
   savedAt: Date.now() - (index + 2) * 3600000,
   color: seedColorForFolder(item.folderId),
   ...item,
 }));
 
-const FOLDER_COLORS = ["#FF6B6B", "#5B8DEF", "#F4B740", "#4D7CF3", "#7567F8", "#FF7A59", "#AA7BFF", "#35C5A2", "#FF9F5A", "#2DB7A3", "#FF5C93", "#7C8CF8", "#A855F7"];
+const FOLDER_COLORS = ["#6C63FF", "#FF8A3D", "#5875FF", "#FF4D6D", "#25C48C", "#FF9F43", "#18B7A0", "#F15BB5", "#6E68FF", "#F7C948"];
 const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
@@ -628,17 +673,24 @@ const normalizeFilename = (name = "") => name.replace(/\.[^.]+$/, "").replace(/[
 const SEED_FOLDER_LOOKUP = Object.fromEntries(SEED_FOLDERS.map((folder) => [folder.id, folder]));
 const LEGACY_FOLDER_ID_MAP = {
   "f-personal": "f-private-vault",
-  "f-hacks": "f-hacks",
-  "f-health": "f-must-do",
-  "f-finance": "f-business",
-  "f-career": "f-business",
-  "f-read": "f-must-read",
+  "f-hacks": "f-growth",
+  "f-health": "f-health",
+  "f-finance": "f-growth",
+  "f-career": "f-growth",
+  "f-read": "f-must-see",
+  "f-wtf": "f-lmao",
+  "f-science": "f-wtf-favorites",
+  "f-business": "f-growth",
+  "f-must-watch": "f-wtf-favorites",
+  "f-must-read": "f-must-see",
+  "f-must-do": "f-must-see",
+  "f-music-memes": "f-lmao",
   "f-design": "f-design",
   "f-research": "f-research",
   "f-recipes": "f-recipes",
   "f-travel": "f-travel",
 };
-const LEGACY_SEED_FOLDER_IDS = ["f-personal", "f-hacks", "f-health", "f-finance", "f-career", "f-read", "f-design", "f-research", "f-recipes", "f-travel"];
+const LEGACY_SEED_FOLDER_IDS = ["f-personal", "f-hacks", "f-health", "f-finance", "f-career", "f-read", "f-wtf", "f-science", "f-business", "f-must-watch", "f-must-read", "f-must-do", "f-design", "f-research", "f-recipes", "f-travel", "f-music-memes"];
 const withSeededFolderDefaults = (folders = []) => {
   const nextFolders = Array.isArray(folders) ? folders : [];
   const merged = nextFolders.map((folder) => {
@@ -1195,19 +1247,16 @@ const mergeMetadata = (...sources) => {
 };
 
 const folderKeywordMap = {
-  "wtf videos": ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "numa", "chipmunk", "double rainbow", "fail", "cat"],
-  "mind blowing science": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe", "quantum", "fusion", "crispr", "mars", "black hole"],
-  "life hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut", "claude", "chatgpt", "midjourney", "mac", "iphone", "vscode", "automation"],
-  "business career": ["career", "work", "job", "resume", "salary", "raise", "manager", "leadership", "interview", "professional", "business", "money", "finance", "budget", "tax", "strategy", "negotiation", "startup", "networking", "side hustle"],
+  "growth hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut", "claude", "chatgpt", "midjourney", "mac", "iphone", "vscode", "automation", "career", "work", "job", "resume", "salary", "leadership", "interview", "professional", "business", "money", "finance", "budget", "strategy", "negotiation", "startup", "networking", "side hustle"],
+  "wtf favorites": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe", "quantum", "fusion", "crispr", "mars", "black hole", "ancient", "mystery", "documentary", "egypt", "atlantis", "nazca", "sphinx", "aliens", "gobekli", "pyramid"],
+  lmao: ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "numa", "chipmunk", "double rainbow", "fail", "cat", "music", "playlist", "spotify", "harambe", "doge", "pepe", "vine", "nostalgia"],
   "private vault": ["private", "vault", "id", "passport", "insurance", "document", "license", "bank", "secure", "card", "personal file", "statement", "tax", "medical", "wifi", "lease", "registration"],
-  "must watch": ["watch later", "must watch", "video", "clip", "youtube", "tiktok", "watchlist", "trailer", "ancient", "mystery", "documentary", "egypt", "atlantis", "nazca", "sphinx"],
-  "must read": ["article", "essay", "read later", "longread", "bookmark", "newsletter", "news", "wait but why", "lex", "paul graham", "naval", "wikipedia"],
-  "must do": ["try", "visit", "todo", "to do", "bucket list", "trip", "places", "itinerary", "adventure", "walking", "museum", "plan", "checklist", "class", "hike", "route"],
+  "health hacks": ["health", "wellness", "fitness", "nutrition", "protein", "sleep", "stress", "mental health", "hydration", "movement", "exercise", "workout", "recovery"],
   "recipes food": ["recipe", "cook", "cooking", "dinner", "lunch", "breakfast", "food", "pasta", "meal", "kitchen", "restaurant", "air fryer", "pizza", "cake", "babish"],
   "travel places": ["travel", "city guide", "hotel", "flight", "vacation", "destination", "maps", "landmark", "paris", "lisbon", "place", "machu picchu", "giza", "santorini", "bali", "iceland"],
   "design inspo": ["design", "ux", "ui", "typography", "brand", "branding", "poster", "visual", "dribbble", "behance", "moodboard", "interior", "figma", "awwwards", "logo"],
   research: ["research", "study", "paper", "analysis", "ai", "ml", "neural", "academic", "arxiv", "transformers", "experiment", "gpt-4", "alignment", "computing", "safety"],
-  "music memes": ["music", "playlist", "spotify", "meme", "harambe", "doge", "pepe", "vine", "nostalgia", "lofi", "workout"],
+  "must see": ["article", "essay", "read later", "watch later", "must see", "longread", "bookmark", "newsletter", "news", "wait but why", "lex", "paul graham", "naval", "wikipedia", "try", "visit", "todo", "bucket list", "itinerary", "adventure", "museum", "plan", "checklist", "class", "hike", "route"],
 };
 
 const scoreFolder = (folder, haystack) => {
@@ -1227,11 +1276,11 @@ const scoreFolder = (folder, haystack) => {
 
 const guessFolderId = (metadata, folders) => {
   const uploadFallback = folders.find(f => f.id === "f-private-vault" || f.name.toLowerCase() === "private vault");
-  const linkFallback = folders.find(f => f.id === "f-must-read" || f.name.toLowerCase() === "must read");
-  const actionFallback = folders.find(f => f.id === "f-must-do" || f.name.toLowerCase() === "must do");
+  const linkFallback = folders.find(f => f.id === "f-must-see" || f.name.toLowerCase() === "must see");
+  const actionFallback = folders.find(f => f.id === "f-must-see" || f.name.toLowerCase() === "must see");
   const placeFallback = folders.find(f => f.id === "f-travel" || f.name.toLowerCase() === "travel places");
-  const mediaFallback = folders.find(f => f.id === "f-must-watch" || f.name.toLowerCase() === "must watch");
-  const musicFallback = folders.find(f => f.id === "f-music-memes" || f.name.toLowerCase() === "music memes");
+  const mediaFallback = folders.find(f => f.id === "f-must-see" || f.name.toLowerCase() === "must see");
+  const musicFallback = folders.find(f => f.id === "f-lmao" || f.name.toLowerCase() === "lmao");
   const fallback = metadata.filename || metadata.assetName
     ? (uploadFallback || linkFallback || folders.find(f => !f.system))
     : metadata.type === "place"
@@ -1276,7 +1325,7 @@ const normalizeSavedState = (state) => {
     let nextFolderId = item.folderId;
     if (legacyTarget) nextFolderId = legacyTarget;
     if (!nextFolders.some(folder => folder.id === nextFolderId)) {
-      nextFolderId = guessFolderId(item, nextFolders) || nextFolders.find(folder => !folder.system)?.id || "f-must-read";
+      nextFolderId = guessFolderId(item, nextFolders) || nextFolders.find(folder => !folder.system)?.id || "f-must-see";
     }
     return { ...item, folderId: nextFolderId };
   });
@@ -2266,7 +2315,7 @@ function SaveSheet({ initialUrl, prefillFromClipboard = false, autoAnalyzeInitia
   const [source, setSource] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [folderId, setFolderId] = useState(folders.find(f => f.id === "f-must-read")?.id || folders.find(f => !f.system)?.id || "f-must-read");
+  const [folderId, setFolderId] = useState(folders.find(f => f.id === "f-must-see")?.id || folders.find(f => !f.system)?.id || "f-must-see");
   const [tags, setTags] = useState("");
   const [type, setType] = useState("article");
   const [thumbnail, setThumbnail] = useState("");
