@@ -1567,7 +1567,7 @@ const isValidBackup = (backup) => {
 function App() {
   const saved = normalizeSavedState(loadState());
   const uiPrefs = loadUiPrefs();
-  const shouldShowOnboarding = !hasStoredLibrary() && !loadOnboarded();
+  const shouldShowOnboarding = !loadOnboarded();
   const [folders, setFolders] = useState(saved?.folders || withSeededFolderDefaults([]));
   const [items, setItems] = useState(saved?.items || SEED_ITEMS);
   const [activeFolder, setActiveFolder] = useState("f-all");
