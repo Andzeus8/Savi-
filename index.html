@@ -92,12 +92,14 @@
   @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes wizard-glow { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.06); opacity: 1; } }
   @keyframes gentle-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
   @keyframes dot-bounce { 0%, 80%, 100% { opacity: 0.28; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
   .anim-slide { animation: slide-up 0.35s ease-out forwards; opacity: 0; }
   .anim-fade { animation: fade-in 0.25s ease-out forwards; }
   .anim-sheet { animation: sheet-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
   .wizard-float { animation: gentle-float 1.6s ease-in-out infinite; }
+  .wizard-glow { animation: wizard-glow 3.8s ease-in-out infinite; }
   .loading-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; vertical-align: middle; }
   .loading-dots span { width: 4px; height: 4px; border-radius: 999px; background: currentColor; animation: dot-bounce 1s infinite; }
   .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
@@ -202,6 +204,7 @@ const BrandBadge = ({ visual, size = 20, active = false }) => {
 // ============ CONSTANTS ============
 const STORAGE_KEY = "savi_v1";
 const UI_PREFS_KEY = "savi_ui_v1";
+const ONBOARDED_KEY = "savi_onboarded";
 const ASSET_DB_NAME = "savi_assets";
 const ASSET_DB_VERSION = 1;
 const ASSET_STORE = "assets";
@@ -859,6 +862,20 @@ const clearAssetRecords = async () => assetStoreRequest("readwrite", (store, res
   const request = store.clear();
   request.onsuccess = () => resolve(true);
 });
+const deleteAssetDatabase = async () => {
+  if (!("indexedDB" in window)) return false;
+  try {
+    const openDb = await assetDbPromise.catch(() => null);
+    openDb?.close?.();
+  } catch {}
+  assetDbPromise = null;
+  return new Promise((resolve) => {
+    const request = window.indexedDB.deleteDatabase(ASSET_DB_NAME);
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => resolve(false);
+    request.onblocked = () => resolve(false);
+  });
+};
 const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = () => resolve(reader.result);
@@ -1457,6 +1474,13 @@ const loadState = () => {
     return JSON.parse(raw);
   } catch { return null; }
 };
+const hasStoredLibrary = () => {
+  try {
+    return Boolean(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return false;
+  }
+};
 const saveState = (data) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
 };
@@ -1469,6 +1493,19 @@ const loadUiPrefs = () => {
 };
 const saveUiPrefs = (prefs) => {
   try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs)); } catch {}
+};
+const loadOnboarded = () => {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+const saveOnboarded = (value) => {
+  try {
+    if (value) localStorage.setItem(ONBOARDED_KEY, "true");
+    else localStorage.removeItem(ONBOARDED_KEY);
+  } catch {}
 };
 const BACKUP_VERSION = 2;
 const BACKUP_MIME = "application/json";
@@ -1510,6 +1547,7 @@ const isValidBackup = (backup) => {
 function App() {
   const saved = normalizeSavedState(loadState());
   const uiPrefs = loadUiPrefs();
+  const shouldShowOnboarding = !hasStoredLibrary() && !loadOnboarded();
   const [folders, setFolders] = useState(saved?.folders || withSeededFolderDefaults([]));
   const [items, setItems] = useState(saved?.items || SEED_ITEMS);
   const [activeFolder, setActiveFolder] = useState("f-all");
@@ -1527,6 +1565,7 @@ function App() {
   const [editingFolderId, setEditingFolderId] = useState("");
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
   const launchClipboardCheckedRef = useRef(false);
 
   const dismissActiveField = () => {
@@ -1579,7 +1618,10 @@ function App() {
     tryClipboardOnLaunch();
   }, [showSaveSheet]);
 
-  useEffect(() => { saveState({ folders, items }); }, [folders, items]);
+  useEffect(() => {
+    if (showOnboarding) return;
+    saveState({ folders, items });
+  }, [folders, items, showOnboarding]);
   useEffect(() => { saveUiPrefs({ viewMode }); }, [viewMode]);
 
   const visibleItems = useMemo(() => {
@@ -1731,9 +1773,21 @@ function App() {
   const addFolder = (folderDraft) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, ...folderDraft }]);
   const updateFolder = (folderId, updates) => setFolders(prev => prev.map(folder => folder.id === folderId ? { ...folder, ...updates } : folder));
   const clearLibrary = async () => {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.clear();
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(UI_PREFS_KEY);
+      localStorage.removeItem(ONBOARDED_KEY);
+    }
+    await deleteAssetDatabase().catch(() => false);
     await clearAssetRecords().catch(() => {});
     window.location.reload();
+  };
+
+  const finishOnboarding = () => {
+    saveOnboarded(true);
+    setShowOnboarding(false);
   };
 
   return (
@@ -1743,6 +1797,9 @@ function App() {
           <div className="bezel-inner">
             <div className="screen">
               <div className="notch" />
+              {showOnboarding ? (
+                <WelcomeWizard onFinish={finishOnboarding} />
+              ) : (
               <div className="app">
                 <div className="app-main">
                   {route === "home" && (
@@ -1807,6 +1864,236 @@ function App() {
                 {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
               </div>
             </div>
+              )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WelcomeWizard({ onFinish }) {
+  const slides = [
+    {
+      eyebrow: "Welcome",
+      title: "Welcome to SAVI",
+      subtitle: "Your personal pocket organizer for everything that matters.",
+      description: "Links, files, recipes, videos, articles — if it's important to you, SAVI keeps it safe and organized.",
+      accent: "linear-gradient(160deg, #6D7CFF 0%, #C8553D 100%)",
+      visual: (
+        <div style={{ position: "relative", width: 182, height: 182 }}>
+          <div className="wizard-glow" style={{ position: "absolute", inset: 10, borderRadius: "50%", background: "radial-gradient(circle, rgba(109,124,255,0.24) 0%, rgba(200,85,61,0.18) 42%, rgba(109,124,255,0) 72%)" }} />
+          <div className="wizard-float" style={{ position: "absolute", inset: 30, borderRadius: 34, background: "linear-gradient(160deg, #161A23 0%, #6D7CFF 100%)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 30px 60px -34px rgba(22,26,35,0.65)" }}>
+            <IconBookmark size={74} stroke={1.9} fill={T.paper} />
+          </div>
+          <div style={{ position: "absolute", top: 24, right: 20, width: 42, height: 42, borderRadius: 16, background: T.card, color: "#C8553D", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 18px 30px -24px rgba(22,26,35,0.55)" }}>
+            <IconSparkles size={18} />
+          </div>
+        </div>
+      ),
+    },
+    {
+      eyebrow: "Fast capture",
+      title: "Save Anything in Seconds",
+      subtitle: "Paste the link. SAVI handles the heavy lifting.",
+      description: "Just paste any link and we'll do the rest. SAVI automatically fetches the title, description, thumbnail, and tags. We'll even pick the best folder for you. Soon you'll be able to save directly from your phone's share button — forward any link, PDF, or file straight to SAVI.",
+      accent: "linear-gradient(160deg, #FF9F43 0%, #6D7CFF 100%)",
+      visual: (
+        <div style={{ width: "100%", maxWidth: 260, padding: 18, borderRadius: 26, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 24px 46px -34px rgba(22,26,35,0.45)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(109,124,255,0.14)", color: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <IconLink size={16} />
+            </div>
+            <div style={{ height: 12, flex: 1, borderRadius: 999, background: T.paperDim }} />
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ height: 46, borderRadius: 14, background: T.paperDim, border: `1px solid ${T.lineSoft}` }} />
+            <div style={{ height: 86, borderRadius: 18, background: "linear-gradient(160deg, rgba(109,124,255,0.14) 0%, rgba(200,85,61,0.14) 100%)", border: `1px solid ${T.lineSoft}`, padding: 12, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ width: "48%", height: 10, borderRadius: 999, background: "rgba(109,124,255,0.22)" }} />
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(22,26,35,0.08)" }} />
+                <div style={{ flex: 1, display: "grid", gap: 6 }}>
+                  <div style={{ height: 10, borderRadius: 999, background: "rgba(22,26,35,0.1)" }} />
+                  <div style={{ height: 10, borderRadius: 999, width: "76%", background: "rgba(22,26,35,0.08)" }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ flex: 1, height: 10, borderRadius: 999, background: "rgba(109,124,255,0.16)" }} />
+                <div style={{ width: 54, height: 10, borderRadius: 999, background: "rgba(200,85,61,0.18)" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      eyebrow: "Smart organization",
+      title: "Everything, Organized",
+      subtitle: "Folders, types, apps, tags, and search all working together.",
+      description: "SAVI automatically categorizes your saves into folders and adds smart tags. Browse by folder, type, or source app. Switch between grid and list views. Search across everything instantly.",
+      accent: "linear-gradient(160deg, #25C48C 0%, #6D7CFF 100%)",
+      visual: (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, width: "100%", maxWidth: 264 }}>
+          {[
+            { label: "Folders", icon: <IconFolderPlus size={18} />, bg: "rgba(109,124,255,0.14)" },
+            { label: "Tags", icon: <IconSparkles size={18} />, bg: "rgba(37,196,140,0.14)" },
+            { label: "Views", icon: <IconGrid size={18} />, bg: "rgba(255,159,67,0.18)" },
+            { label: "Search", icon: <IconSearch size={18} />, bg: "rgba(200,85,61,0.14)" },
+          ].map((card) => (
+            <div key={card.label} style={{ padding: 16, borderRadius: 22, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 22px 40px -32px rgba(22,26,35,0.42)" }}>
+              <div style={{ width: 38, height: 38, borderRadius: 14, background: card.bg, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                {card.icon}
+              </div>
+              <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute, marginBottom: 4 }}>{card.label}</div>
+              <div style={{ fontSize: 12.5, lineHeight: 1.4, color: T.inkSoft }}>
+                {card.label === "Folders" ? "Auto-sorted homes" : card.label === "Tags" ? "Smarter context" : card.label === "Views" ? "Grid or list instantly" : "Find anything fast"}
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      eyebrow: "Your library",
+      title: "Need that link from last week?",
+      subtitle: "SAVI keeps your personal archive ready when memory does not.",
+      description: "Whether it's a recipe you saved, a job posting, a funny video, or an important document — SAVI helps you find it fast. Your personal library, always in your pocket.",
+      accent: "linear-gradient(160deg, #C8553D 0%, #161A23 100%)",
+      visual: (
+        <div style={{ width: "100%", maxWidth: 270, padding: 18, borderRadius: 28, background: "linear-gradient(180deg, #FFFFFF 0%, #F3EEE5 100%)", border: `1px solid ${T.lineSoft}`, boxShadow: "0 24px 50px -34px rgba(22,26,35,0.44)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 14, background: "linear-gradient(160deg, #161A23 0%, #6D7CFF 100%)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <IconBookmark size={16} stroke={2} fill={T.paper} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>Personal library</div>
+              <div className="mono" style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute }}>Ready when you are</div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {["Recipe saved yesterday", "Funny video from last week", "Document you actually need", "Map pin for later"].map((label, index) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 16, background: index % 2 === 0 ? T.card : "rgba(255,255,255,0.72)", border: `1px solid ${T.lineSoft}` }}>
+                <div style={{ width: 36, height: 36, borderRadius: 12, background: index === 0 ? "rgba(255,159,67,0.18)" : index === 1 ? "rgba(255,77,109,0.16)" : index === 2 ? "rgba(109,124,255,0.14)" : "rgba(24,183,160,0.14)", color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {index === 0 ? <IconFile size={15} /> : index === 1 ? <IconPlayCircle size={15} /> : index === 2 ? <IconLock size={15} /> : <IconPin size={15} />}
+                </div>
+                <div style={{ fontSize: 12.5, color: T.ink }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+  const [step, setStep] = useState(0);
+  const touchStartXRef = useRef(0);
+  const touchStartTimeRef = useRef(0);
+  const touchCurrentXRef = useRef(0);
+
+  const goToStep = (nextStep) => {
+    const clamped = Math.max(0, Math.min(slides.length - 1, nextStep));
+    setStep(clamped);
+  };
+
+  const nextStep = () => {
+    if (step === slides.length - 1) {
+      onFinish();
+      return;
+    }
+    goToStep(step + 1);
+  };
+
+  const previousStep = () => goToStep(step - 1);
+
+  const handleTouchStart = (event) => {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    touchStartXRef.current = touch.clientX;
+    touchCurrentXRef.current = touch.clientX;
+    touchStartTimeRef.current = performance.now();
+  };
+
+  const handleTouchMove = (event) => {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    touchCurrentXRef.current = touch.clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const deltaX = touchCurrentXRef.current - touchStartXRef.current;
+    const elapsed = Math.max(1, performance.now() - touchStartTimeRef.current);
+    const velocity = Math.abs(deltaX) / elapsed;
+    if (deltaX <= -70 || (deltaX < -38 && velocity > 0.45)) nextStep();
+    if (deltaX >= 70 || (deltaX > 38 && velocity > 0.45)) previousStep();
+  };
+
+  return (
+    <div className="anim-fade" style={{ height: "100%", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #FBFAF7 0%, #F3EEE5 100%)" }}>
+      <div style={{ padding: "calc(18px + env(safe-area-inset-top)) 22px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 12, background: "linear-gradient(160deg, #161A23 0%, #6D7CFF 100%)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconBookmark size={14} stroke={2} fill={T.paper} />
+          </div>
+          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.16em", color: T.inkMute }}>SAVI setup</div>
+        </div>
+        <button onClick={onFinish} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute }}>
+          Skip
+        </button>
+      </div>
+
+      <div style={{ padding: "0 22px 22px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          style={{ flex: 1, minHeight: 0, overflow: "hidden", touchAction: "pan-y" }}
+        >
+          <div style={{ display: "flex", width: `${slides.length * 100}%`, height: "100%", transform: `translateX(-${step * (100 / slides.length)}%)`, transition: "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)" }}>
+            {slides.map((slide, index) => (
+              <div key={slide.title} style={{ width: `${100 / slides.length}%`, padding: "6px 2px 0", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 20 }}>
+                <div style={{ padding: "22px 18px 20px", borderRadius: 32, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 28px 60px -38px rgba(22,26,35,0.32)", minHeight: "100%", display: "flex", flexDirection: "column" }}>
+                  <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.16em", color: T.inkMute, marginBottom: 14 }}>{slide.eyebrow}</div>
+                  <div className="serif" style={{ fontSize: 34, lineHeight: 1.02, color: T.ink, marginBottom: 12 }}>{slide.title}</div>
+                  <div style={{ fontSize: 15, lineHeight: 1.45, color: T.ink, marginBottom: 10 }}>{slide.subtitle}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: T.inkSoft, marginBottom: 24 }}>{slide.description}</div>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0 8px" }}>
+                    {slide.visual}
+                  </div>
+                  <div style={{ marginTop: 18, height: 6, borderRadius: 999, background: slide.accent, opacity: 0.92 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ paddingTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 18 }}>
+            {slides.map((slide, index) => (
+              <button
+                key={slide.title}
+                aria-label={`Go to onboarding step ${index + 1}`}
+                onClick={() => goToStep(index)}
+                style={{
+                  width: index === step ? 24 : 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: index === step ? "linear-gradient(160deg, #6D7CFF 0%, #C8553D 100%)" : "rgba(143,138,128,0.28)",
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 10, paddingBottom: "calc(8px + env(safe-area-inset-bottom))" }}>
+            <button
+              onClick={previousStep}
+              disabled={step === 0}
+              style={{ padding: 15, borderRadius: 16, fontSize: 13, fontWeight: 600, background: step === 0 ? T.paperDim : T.card, color: step === 0 ? T.inkMute : T.ink, border: `1px solid ${T.lineSoft}`, opacity: step === 0 ? 0.7 : 1 }}
+            >
+              Back
+            </button>
+            <button onClick={nextStep} style={{ padding: 15, borderRadius: 16, fontSize: 14, fontWeight: 700, background: slides[step].accent, color: T.paper, boxShadow: "0 22px 34px -24px rgba(22,26,35,0.52)" }}>
+              {step === slides.length - 1 ? "Let's Go!" : step === 0 ? "Get Started" : "Next"}
+            </button>
           </div>
         </div>
       </div>
@@ -2203,16 +2490,31 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   const [backupTone, setBackupTone] = useState("muted");
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteValue, setDeleteValue] = useState("");
+  const [isDeletingEverything, setIsDeletingEverything] = useState(false);
+  const deleteReady = deleteValue === "DELETE";
 
   const showBackupMessage = (message, tone = "muted") => {
     setBackupMessage(message);
     setBackupTone(tone);
   };
 
-  const clearData = async () => {
-    if (confirm("Clear all saves and start over?")) {
-      await clearLibrary();
-    }
+  const openDeleteModal = () => {
+    setDeleteValue("");
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    if (isDeletingEverything) return;
+    setDeleteValue("");
+    setShowDeleteModal(false);
+  };
+
+  const confirmDeleteEverything = async () => {
+    if (!deleteReady || isDeletingEverything) return;
+    setIsDeletingEverything(true);
+    await clearLibrary();
   };
 
   const handleExport = async () => {
@@ -2307,10 +2609,10 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
         <div style={{ marginBottom: 24, padding: 16, borderRadius: 16, background: "#FFF6F2", border: "1px solid rgba(200,85,61,0.18)" }}>
           <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, color: T.accent }}>Danger zone</div>
           <div style={{ fontSize: 12.5, lineHeight: 1.5, color: T.inkSoft, marginBottom: 12 }}>
-            Resetting clears the prototype on this device, including saves, uploads, and local previews.
+            Delete everything on this device, including your saved items, custom folders, uploaded files, onboarding state, and local settings.
           </div>
-          <button onClick={clearData} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.paper, color: T.accent, border: "1px solid rgba(200,85,61,0.24)" }}>
-            Reset prototype
+          <button onClick={openDeleteModal} style={{ width: "100%", padding: 13, borderRadius: 12, fontSize: 12.5, fontWeight: 700, background: "linear-gradient(180deg, #D45745 0%, #B83428 100%)", color: T.paper, border: "1px solid rgba(120,20,16,0.22)", boxShadow: "0 18px 28px -22px rgba(184,52,40,0.65)" }}>
+            Delete Everything
           </button>
         </div>
 
@@ -2319,6 +2621,43 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
           <div style={{ fontSize: 12, lineHeight: 1.5, color: T.inkSoft }}>Web version of SAVI. The native iOS app would add the Share Extension, cross-device sync, and system gestures.</div>
         </div>
       </div>
+      {showDeleteModal && (
+        <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(20, 18, 24, 0.45)" }} onClick={closeDeleteModal}>
+          <div className="anim-sheet" style={{ width: "100%", borderRadius: "28px 28px 0 0", background: T.paper, padding: "14px 20px calc(26px + env(safe-area-inset-bottom))", boxShadow: "0 -18px 40px -26px rgba(20,18,24,0.55)" }} onClick={(event) => event.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <div style={{ width: 40, height: 5, borderRadius: 999, background: T.line }} />
+            </div>
+            <div style={{ width: 54, height: 54, borderRadius: 18, background: "rgba(212,87,69,0.14)", color: "#B83428", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+              <IconTrash size={22} />
+            </div>
+            <div className="serif" style={{ fontSize: 29, lineHeight: 1.04, color: T.ink, marginBottom: 10 }}>Are you sure?</div>
+            <div style={{ fontSize: 13, lineHeight: 1.55, color: T.inkSoft, marginBottom: 14 }}>
+              This will permanently delete all your saved items, folders, and settings.
+            </div>
+            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute, marginBottom: 8 }}>
+              Type DELETE to confirm
+            </div>
+            <input
+              aria-label="Type DELETE to confirm"
+              value={deleteValue}
+              onChange={(event) => setDeleteValue(event.target.value)}
+              placeholder="DELETE"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck="false"
+              style={{ ...inputStyle(), marginBottom: 16, fontSize: 15, letterSpacing: "0.08em" }}
+            />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <button onClick={closeDeleteModal} disabled={isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 600, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, opacity: isDeletingEverything ? 0.55 : 1 }}>
+                Cancel
+              </button>
+              <button onClick={confirmDeleteEverything} disabled={!deleteReady || isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 700, background: deleteReady ? "linear-gradient(180deg, #D45745 0%, #B83428 100%)" : "rgba(184,52,40,0.24)", color: T.paper, opacity: !deleteReady || isDeletingEverything ? 0.6 : 1 }}>
+                {isDeletingEverything ? "Deleting..." : "Delete forever"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
