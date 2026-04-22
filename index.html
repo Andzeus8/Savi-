@@ -2519,7 +2519,7 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteValue, setDeleteValue] = useState("");
   const [isDeletingEverything, setIsDeletingEverything] = useState(false);
-  const deleteReady = deleteValue === "DELETE";
+  const deleteReady = deleteValue.trim().toUpperCase() === "DELETE";
 
   const showBackupMessage = (message, tone = "muted") => {
     setBackupMessage(message);
@@ -2541,6 +2541,13 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
     if (!deleteReady || isDeletingEverything) return;
     setIsDeletingEverything(true);
     await clearLibrary();
+  };
+
+  const resetPrototype = () => {
+    try {
+      localStorage.removeItem(ONBOARDED_KEY);
+    } catch {}
+    window.location.reload();
   };
 
   const handleExport = async () => {
@@ -2644,12 +2651,15 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
 
         <div style={{ padding: 16, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
           <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, color: T.accent }}>Prototype</div>
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: T.inkSoft }}>Web version of SAVI. The native iOS app would add the Share Extension, cross-device sync, and system gestures.</div>
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: T.inkSoft, marginBottom: 12 }}>Web version of SAVI. The native iOS app would add the Share Extension, cross-device sync, and system gestures.</div>
+          <button onClick={resetPrototype} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}`, boxShadow: "0 12px 20px -18px rgba(22,26,35,0.3)" }}>
+            Reset Prototype
+          </button>
         </div>
       </div>
       {showDeleteModal && (
-        <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 60, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(20, 18, 24, 0.45)" }} onClick={closeDeleteModal}>
-          <div className="anim-sheet" style={{ width: "100%", borderRadius: "28px 28px 0 0", background: T.paper, padding: "14px 20px calc(26px + env(safe-area-inset-bottom))", boxShadow: "0 -18px 40px -26px rgba(20,18,24,0.55)" }} onClick={(event) => event.stopPropagation()}>
+        <div className="anim-fade" style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(20, 18, 24, 0.45)" }} onClick={closeDeleteModal}>
+          <div className="anim-sheet" style={{ width: "100%", borderRadius: "28px 28px 0 0", background: T.paper, padding: "14px 20px calc(120px + env(safe-area-inset-bottom))", boxShadow: "0 -18px 40px -26px rgba(20,18,24,0.55)" }} onClick={(event) => event.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
               <div style={{ width: 40, height: 5, borderRadius: 999, background: T.line }} />
             </div>
