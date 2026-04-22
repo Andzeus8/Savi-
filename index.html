@@ -395,6 +395,7 @@ const DEFAULT_FOLDER_ORDER = [
   "f-private-vault",
   "f-growth",
   "f-wtf-favorites",
+  "f-tinfoil",
   "f-lmao",
   "f-health",
   "f-recipes",
@@ -409,6 +410,7 @@ const SEED_FOLDERS = [
   { id: "f-private-vault", name: "Private Vault", color: "#6C63FF", image: "https://picsum.photos/seed/lockvault/800/600" },
   { id: "f-growth", name: "Growth Hacks", color: "#FF8A3D", image: "https://picsum.photos/seed/rocket/800/600" },
   { id: "f-wtf-favorites", name: "WTF Favorites", color: "#5875FF", image: "https://picsum.photos/seed/galaxy/800/600" },
+  { id: "f-tinfoil", name: "Tinfoil Hat Club", color: "#4C3D91", image: "https://picsum.photos/seed/tinfoilhat/800/600" },
   { id: "f-lmao", name: "LMAO", color: "#FF4D6D", image: "https://picsum.photos/seed/laugh/800/600" },
   { id: "f-health", name: "Health Hacks", color: "#25C48C", image: "https://picsum.photos/seed/wellness/800/600" },
   { id: "f-recipes", name: "Recipes & Food", color: "#FF9F43", image: "https://picsum.photos/seed/cooking/800/600" },
@@ -449,7 +451,7 @@ const DEMO_ITEMS = [
     { title: "Hubble's deep field still bends the brain", description: "A reminder of how much cosmic history was hiding inside what looked like a blank patch of night.", url: "https://science.nasa.gov/mission/hubble/science/universe-uncovered/hubble-deep-fields", thumbnail: picsumThumb("hubble-deep-field"), tags: ["hubble", "universe", "deep field"] },
     { title: "Webb finds carbon-rich chemistry on a distant world", description: "Another exoplanet atmosphere result that makes the universe feel much more populated and much stranger.", url: "https://science.nasa.gov/mission/webb/science-overview/", thumbnail: picsumThumb("jwst-exoplanet"), tags: ["exoplanet", "chemistry", "discovery"] },
   ]),
-  ...seedGroup({ folderId: "f-wtf-favorites", source: "Web", type: "video" }, [
+  ...seedGroup({ folderId: "f-tinfoil", source: "Web", type: "video" }, [
     { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
     { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
     { title: "Tutankhamun tomb discovery timeline", description: "The treasure, the media frenzy, and how archaeology became global spectacle.", url: "https://www.history.com/articles/tutankhamen", thumbnail: picsumThumb("tutankhamun-tomb"), tags: ["tutankhamun", "egypt", "discovery"] },
@@ -460,6 +462,20 @@ const DEMO_ITEMS = [
     { title: "Nazca Lines from the air", description: "An ideal late-night mystery watch: giant geoglyphs, uncertain motives, and endless theory bait.", url: "https://whc.unesco.org/en/list/700/", thumbnail: picsumThumb("nazca-lines"), tags: ["nazca", "mystery", "peru"] },
     { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.discovery.com/exploration/lost-cities-of-the-world", source: "Web", type: "article", thumbnail: picsumThumb("lost-civilizations-iceberg"), tags: ["iceberg", "history", "deep dive"] },
     { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.smithsonianmag.com/history/how-great-pyramid-giza-was-built-180979146/", source: "Web", type: "article", thumbnail: picsumThumb("temple-engineering-mysteries"), tags: ["temples", "engineering", "ancient"] },
+  ]),
+  ...seedGroup({ folderId: "f-tinfoil", source: "Web", type: "article" }, [
+    { title: "Pentagon fails 7th audit in a row", description: "A budget-watch rabbit hole on how the Pentagon still cannot fully account for hundreds of billions in spending.", url: "https://www.youtube.com/watch?v=30ffX3PXNc0", source: "YouTube", type: "video", thumbnail: youtubeThumb("30ffX3PXNc0"), tags: ["pentagon", "audit", "budget", "government"] },
+    { title: "The Missing $21 Trillion at the Pentagon", description: "The Reuters report that became one of the internet's favorite entry points into black-budget speculation.", url: "https://www.reuters.com/article/us-usa-audit-army-idUSKCN1BW1GE", source: "Reuters", thumbnail: picsumThumb("pentagon-missing-money"), tags: ["pentagon", "missing money", "government", "budget"] },
+    { title: "HOW PYRAMIDS WERE BUILT!", description: "A mystery-heavy watch on impossible precision, massive stone transport, and why Giza keeps restarting the argument.", url: "https://www.youtube.com/watch?v=icW0Itp675c", source: "YouTube", type: "video", thumbnail: youtubeThumb("icW0Itp675c"), tags: ["egypt", "pyramids", "ancient", "mystery"] },
+    { title: "The Sphinx water erosion theory explained", description: "Robert Schoch's case for an older Sphinx, the geology behind it, and why it still sparks endless debate.", url: "https://www.saturniancosmology.org/files/sphinx/sphinxcontent.html", source: "Robert Schoch", thumbnail: picsumThumb("sphinx-water-erosion"), tags: ["sphinx", "egypt", "erosion", "ancient"] },
+    { title: "WORLD TRADE CENTER #7: a disturbing deep dive", description: "A long-form Building 7 breakdown that sits right at the center of one of the internet's most persistent modern conspiracies.", url: "https://www.youtube.com/watch?v=fxnSvCc_swE", source: "YouTube", type: "video", thumbnail: youtubeThumb("fxnSvCc_swE"), tags: ["9/11", "building 7", "conspiracy", "rabbit hole"] },
+    { title: "What's the most believable conspiracy theory?", description: "A classic AskReddit thread full of plausible-sounding cover-ups, wild replies, and links out to deeper holes.", url: "https://www.reddit.com/r/AskReddit/comments/p220cf/what_is_the_most_believable_conspiracy_theory/", source: "Reddit", type: "link", thumbnail: picsumThumb("believable-conspiracy-reddit"), tags: ["conspiracy", "reddit", "theories", "discussion"] },
+    { title: "Operation Northwoods: the government's own declassified plan", description: "A National Security Archive document showing just how far some proposed Cold War pretexts were willing to go.", url: "https://nsarchive.gwu.edu/CMC-60/joint-chiefs-pretexts-to-invade-Cuba-1962", source: "National Security Archive", thumbnail: picsumThumb("operation-northwoods"), tags: ["operation northwoods", "declassified", "government", "false flag"] },
+    { title: "Atlantis Found: The Search for the Lost City", description: "Peak lost-civilization viewing with submerged ruins, ancient maps, and exactly the kind of evidence montage you want here.", url: "https://www.youtube.com/watch?v=zWZO3_kL1RA", source: "YouTube", type: "video", thumbnail: youtubeThumb("zWZO3_kL1RA"), tags: ["atlantis", "lost civilization", "mystery", "documentary"] },
+    { title: "MKUltra: The CIA's appalling human experiments with mind control", description: "A readable history of the Cold War-era program that made government secrecy look much darker in hindsight.", url: "https://www.history.com/mkultra-operation-midnight-climax-cia-lsd-experiments", source: "History", thumbnail: picsumThumb("mkultra-history"), tags: ["mkultra", "cia", "mind control", "declassified"] },
+    { title: "Aliens and Cover-Ups (S5, E1) | Ancient Aliens", description: "Government secrecy, UFO files, and full History Channel energy for when you want your aliens with extra official denials.", url: "https://www.youtube.com/watch?v=s1l1g98XNbc", source: "YouTube", type: "video", thumbnail: youtubeThumb("s1l1g98XNbc"), tags: ["ancient aliens", "history channel", "aliens", "cover-up"] },
+    { title: "Area 51: what we actually know", description: "A more grounded read on Groom Lake, black aircraft, and why real secrecy did so much to fuel the alien mythology.", url: "https://www.history.com/news/what-goes-on-at-area-51", source: "History", thumbnail: picsumThumb("area51-what-we-know"), tags: ["area 51", "aliens", "government", "secrets"] },
+    { title: "What conspiracy theories actually turned out to be true in the end?", description: "A modern Reddit thread collecting examples like MKUltra, surveillance programs, and other stories that stopped sounding fake.", url: "https://www.reddit.com/r/AskReddit/comments/1bjmjjk/what_conspiracy_theories_actually_turned_out_to_be_true_in_the_end/", source: "Reddit", type: "link", thumbnail: picsumThumb("proven-true-conspiracies"), tags: ["conspiracy", "government", "proven true", "reddit"] },
   ]),
   ...seedGroup({ folderId: "f-growth", source: "Web", type: "article" }, [
     { title: "How to use Claude like a real thinking partner", description: "A practical setup for long-context prompting, critique passes, and using models as editors instead of slot machines.", url: "https://www.anthropic.com/claude", thumbnail: picsumThumb("claude-ai-workflow"), tags: ["claude", "ai", "workflow"] },
@@ -641,7 +657,7 @@ const SEED_ITEMS = buildSeedFeed(DEMO_ITEMS).map((item, index) => ({
   ...item,
 }));
 
-const FOLDER_COLORS = ["#6C63FF", "#FF8A3D", "#5875FF", "#FF4D6D", "#25C48C", "#FF9F43", "#18B7A0", "#F15BB5", "#6E68FF", "#F7C948"];
+const FOLDER_COLORS = ["#6C63FF", "#FF8A3D", "#5875FF", "#4C3D91", "#FF4D6D", "#25C48C", "#FF9F43", "#18B7A0", "#F15BB5", "#6E68FF", "#F7C948"];
 const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
@@ -680,6 +696,8 @@ const LEGACY_FOLDER_ID_MAP = {
   "f-read": "f-must-see",
   "f-wtf": "f-lmao",
   "f-science": "f-wtf-favorites",
+  "f-tinfoil-hat-club": "f-tinfoil",
+  "f-conspiracy": "f-tinfoil",
   "f-business": "f-growth",
   "f-must-watch": "f-wtf-favorites",
   "f-must-read": "f-must-see",
@@ -1248,7 +1266,8 @@ const mergeMetadata = (...sources) => {
 
 const folderKeywordMap = {
   "growth hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut", "claude", "chatgpt", "midjourney", "mac", "iphone", "vscode", "automation", "career", "work", "job", "resume", "salary", "leadership", "interview", "professional", "business", "money", "finance", "budget", "strategy", "negotiation", "startup", "networking", "side hustle"],
-  "wtf favorites": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe", "quantum", "fusion", "crispr", "mars", "black hole", "ancient", "mystery", "documentary", "egypt", "atlantis", "nazca", "sphinx", "aliens", "gobekli", "pyramid"],
+  "wtf favorites": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe", "quantum", "fusion", "crispr", "mars", "black hole", "starship", "exoplanet", "mariana trench", "deep sea", "hubble", "planetary science"],
+  "tinfoil hat club": ["conspiracy", "cover-up", "coverup", "classified", "declassified", "government secrets", "rabbit hole", "pentagon", "audit", "budget", "missing money", "operation northwoods", "northwoods", "mkultra", "cia", "mind control", "area 51", "building 7", "9/11", "atlantis", "ancient aliens", "ufo", "aliens", "sphinx", "water erosion", "pyramid", "pyramids", "gobekli", "nazca", "tutankhamun", "egypt mystery"],
   lmao: ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "numa", "chipmunk", "double rainbow", "fail", "cat", "music", "playlist", "spotify", "harambe", "doge", "pepe", "vine", "nostalgia"],
   "private vault": ["private", "vault", "id", "passport", "insurance", "document", "license", "bank", "secure", "card", "personal file", "statement", "tax", "medical", "wifi", "lease", "registration"],
   "health hacks": ["health", "wellness", "fitness", "nutrition", "protein", "sleep", "stress", "mental health", "hydration", "movement", "exercise", "workout", "recovery"],
@@ -1320,12 +1339,31 @@ const normalizeSavedState = (state) => {
   const rawItems = Array.isArray(state.items) ? state.items : [];
   const customFolders = rawFolders.filter(folder => !LEGACY_SEED_FOLDER_IDS.includes(folder.id) && !SEED_FOLDER_LOOKUP[folder.id]);
   const nextFolders = withSeededFolderDefaults(customFolders);
+  const tinfoilFolder = nextFolders.find(folder => folder.id === "f-tinfoil");
+  const wtfFolder = nextFolders.find(folder => folder.id === "f-wtf-favorites");
   const nextItems = rawItems.map((item) => {
     const legacyTarget = LEGACY_FOLDER_ID_MAP[item.folderId];
     let nextFolderId = item.folderId;
     if (legacyTarget) nextFolderId = legacyTarget;
     if (!nextFolders.some(folder => folder.id === nextFolderId)) {
       nextFolderId = guessFolderId(item, nextFolders) || nextFolders.find(folder => !folder.system)?.id || "f-must-see";
+    }
+    if (nextFolderId === "f-wtf-favorites" && tinfoilFolder) {
+      const haystack = sanitizeText([
+        item.title,
+        item.description,
+        item.publisher,
+        item.author,
+        item.source,
+        item.url,
+        item.filename,
+        item.mimeType,
+        item.extension,
+        Array.isArray(item.tags) ? item.tags.join(" ") : item.tags,
+      ].join(" ").toLowerCase());
+      const tinfoilScore = scoreFolder(tinfoilFolder, haystack);
+      const wtfScore = wtfFolder ? scoreFolder(wtfFolder, haystack) : 0;
+      if (tinfoilScore > 0 && tinfoilScore >= wtfScore) nextFolderId = "f-tinfoil";
     }
     return { ...item, folderId: nextFolderId };
   });
