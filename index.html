@@ -442,6 +442,46 @@ const seededShuffle = (items, seed = "savi") => {
     .sort((a, b) => a.rank - b.rank || a.item.title.localeCompare(b.item.title))
     .map(({ item }) => item);
 };
+const orderSeedItemsByTitles = (items, orderedTitles = []) => {
+  const orderMap = new Map(orderedTitles.map((title, index) => [title, index]));
+  return [...items].sort((a, b) => {
+    const aOrder = orderMap.has(a.title) ? orderMap.get(a.title) : Number.MAX_SAFE_INTEGER;
+    const bOrder = orderMap.has(b.title) ? orderMap.get(b.title) : Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return (a.title || "").localeCompare(b.title || "");
+  });
+};
+const TINFOIL_FEED_ORDER = [
+  "Pentagon fails 7th audit in a row",
+  "Atlantis theories that refuse to die",
+  "What's the most believable conspiracy theory?",
+  "HOW PYRAMIDS WERE BUILT!",
+  "Operation Northwoods: the government's own declassified plan",
+  "Ancient Aliens: the wildest episode recap",
+  "WORLD TRADE CENTER #7: a disturbing deep dive",
+  "Sphinx water erosion theory in plain English",
+  "What conspiracy theories actually turned out to be true in the end?",
+  "Atlantis Found: The Search for the Lost City",
+  "The Missing $21 Trillion at the Pentagon",
+  "Nazca Lines from the air",
+  "Aliens and Cover-Ups (S5, E1) | Ancient Aliens",
+  "Gobekli Tepe and the rewrite of early civilization",
+  "MKUltra: The CIA's appalling human experiments with mind control",
+  "Tutankhamun tomb discovery timeline",
+  "Area 51: what we actually know",
+  "How were the pyramids actually built?",
+  "Lost civilizations iceberg explained",
+  "Egyptian Book of the Dead explained visually",
+  "Unsolved temple engineering mysteries",
+  "The Sphinx water erosion theory explained",
+];
+const tinfoilSavedAtHoursForTitle = (title) => {
+  const index = TINFOIL_FEED_ORDER.indexOf(title);
+  if (index < 0) return null;
+  const cluster = Math.floor(index / 3);
+  const slotOffsets = [0, 9, 19];
+  return 12 + cluster * 29 + slotOffsets[index % 3];
+};
 
 const DEMO_ITEMS = [
   ...seedGroup({ folderId: "f-lmao", source: "YouTube", type: "video" }, [
@@ -468,7 +508,7 @@ const DEMO_ITEMS = [
     { title: "Hubble's deep field still bends the brain", description: "A reminder of how much cosmic history was hiding inside what looked like a blank patch of night.", url: "https://science.nasa.gov/mission/hubble/science/universe-uncovered/hubble-deep-fields", thumbnail: picsumThumb("hubble-deep-field"), tags: ["hubble", "universe", "deep field"] },
     { title: "Webb finds carbon-rich chemistry on a distant world", description: "Another exoplanet atmosphere result that makes the universe feel much more populated and much stranger.", url: "https://science.nasa.gov/mission/webb/science-overview/", thumbnail: picsumThumb("jwst-exoplanet"), tags: ["exoplanet", "chemistry", "discovery"] },
   ]),
-  ...seededShuffle(seedGroup({ folderId: "f-tinfoil", source: "Web", type: "article" }, [
+  ...orderSeedItemsByTitles(seedGroup({ folderId: "f-tinfoil", source: "Web", type: "article" }, [
     { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", source: "History", type: "article", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
     { title: "Pentagon fails 7th audit in a row", description: "A budget-watch rabbit hole on how the Pentagon still cannot fully account for hundreds of billions in spending.", url: "https://www.youtube.com/watch?v=30ffX3PXNc0", source: "YouTube", type: "video", thumbnail: youtubeThumb("30ffX3PXNc0"), tags: ["pentagon", "audit", "budget", "government"] },
     { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", source: "History", type: "article", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
@@ -491,7 +531,7 @@ const DEMO_ITEMS = [
     { title: "Aliens and Cover-Ups (S5, E1) | Ancient Aliens", description: "Government secrecy, UFO files, and full History Channel energy for when you want your aliens with extra official denials.", url: "https://www.youtube.com/watch?v=s1l1g98XNbc", source: "YouTube", type: "video", thumbnail: youtubeThumb("s1l1g98XNbc"), tags: ["ancient aliens", "history channel", "aliens", "cover-up"] },
     { title: "Area 51: what we actually know", description: "A more grounded read on Groom Lake, black aircraft, and why real secrecy did so much to fuel the alien mythology.", url: "https://www.history.com/news/what-goes-on-at-area-51", source: "History", thumbnail: picsumThumb("area51-what-we-know"), tags: ["area 51", "aliens", "government", "secrets"] },
     { title: "What conspiracy theories actually turned out to be true in the end?", description: "A modern Reddit thread collecting examples like MKUltra, surveillance programs, and other stories that stopped sounding fake.", url: "https://www.reddit.com/r/AskReddit/comments/1bjmjjk/what_conspiracy_theories_actually_turned_out_to_be_true_in_the_end/", source: "Reddit", type: "link", thumbnail: picsumThumb("proven-true-conspiracies"), tags: ["conspiracy", "government", "proven true", "reddit"] },
-  ]), "tinfoil-hat-club"),
+  ]), TINFOIL_FEED_ORDER),
   ...seedGroup({ folderId: "f-growth", source: "Web", type: "article" }, [
     { title: "How to use Claude like a real thinking partner", description: "A practical setup for long-context prompting, critique passes, and using models as editors instead of slot machines.", url: "https://www.anthropic.com/claude", thumbnail: picsumThumb("claude-ai-workflow"), tags: ["claude", "ai", "workflow"] },
     { title: "ChatGPT prompt engineering patterns worth saving", description: "Prompt structures that consistently produce better drafts, better summaries, and fewer weird surprises.", url: "https://platform.openai.com/docs/guides/prompt-engineering", thumbnail: picsumThumb("chatgpt-prompting"), tags: ["chatgpt", "prompts", "ai"] },
@@ -667,7 +707,7 @@ const buildSeedFeed = (items) => {
 };
 const SEED_ITEMS = buildSeedFeed(DEMO_ITEMS).map((item, index) => ({
   id: `i${index + 1}`,
-  savedAt: Date.now() - (index + 2) * 3600000,
+  savedAt: Date.now() - ((item.folderId === "f-tinfoil" ? (tinfoilSavedAtHoursForTitle(item.title) ?? (index + 2)) : (index + 2)) * 3600000),
   color: seedColorForFolder(item.folderId),
   ...item,
 }));
