@@ -203,7 +203,7 @@ const STORAGE_KEY = "savi_v1";
 const ASSET_DB_NAME = "savi_assets";
 const ASSET_DB_VERSION = 1;
 const ASSET_STORE = "assets";
-const T = { paper: "#F5F1EA", paperDim: "#EBE6DD", ink: "#1C1A17", inkSoft: "#5C574F", inkMute: "#8F8A80", line: "#D9D3C7", lineSoft: "#E6E0D4", accent: "#C8553D", card: "#FFFFFF" };
+const T = { paper: "#F7F7FB", paperDim: "#EEF1F7", ink: "#161A23", inkSoft: "#5D6678", inkMute: "#8A93A6", line: "#D8DEEA", lineSoft: "#E8ECF4", accent: "#6D7CFF", card: "#FFFFFF" };
 
 const svgCoverDataUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 const PRESET_FOLDER_COVERS = [
@@ -388,53 +388,196 @@ const PRESET_FOLDER_COVERS = [
 ];
 const PRESET_FOLDER_COVER_MAP = Object.fromEntries(PRESET_FOLDER_COVERS.map((cover) => [cover.id, cover.image]));
 
+const unsplashFolderCover = (keywords) => `https://source.unsplash.com/800x600/?${keywords}`;
 const SEED_FOLDERS = [
   { id: "f-all", name: "All Saves", system: true },
-  { id: "f-wtf", name: "WTF Videos", color: "#FF5E5B", image: "https://source.unsplash.com/featured/900x900/?neon,party" },
-  { id: "f-science", name: "Mind-Blowing Science", color: "#4ECDC4", image: "https://source.unsplash.com/featured/900x900/?space,science" },
-  { id: "f-hacks", name: "Life Hacks", color: "#FFB703", image: "https://source.unsplash.com/featured/900x900/?lightbulb,ideas" },
-  { id: "f-business", name: "Business & Career", color: "#3A86FF", image: "https://source.unsplash.com/featured/900x900/?office,business" },
-  { id: "f-private-vault", name: "Private Vault", color: "#6D597A", image: "https://source.unsplash.com/featured/900x900/?vault,lock" },
-  { id: "f-must-watch", name: "Must Watch", color: "#E63946", image: "https://source.unsplash.com/featured/900x900/?cinema,screen" },
-  { id: "f-must-read", name: "Must Read", color: "#9C6644", image: "https://source.unsplash.com/featured/900x900/?books,reading" },
-  { id: "f-must-do", name: "Must Do", color: "#06D6A0", image: "https://source.unsplash.com/featured/900x900/?adventure,checklist" },
-  { id: "f-recipes", name: "Recipes & Food", color: "#F77F00", image: "https://source.unsplash.com/featured/900x900/?food,plate" },
-  { id: "f-travel", name: "Travel & Places", color: "#2A9D8F", image: "https://source.unsplash.com/featured/900x900/?travel,globe" },
-  { id: "f-design", name: "Design Inspo", color: "#B5179E", image: "https://source.unsplash.com/featured/900x900/?design,art" },
-  { id: "f-research", name: "Research", color: "#577590", image: "https://source.unsplash.com/featured/900x900/?laboratory,research" },
+  { id: "f-wtf", name: "WTF Videos", color: "#FF6B6B", image: unsplashFolderCover("neon,nightlife,party") },
+  { id: "f-science", name: "Mind-Blowing Science", color: "#5B8DEF", image: unsplashFolderCover("space,cosmos,telescope") },
+  { id: "f-hacks", name: "Life Hacks", color: "#F4B740", image: unsplashFolderCover("lightbulb,workspace,ideas") },
+  { id: "f-business", name: "Business & Career", color: "#4D7CF3", image: unsplashFolderCover("office,career,laptop") },
+  { id: "f-private-vault", name: "Private Vault", color: "#7567F8", image: unsplashFolderCover("lock,safe,vault") },
+  { id: "f-must-watch", name: "Must Watch", color: "#FF7A59", image: unsplashFolderCover("cinema,projector,screen") },
+  { id: "f-must-read", name: "Must Read", color: "#AA7BFF", image: unsplashFolderCover("books,library,reading") },
+  { id: "f-must-do", name: "Must Do", color: "#35C5A2", image: unsplashFolderCover("adventure,hiking,checklist") },
+  { id: "f-recipes", name: "Recipes & Food", color: "#FF9F5A", image: unsplashFolderCover("food,kitchen,dinner") },
+  { id: "f-travel", name: "Travel & Places", color: "#2DB7A3", image: unsplashFolderCover("travel,airplane,landscape") },
+  { id: "f-design", name: "Design Inspo", color: "#FF5C93", image: unsplashFolderCover("design,studio,poster") },
+  { id: "f-research", name: "Research", color: "#7C8CF8", image: unsplashFolderCover("research,laboratory,notes") },
+  { id: "f-music-memes", name: "Music & Memes", color: "#A855F7", image: unsplashFolderCover("concert,retro,meme") },
 ];
 
-const SEED_ITEMS = [
-  { id: "i1", title: "Never Gonna Give You Up", description: "The immortal Rickroll: internet history, maximum whiplash, and still one of the most recognizable YouTube links on the planet.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", source: "YouTube", type: "video", folderId: "f-wtf", tags: ["viral", "music", "internet classic"], thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", savedAt: Date.now() - 3600000 * 2, color: "#FF5E5B" },
-  { id: "i2", title: "How Great Leaders Inspire Action", description: "Simon Sinek's classic TED talk on purpose-first leadership, influence, and why the strongest brands lead with belief.", url: "https://www.youtube.com/watch?v=8jPQjjsBbIc", source: "YouTube", type: "video", folderId: "f-business", tags: ["leadership", "career", "communication"], thumbnail: "https://i.ytimg.com/vi/8jPQjjsBbIc/hqdefault.jpg", savedAt: Date.now() - 3600000 * 5, color: "#3A86FF" },
-  { id: "i3", title: "10-Minute Morning Yoga", description: "A simple Yoga With Adriene session that makes it easier to actually stretch before the day gets away from you.", url: "https://www.youtube.com/watch?v=v7AYKMP6rOE", source: "YouTube", type: "video", folderId: "f-must-watch", tags: ["wellness", "stretching", "routine"], thumbnail: "https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg", savedAt: Date.now() - 3600000 * 8, color: "#E63946" },
-  { id: "i4", title: "Pocket-sized desk reset trick", description: "A TikTok productivity save about resetting your desk in micro-steps so it actually happens instead of becoming a whole project.", url: "https://www.tiktok.com/@thatpracticalmom/video/7203818217758301486", source: "TikTok", type: "video", folderId: "f-hacks", tags: ["productivity", "desk setup", "cleaning"], thumbnail: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 12, color: "#FFB703" },
-  { id: "i5", title: "15-minute creamy lemon pasta", description: "A fast TikTok recipe that hits all the weeknight priorities: one pan, bright flavor, and barely any cleanup.", url: "https://www.tiktok.com/@feelgoodfoodie/video/7212745259820164395", source: "TikTok", type: "video", folderId: "f-recipes", tags: ["recipe", "pasta", "quick dinner"], thumbnail: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 16, color: "#F77F00" },
-  { id: "i6", title: "Muted editorial poster carousel", description: "An Instagram design post with layered serif type, warm neutrals, and art-direction ideas worth borrowing later.", url: "https://www.instagram.com/p/C9n6oKfS0L8/", source: "Instagram", type: "image", folderId: "f-design", tags: ["poster", "editorial", "branding"], thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 20, color: "#B5179E" },
-  { id: "i7", title: "Lisbon rooftop sunset roundup", description: "An Instagram travel post collecting lookouts, tram views, and the kind of spots you want to remember once you're actually there.", url: "https://www.instagram.com/p/C8vLa4XPD8Y/", source: "Instagram", type: "image", folderId: "f-travel", tags: ["lisbon", "travel", "sunset"], thumbnail: "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 24, color: "#2A9D8F" },
-  { id: "i8", title: "LPT: make your reset ritual too small to fail", description: "A Reddit save about using tiny recurring resets instead of waiting for huge motivation spikes.", url: "https://www.reddit.com/r/LifeProTips/comments/18w7b0d/lpt_build_a_reset_ritual_you_can_do_in_under_15/", source: "Reddit", type: "article", folderId: "f-hacks", tags: ["lifeprotips", "routine", "systems"], thumbnail: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 30, color: "#FFB703" },
-  { id: "i9", title: "Attention papers that still feel fresh", description: "A Reddit thread collecting standout transformer papers, explainers, and follow-up reading from the ML crowd.", url: "https://www.reddit.com/r/MachineLearning/comments/16s3g8a/d_attention_papers_that_aged_well/", source: "Reddit", type: "article", folderId: "f-research", tags: ["machine learning", "papers", "transformers"], thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 36, color: "#577590" },
-  { id: "i10", title: "Automate payday before lifestyle creep wins", description: "An X post worth saving because it explains a clean flow for moving income into bills, buffer, and investing without overthinking.", url: "https://x.com/ramit/status/1733162024178774160", source: "X", type: "article", folderId: "f-business", tags: ["money", "automation", "planning"], thumbnail: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 42, color: "#3A86FF" },
-  { id: "i11", title: "Story prompts before your next interview", description: "A concise X thread about prepping better examples, metrics, and leadership stories before high-stakes interviews.", url: "https://x.com/shreyas/status/1762159207779418569", source: "X", type: "article", folderId: "f-business", tags: ["interviews", "career", "storytelling"], thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 48, color: "#3A86FF" },
-  { id: "i12", title: "Lilia Restaurant", description: "A Williamsburg restaurant save for a future New York food crawl, straight from Google Maps.", url: "https://www.google.com/maps/place/Lilia/@40.717318,-73.961538,17z/", source: "Google Maps", type: "place", folderId: "f-recipes", tags: ["restaurant", "nyc", "italian", "location"], thumbnail: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 54, color: "#F77F00" },
-  { id: "i13", title: "Eiffel Tower", description: "Saved as a place so the Paris landmark is one tap away when planning what to do on the ground.", url: "https://www.google.com/maps/place/Eiffel+Tower/@48.8583701,2.2922926,17z/", source: "Google Maps", type: "place", folderId: "f-travel", tags: ["paris", "landmark", "travel", "location"], thumbnail: "https://upload.wikimedia.org/wikipedia/commons/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg", savedAt: Date.now() - 3600000 * 60, color: "#2A9D8F" },
-  { id: "i14", title: "Mirror bacteria could be a radical departure from known life", description: "A CNN science save on why researchers are warning about mirror-life experiments and synthetic biology risks.", url: "https://amp.cnn.com/cnn/2024/12/16/science/mirror-bacteria-research-risks", source: "CNN", type: "article", folderId: "f-science", tags: ["science", "biology", "future"], thumbnail: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 68, color: "#4ECDC4" },
-  { id: "i15", title: "Why cities are redesigning streets for people", description: "A BBC-style urban design and mobility piece on calmer streets, better walking culture, and more livable neighborhoods.", url: "https://www.bbc.com/future/article/20240214-how-cities-are-redesigning-streets-for-people", source: "BBC", type: "article", folderId: "f-must-read", tags: ["cities", "urbanism", "mobility"], thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 76, color: "#9C6644" },
-  { id: "i16", title: "The new rules of getting work done", description: "A New York Times-style productivity read on focus, meetings, and what knowledge work looks like now.", url: "https://www.nytimes.com/2024/01/01/business/productivity-work-advice.html", source: "New York Times", type: "article", folderId: "f-must-read", tags: ["productivity", "work", "longread"], thumbnail: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 84, color: "#9C6644" },
-  { id: "i17", title: "Passport Book Renewal Form DS-82", description: "A real PDF form saved into the vault for travel paperwork and identity-document logistics.", url: "https://travel.state.gov/content/dam/passports/forms-fees/Passport%20Book%20Renewal%20Form%20DS-82.pdf", source: "U.S. State Dept", type: "file", folderId: "f-private-vault", tags: ["pdf", "passport", "documents"], thumbnail: "https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 92, color: "#6D597A" },
-  { id: "i18", title: "Harvard Resume & Cover Letter Guide", description: "A polished PDF to revisit before rewriting bullets, tightening stories, and applying for stronger roles.", url: "https://careerservices.fas.harvard.edu/files/ocs/files/hes-resume-cover-letter-guide.pdf", source: "Harvard", type: "file", folderId: "f-business", tags: ["pdf", "resume", "job search"], thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 100, color: "#3A86FF" },
-  { id: "i19", title: "Blinding Lights", description: "A Spotify track save for when you want a fast mood reset or need to remember a song that always works.", url: "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b", source: "Spotify", type: "link", folderId: "f-must-watch", tags: ["music", "favorites", "spotify"], thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 108, color: "#E63946" },
-  { id: "i20", title: "Deep Focus", description: "Spotify's high-rotation concentration playlist, saved for reading sessions and work sprints.", url: "https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ", source: "Spotify", type: "link", folderId: "f-must-do", tags: ["playlist", "focus", "work"], thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 116, color: "#06D6A0" },
-  { id: "i21", title: "Layered serif poster system", description: "A Pinterest save with dramatic type, asymmetry, and enough styling ideas to restart an entire moodboard.", url: "https://www.pinterest.com/pin/765893480350668658/", source: "Pinterest", type: "image", folderId: "f-design", tags: ["pinterest", "poster", "art direction"], thumbnail: "https://images.unsplash.com/photo-1524749292158-7540c2494485?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 124, color: "#B5179E" },
-  { id: "i22", title: "Warm minimalist kitchen", description: "A Pinterest interiors save with creamy woods, subtle stone, and a kitchen palette worth stealing for future spaces.", url: "https://www.pinterest.com/pin/118641771424861809/", source: "Pinterest", type: "image", folderId: "f-recipes", tags: ["kitchen", "interiors", "food space"], thumbnail: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 132, color: "#F77F00" },
-  { id: "i23", title: "Are.na", description: "A generic website bookmark for collecting references, ideas, and web fragments outside of the algorithmic feed.", url: "https://www.are.na/", source: "Web", type: "link", folderId: "f-must-read", tags: ["bookmark", "curation", "tools"], thumbnail: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 140, color: "#9C6644" },
-  { id: "i24", title: "JWST Pillars image", description: "A direct image URL saved because the colors and scale feel impossible in the best way.", url: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80", source: "Web", type: "image", folderId: "f-science", tags: ["space", "image", "astronomy"], thumbnail: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 148, color: "#4ECDC4" },
-  { id: "i25", title: "Monochrome interior composition", description: "A direct image save for layout, tone, and how to make a room feel editorial instead of generic.", url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80", source: "Web", type: "image", folderId: "f-design", tags: ["interior", "composition", "image"], thumbnail: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 156, color: "#B5179E" },
-  { id: "i26", title: "Attention Is All You Need", description: "The original transformer paper, saved as a PDF for quick reference and deep re-reads.", url: "https://arxiv.org/pdf/1706.03762.pdf", source: "arXiv", type: "file", folderId: "f-research", tags: ["pdf", "transformers", "research"], thumbnail: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 164, color: "#577590" },
-  { id: "i27", title: "Five museums to hit in one rainy afternoon", description: "A compact city-planning save that feels more like a doable itinerary than a someday dream board.", url: "https://www.google.com/maps/search/museums+in+lisbon/", source: "Google Maps", type: "place", folderId: "f-must-do", tags: ["museums", "itinerary", "maps", "location"], thumbnail: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80", savedAt: Date.now() - 3600000 * 172, color: "#06D6A0" },
+const seedColorForFolder = (folderId) => SEED_FOLDERS.find((folder) => folder.id === folderId)?.color || T.accent;
+const picsumThumb = (seed, width = 900, height = 1100) => `https://picsum.photos/seed/${encodeURIComponent(seed)}/${width}/${height}`;
+const youtubeThumb = (videoId) => `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+const seedGroup = (defaults, items) => items.map((item) => ({ ...defaults, ...item }));
+
+const DEMO_ITEMS = [
+  ...seedGroup({ folderId: "f-wtf", source: "YouTube", type: "video" }, [
+    { title: "Numa Numa", description: "Gary Brolsma's webcam lip-sync artifact from the early internet that still feels impossible to explain to anyone born after autoplay.", url: "https://www.youtube.com/watch?v=KmtzQCSh6xk", thumbnail: youtubeThumb("KmtzQCSh6xk"), tags: ["viral", "internet classic", "nostalgia"] },
+    { title: "Charlie Bit My Finger", description: "The sibling chaos clip that became one of YouTube's defining eras in under a minute.", url: "https://www.youtube.com/watch?v=_OBlgSz8sSM", thumbnail: youtubeThumb("_OBlgSz8sSM"), tags: ["viral", "siblings", "classic"] },
+    { title: "Keyboard Cat", description: "A perfect cutaway punchline and still one of the purest meme formats ever uploaded.", url: "https://www.youtube.com/watch?v=J---aiyznGQ", thumbnail: youtubeThumb("J---aiyznGQ"), tags: ["meme", "cat", "internet classic"] },
+    { title: "David After Dentist", description: "Peak post-anesthesia confusion, immortalized forever by the early YouTube recommendation engine.", url: "https://www.youtube.com/watch?v=txqiwrbYGrs", thumbnail: youtubeThumb("txqiwrbYGrs"), tags: ["viral", "family", "comedy"] },
+    { title: "Double Rainbow", description: "A genuine emotional reaction to weather that became a legendary reaction clip all on its own.", url: "https://www.youtube.com/watch?v=OQSNhk5ICTI", thumbnail: youtubeThumb("OQSNhk5ICTI"), tags: ["rainbow", "reaction", "internet"] },
+    { title: "Sneezing Baby Panda", description: "Eight seconds of perfect comedic timing that somehow defined an entire era of cute internet content.", url: "https://www.youtube.com/watch?v=FzRH3iTQPrk", thumbnail: youtubeThumb("FzRH3iTQPrk"), tags: ["panda", "cute", "viral"] },
+    { title: "Evolution of Dance", description: "A one-man speedrun through decades of dance crazes before TikTok made that a genre.", url: "https://www.youtube.com/watch?v=dMH0bHeiRNg", thumbnail: youtubeThumb("dMH0bHeiRNg"), tags: ["dance", "viral", "throwback"] },
+    { title: "Dramatic Chipmunk", description: "The hard zoom, the music sting, the expression. Nothing about it should work this well and yet.", url: "https://www.youtube.com/watch?v=a1Y73sPHKxw", thumbnail: youtubeThumb("a1Y73sPHKxw"), tags: ["chipmunk", "reaction", "meme"] },
+    { title: "FailArmy Mega Fail Mix", description: "A maximalist stack of wipeouts, slips, and bad decisions made for doom-scrolling with friends.", url: "https://www.failarmy.com/collections/funny-fails", thumbnail: picsumThumb("failarmy-mega-fail"), source: "Web", tags: ["fails", "funny", "compilation"] },
+    { title: "Never Gonna Give You Up", description: "The immortal Rickroll: internet history, maximum whiplash, and still the cleanest bait-and-switch in the library.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", thumbnail: youtubeThumb("dQw4w9WgXcQ"), tags: ["rickroll", "music", "internet classic"] },
+  ]),
+  ...seedGroup({ folderId: "f-science", source: "Web", type: "article" }, [
+    { title: "Webb captures impossible-looking pillars of creation detail", description: "NASA's James Webb telescope delivers a sharper, deeper look at the dust structures that made space feel fake all over again.", url: "https://science.nasa.gov/mission/webb/science-overview/webbs-pillars-of-creation/", thumbnail: picsumThumb("jwst-pillars"), tags: ["jwst", "nasa", "space"] },
+    { title: "Starship flight test recap and why it matters", description: "A launch breakdown focused on reusable heavy lift, heat shielding, and the long game of getting serious mass off Earth.", url: "https://www.spacex.com/launches/mission/?missionId=starship-flight-test", thumbnail: picsumThumb("starship-flight"), tags: ["spacex", "rockets", "launch"] },
+    { title: "How the first black hole image was stitched together", description: "The Event Horizon Telescope result explained without draining the wonder out of it.", url: "https://eventhorizontelescope.org/press-release-april-10-2019-astronomers-capture-first-image-black-hole", thumbnail: picsumThumb("black-hole-first-photo"), tags: ["black hole", "astronomy", "physics"] },
+    { title: "Quantum computing finally gets better at fixing itself", description: "A useful read on error correction progress and why the boring reliability problems are the real frontier.", url: "https://research.ibm.com/blog/quantum-error-correction-breakthrough", thumbnail: picsumThumb("quantum-error-correction"), tags: ["quantum", "computing", "breakthrough"] },
+    { title: "Perseverance rover's most intriguing Mars samples so far", description: "A quick science catch-up on the rock cores and delta clues that make Jezero crater so valuable.", url: "https://mars.nasa.gov/mars2020/mission/science/sample-caching/", thumbnail: picsumThumb("perseverance-mars"), tags: ["mars", "rover", "planetary science"] },
+    { title: "Inside the pressure and darkness of the Mariana Trench", description: "Deep ocean research notes from a place so hostile it feels closer to sci-fi than geography.", url: "https://oceanservice.noaa.gov/facts/marianatrench.html", thumbnail: picsumThumb("mariana-trench"), tags: ["ocean", "deep sea", "exploration"] },
+    { title: "CRISPR moves from theory to approved medicine", description: "A plain-language explanation of the gene-editing shift from lab promise to actual therapy.", url: "https://www.genome.gov/about-genomics/policy-issues/what-is-crispr", thumbnail: picsumThumb("crispr-gene-editing"), tags: ["crispr", "genetics", "medicine"] },
+    { title: "Fusion ignition crosses from headline to engineering problem", description: "The useful framing: not 'unlimited power tomorrow,' but a real threshold crossed in the lab.", url: "https://www.llnl.gov/article/49816/lawrence-livermore-national-laboratory-achieves-fusion-ignition", thumbnail: picsumThumb("fusion-ignition"), tags: ["fusion", "energy", "physics"] },
+    { title: "Hubble's deep field still bends the brain", description: "A reminder of how much cosmic history was hiding inside what looked like a blank patch of night.", url: "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-ultra-deep-field/", thumbnail: picsumThumb("hubble-deep-field"), tags: ["hubble", "universe", "deep field"] },
+    { title: "Webb finds carbon-rich chemistry on a distant world", description: "Another exoplanet atmosphere result that makes the universe feel much more populated and much stranger.", url: "https://science.nasa.gov/mission/webb/science-overview/", thumbnail: picsumThumb("jwst-exoplanet"), tags: ["exoplanet", "chemistry", "discovery"] },
+  ]),
+  ...seedGroup({ folderId: "f-must-watch", source: "Web", type: "video" }, [
+    { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
+    { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
+    { title: "Tutankhamun tomb discovery timeline", description: "The treasure, the media frenzy, and how archaeology became global spectacle.", url: "https://www.britannica.com/topic/tomb-of-Tutankhamen", thumbnail: picsumThumb("tutankhamun-tomb"), tags: ["tutankhamun", "egypt", "discovery"] },
+    { title: "Atlantis theories that refuse to die", description: "A greatest-hits tour of the historical, geological, and completely unhinged versions of Atlantis.", url: "https://www.nationalgeographic.com/history/article/atlantis", thumbnail: picsumThumb("atlantis-theories"), tags: ["atlantis", "legend", "mystery"] },
+    { title: "Egyptian Book of the Dead explained visually", description: "A crisp visual introduction to spells, judgment scenes, and the aesthetics of an afterlife manual.", url: "https://www.metmuseum.org/toah/hd/dbod/hd_dbod.htm", thumbnail: picsumThumb("book-of-the-dead"), tags: ["egypt", "mythology", "afterlife"] },
+    { title: "Sphinx water erosion theory in plain English", description: "One of those archaeology-adjacent arguments that instantly sends you down three more tabs.", url: "https://www.smithsonianmag.com/history/uncovering-secrets-of-great-sphinx-180952437/", thumbnail: picsumThumb("sphinx-erosion"), tags: ["sphinx", "erosion", "debate"] },
+    { title: "Gobekli Tepe and the rewrite of early civilization", description: "A fascinating watch about ritual, agriculture, and the timeline getting rearranged.", url: "https://www.nationalgeographic.com/history/article/gobekli-tepe-oldest-monument-temple", thumbnail: picsumThumb("gobekli-tepe"), tags: ["archaeology", "civilization", "ancient"] },
+    { title: "Nazca Lines from the air", description: "An ideal late-night mystery watch: giant geoglyphs, uncertain motives, and endless theory bait.", url: "https://whc.unesco.org/en/list/700/", thumbnail: picsumThumb("nazca-lines"), tags: ["nazca", "mystery", "peru"] },
+    { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.youtube.com/watch?v=8jPQjjsBbIc", source: "YouTube", thumbnail: youtubeThumb("8jPQjjsBbIc"), tags: ["iceberg", "history", "deep dive"] },
+    { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.youtube.com/watch?v=v7AYKMP6rOE", source: "YouTube", thumbnail: youtubeThumb("v7AYKMP6rOE"), tags: ["temples", "engineering", "ancient"] },
+  ]),
+  ...seedGroup({ folderId: "f-hacks", source: "Web", type: "article" }, [
+    { title: "How to use Claude like a real thinking partner", description: "A practical setup for long-context prompting, critique passes, and using models as editors instead of slot machines.", url: "https://www.anthropic.com/news/claude", thumbnail: picsumThumb("claude-ai-workflow"), tags: ["claude", "ai", "workflow"] },
+    { title: "ChatGPT prompt engineering patterns worth saving", description: "Prompt structures that consistently produce better drafts, better summaries, and fewer weird surprises.", url: "https://platform.openai.com/docs/guides/prompt-engineering", thumbnail: picsumThumb("chatgpt-prompting"), tags: ["chatgpt", "prompts", "ai"] },
+    { title: "AI productivity stack for solo operators", description: "A calmer workflow for research, writing, and follow-through without turning your day into an automation costume.", url: "https://www.notion.so/product/ai", thumbnail: picsumThumb("ai-productivity-stack"), tags: ["productivity", "automation", "ai"] },
+    { title: "Midjourney prompts that stop looking generic", description: "A save for better style references, camera language, and how not to get the same four outputs everyone else gets.", url: "https://docs.midjourney.com/", thumbnail: picsumThumb("midjourney-tips"), tags: ["midjourney", "prompting", "images"] },
+    { title: "Mac hidden features you'll actually use", description: "Window tiling, quick actions, clipboard tricks, and other little things that add up fast.", url: "https://support.apple.com/guide/mac-help/welcome/mac", thumbnail: picsumThumb("mac-hidden-features"), tags: ["mac", "shortcuts", "tips"] },
+    { title: "iPhone tricks that make daily friction disappear", description: "A tidy list of quality-of-life settings, text shortcuts, and camera gestures worth turning on.", url: "https://support.apple.com/guide/iphone/welcome/ios", thumbnail: picsumThumb("iphone-tricks"), tags: ["iphone", "ios", "workflow"] },
+    { title: "VS Code shortcuts for flow state", description: "One of those saves you should probably revisit every month until the muscle memory sticks.", url: "https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf", thumbnail: picsumThumb("vscode-shortcuts"), tags: ["vscode", "shortcuts", "coding"] },
+    { title: "Python scripts that automate the annoying stuff", description: "Batch renaming, scraping, reminders, exports, and all the tiny scripts that quietly pay rent.", url: "https://automatetheboringstuff.com/", thumbnail: picsumThumb("python-automation"), tags: ["python", "automation", "scripts"] },
+    { title: "Browser extensions that earn their keep", description: "A curated mix of focus, capture, and tab cleanup tools without turning the toolbar into a junk drawer.", url: "https://chromewebstore.google.com/category/extensions", thumbnail: picsumThumb("browser-extensions"), tags: ["browser", "extensions", "workflow"] },
+    { title: "Home organization hacks with zero Pinterest energy", description: "Simple resets, labels, bins, and defaults that make the room easier to maintain later.", url: "https://www.apartmenttherapy.com/organization-hacks", thumbnail: picsumThumb("home-organization"), tags: ["home", "organization", "systems"] },
+  ]),
+  ...seedGroup({ folderId: "f-business", source: "Web", type: "article" }, [
+    { title: "Simon Sinek on starting with why", description: "Still one of the cleanest leadership frameworks for clarity, trust, and getting people to care.", url: "https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action", thumbnail: picsumThumb("simon-sinek"), source: "YouTube", type: "video", tags: ["leadership", "communication", "management"] },
+    { title: "Y Combinator startup school notes to keep around", description: "Advice on momentum, distribution, and why clarity beats cleverness when you're actually building.", url: "https://www.startupschool.org/", thumbnail: picsumThumb("yc-startup-school"), tags: ["startup", "yc", "founders"] },
+    { title: "Negotiation tactics that don't feel slimy", description: "Anchoring, silence, framing, and a few practical scripts to save before the next tense call.", url: "https://hbr.org/topic/negotiation", thumbnail: picsumThumb("negotiation-tactics"), tags: ["negotiation", "salary", "strategy"] },
+    { title: "Resume bullet upgrades that actually matter", description: "Less buzzword paste, more evidence and scope. The kind of resume advice that improves the page immediately.", url: "https://careerservices.fas.harvard.edu/resources/create-a-strong-resume/", thumbnail: picsumThumb("resume-tips"), tags: ["resume", "job search", "career"] },
+    { title: "Networking without becoming a LinkedIn gremlin", description: "Better prompts, better follow-ups, and a much saner way to stay top of mind.", url: "https://www.linkedin.com/business/talent/blog/talent-acquisition/networking-tips", thumbnail: picsumThumb("networking-strategies"), tags: ["networking", "career", "relationships"] },
+    { title: "Remote work productivity without calendar sprawl", description: "A realistic guide to focus blocks, async updates, and keeping home from feeling like a half-office forever.", url: "https://basecamp.com/books/remote", thumbnail: picsumThumb("remote-work-productivity"), tags: ["remote work", "focus", "teamwork"] },
+    { title: "Side hustle ideas that survive first contact with reality", description: "An honest list of small businesses, leverage plays, and creator-adjacent income streams.", url: "https://www.shopify.com/blog/side-hustle", thumbnail: picsumThumb("side-hustle-ideas"), tags: ["side hustle", "income", "ideas"] },
+    { title: "Personal finance basics for smart adults who avoided it", description: "The clean starting grid: emergency fund, high-interest debt, retirement, and automatic investing.", url: "https://www.consumerfinance.gov/consumer-tools/budgeting/", thumbnail: picsumThumb("personal-finance-basics"), tags: ["finance", "budgeting", "basics"] },
+    { title: "Storytelling for interviews and promotions", description: "A save for turning vague achievements into memorable, specific leadership stories.", url: "https://hbr.org/2024/01/how-to-tell-a-great-career-story", thumbnail: picsumThumb("career-storytelling"), tags: ["storytelling", "interviews", "growth"] },
+    { title: "A sharper way to run your weekly review", description: "A business-oriented system for planning, follow-up, and not letting important tasks dissolve in chat threads.", url: "https://todoist.com/productivity-methods/weekly-review", thumbnail: picsumThumb("weekly-review"), tags: ["planning", "review", "execution"] },
+  ]),
+  ...seedGroup({ folderId: "f-must-read", source: "Web", type: "article" }, [
+    { title: "Wait But Why: The AI Revolution", description: "Tim Urban's sprawling AI explainer that still does a great job making the stakes feel both funny and unsettling.", url: "https://waitbutwhy.com/2015/01/artificial-intelligence-revolution-1.html", thumbnail: picsumThumb("waitbutwhy-ai"), tags: ["ai", "longread", "tim urban"] },
+    { title: "Lex Fridman interview notes worth revisiting", description: "A catch-all save for the best deep interview threads on technology, ambition, and how people actually think.", url: "https://lexfridman.com/podcast/", thumbnail: picsumThumb("lex-fridman"), tags: ["interviews", "podcast", "ideas"] },
+    { title: "Wikipedia rabbit hole: Byzantine Empire", description: "One of those tabs that starts as a skim and ends with ten more tabs and a missing afternoon.", url: "https://en.wikipedia.org/wiki/Byzantine_Empire", thumbnail: picsumThumb("wikipedia-byzantine"), tags: ["wikipedia", "history", "rabbit hole"] },
+    { title: "Paul Graham: Do Things That Don't Scale", description: "Still foundational for anyone making something early and wondering if the messy version counts.", url: "https://paulgraham.com/ds.html", thumbnail: picsumThumb("paul-graham-dtts"), tags: ["paul graham", "startups", "essay"] },
+    { title: "Tim Urban on procrastination and the panic monster", description: "The funniest useful explanation for self-sabotage that the internet ever produced.", url: "https://waitbutwhy.com/2013/10/why-procrastinators-procrastinate.html", thumbnail: picsumThumb("panic-monster"), tags: ["procrastination", "psychology", "tim urban"] },
+    { title: "Naval Ravikant on wealth and leverage", description: "A compact philosophy save on ownership, specific knowledge, and avoiding a life built from borrowed status games.", url: "https://nav.al/wealth", thumbnail: picsumThumb("naval-wealth"), tags: ["naval", "wealth", "leverage"] },
+    { title: "Wikipedia rabbit hole: Antikythera mechanism", description: "An astonishing mechanical object that immediately upgrades your sense of what ancient people could build.", url: "https://en.wikipedia.org/wiki/Antikythera_mechanism", thumbnail: picsumThumb("antikythera"), tags: ["wikipedia", "ancient tech", "history"] },
+    { title: "Paul Graham: Maker's Schedule, Manager's Schedule", description: "Still painfully relevant every time your week gets carved into unusable slices.", url: "https://paulgraham.com/makersschedule.html", thumbnail: picsumThumb("makers-managers"), tags: ["focus", "work", "essay"] },
+    { title: "Wait But Why: Elon Musk and the scary future", description: "A classic long-form internet essay save for when you want big-arc technology framing.", url: "https://waitbutwhy.com/2017/03/neuralink.html", thumbnail: picsumThumb("waitbutwhy-future"), tags: ["future", "technology", "essay"] },
+    { title: "Naval's readings on judgment", description: "A compact read on taste, leverage, and how to think more cleanly when the stakes go up.", url: "https://nav.al/judgment", thumbnail: picsumThumb("naval-judgment"), tags: ["judgment", "thinking", "wisdom"] },
+  ]),
+  ...seedGroup({ folderId: "f-must-do", source: "Web", type: "link" }, [
+    { title: "48-hour Lisbon coffee crawl", description: "A neat city mission save with cafes, bookstores, and a route that actually fits into a weekend.", url: "https://www.google.com/maps/search/coffee+shops+in+lisbon/", source: "Google Maps", type: "place", thumbnail: picsumThumb("lisbon-coffee-crawl"), tags: ["coffee", "weekend", "itinerary"] },
+    { title: "Try a pottery class this month", description: "A reminder that not every good hobby has to start as a five-year identity plan.", url: "https://www.eventbrite.com/d/online/pottery-class/", thumbnail: picsumThumb("pottery-class"), tags: ["hobby", "class", "offline"] },
+    { title: "Grand Canyon south rim day map", description: "A place save for future trip planning when you want the viewpoints and logistics in one place.", url: "https://www.google.com/maps/place/Grand+Canyon+Village/", source: "Google Maps", type: "place", thumbnail: picsumThumb("grand-canyon-day"), tags: ["nature", "maps", "trip"] },
+    { title: "Weekend apartment reset checklist", description: "A practical must-do list for getting the house back to baseline without wasting your whole Sunday.", url: "https://todoist.com/inspiration/weekly-cleaning-schedule", thumbnail: picsumThumb("weekend-reset"), tags: ["checklist", "reset", "home"] },
+    { title: "Book the museum-heavy rainy day route", description: "A route save built around clustered museums so weather stops mattering so much.", url: "https://www.google.com/maps/search/museums+in+paris/", source: "Google Maps", type: "place", thumbnail: picsumThumb("museum-route"), tags: ["museum", "day plan", "city"] },
+    { title: "Three recipes to batch this Sunday", description: "A save for turning one cooking burst into a calmer week with almost no decisions left.", url: "https://www.budgetbytes.com/category/extra-bytes/budget-friendly-meal-prep/", thumbnail: picsumThumb("sunday-batch-cook"), tags: ["meal prep", "routine", "try"] },
+    { title: "One-day Tokyo design district walk", description: "A street-level route through stores, cafes, and neighborhoods worth actually walking instead of just pinning.", url: "https://www.google.com/maps/search/shibuya+design+stores/", source: "Google Maps", type: "place", thumbnail: picsumThumb("tokyo-design-walk"), tags: ["tokyo", "walk", "design"] },
+    { title: "Finally set up a digital emergency kit", description: "A gentle kick to collect IDs, insurance, contacts, and travel docs before you actually need them.", url: "https://www.ready.gov/kit", thumbnail: picsumThumb("digital-emergency-kit"), tags: ["preparedness", "documents", "admin"] },
+    { title: "Hike with the best skyline payoff nearby", description: "A trail save for the kind of Saturday that needs one clear plan and a good view.", url: "https://www.google.com/maps/search/hiking+trails+near+barcelona/", source: "Google Maps", type: "place", thumbnail: picsumThumb("skyline-hike"), tags: ["hike", "outdoors", "weekend"] },
+    { title: "Learn one new hosting recipe", description: "A practical action save for becoming the person who can pull dinner together when people actually show up.", url: "https://www.seriouseats.com/easy-dinner-party-recipes", thumbnail: picsumThumb("hosting-recipe"), tags: ["hosting", "recipe", "todo"] },
+  ]),
+  ...seedGroup({ folderId: "f-recipes", source: "Web", type: "video" }, [
+    { title: "Gordon Ramsay's scrambled eggs", description: "The buttery slow-scramble method that people either become devoted to or immediately argue about.", url: "https://www.youtube.com/watch?v=PUP7U5vTMM0", source: "YouTube", thumbnail: youtubeThumb("PUP7U5vTMM0"), tags: ["breakfast", "eggs", "chef"] },
+    { title: "Viral TikTok pasta, but actually worth it", description: "A save for the creamy baked pasta era that still lands on busy weeknights.", url: "https://www.tiktok.com/@feelgoodfoodie/video/7212745259820164395", source: "TikTok", thumbnail: picsumThumb("viral-tiktok-pasta"), tags: ["tiktok", "pasta", "viral"] },
+    { title: "5-minute mug cake for emergencies", description: "The exact kind of snack knowledge you want available when the sweet tooth hits at 11:40 p.m.", url: "https://www.bbcgoodfood.com/recipes/microwave-mug-cake", thumbnail: picsumThumb("mug-cake"), tags: ["dessert", "quick", "microwave"] },
+    { title: "Meal prep Sunday without hating your life", description: "A realistic weekly prep plan with enough flexibility to survive actual appetites and schedules.", url: "https://www.budgetbytes.com/meal-prep-101-a-beginners-guide/", thumbnail: picsumThumb("meal-prep-sunday"), tags: ["meal prep", "planning", "weekly"] },
+    { title: "Air fryer hacks that save dinner", description: "A useful roundup for reheats, vegetables, and the kind of snack dinners nobody needs to apologize for.", url: "https://www.delish.com/cooking/g4711/air-fryer-recipes/", thumbnail: picsumThumb("air-fryer-hacks"), tags: ["air fryer", "dinner", "tips"] },
+    { title: "Best pizza dough recipe to keep forever", description: "A serious dough save with enough detail to stop the trial-and-error spiral.", url: "https://www.seriouseats.com/basic-new-york-style-pizza-dough", thumbnail: picsumThumb("pizza-dough"), tags: ["pizza", "baking", "dough"] },
+    { title: "Babish: basics of bolognese", description: "A comfort-watch episode that doubles as an actual dinner plan.", url: "https://www.youtube.com/@babishculinaryuniverse", source: "YouTube", thumbnail: picsumThumb("babish-bolognese"), tags: ["babish", "pasta", "video"] },
+    { title: "Crispy sheet-pan chicken with lemon potatoes", description: "A low-chaos dinner save that looks like way more effort than it is.", url: "https://www.bonappetit.com/recipe/chicken-and-potatoes", thumbnail: picsumThumb("sheet-pan-chicken"), tags: ["sheet pan", "dinner", "chicken"] },
+    { title: "Ramen upgrade tricks for broke nights", description: "Exactly the kind of save you want when instant noodles need to feel like a choice, not a confession.", url: "https://www.seriouseats.com/instant-ramen-hacks", thumbnail: picsumThumb("ramen-hacks"), tags: ["ramen", "cheap eats", "hack"] },
+    { title: "Best NYC pasta spots map", description: "A food-and-place save that turns one folder into dinner plans instantly.", url: "https://www.google.com/maps/search/pasta+restaurants+in+new+york/", source: "Google Maps", type: "place", thumbnail: picsumThumb("nyc-pasta-map"), tags: ["restaurant", "maps", "food"] },
+  ]),
+  ...seedGroup({ folderId: "f-travel", source: "Google Maps", type: "place" }, [
+    { title: "Pyramids of Giza", description: "The one map pin that makes every ancient-history folder feel more serious immediately.", url: "https://www.google.com/maps/place/Pyramids+of+Giza/", thumbnail: picsumThumb("pyramids-giza"), tags: ["egypt", "landmark", "travel"] },
+    { title: "Machu Picchu", description: "A bucket-list place save with all the altitude, ruins, and route-planning energy built in.", url: "https://www.google.com/maps/place/Machu+Picchu/", thumbnail: picsumThumb("machu-picchu"), tags: ["peru", "landmark", "hike"] },
+    { title: "Great Wall of China", description: "A travel pin for the kind of day that starts with history and ends with leg soreness.", url: "https://www.google.com/maps/place/Great+Wall+of+China/", thumbnail: picsumThumb("great-wall"), tags: ["china", "history", "destination"] },
+    { title: "Santorini caldera viewpoints", description: "A save for white buildings, blue domes, and the best kind of impractical sunset photos.", url: "https://www.google.com/maps/search/santorini+viewpoints/", thumbnail: picsumThumb("santorini"), tags: ["greece", "sunset", "island"] },
+    { title: "Bali rice terraces", description: "A place save for that surreal green geometry you keep seeing in travel moodboards.", url: "https://www.google.com/maps/search/bali+rice+terraces/", thumbnail: picsumThumb("bali-terraces"), tags: ["bali", "nature", "landscape"] },
+    { title: "Shibuya Crossing", description: "A city pin for peak Tokyo energy and one of the best people-watching intersections on Earth.", url: "https://www.google.com/maps/place/Shibuya+Scramble+Crossing/", thumbnail: picsumThumb("shibuya-crossing"), tags: ["tokyo", "city", "japan"] },
+    { title: "Northern Lights in Iceland", description: "A place save for aurora chasing, warm layers, and planning around the sky.", url: "https://www.google.com/maps/search/northern+lights+iceland/", thumbnail: picsumThumb("iceland-aurora"), tags: ["iceland", "aurora", "winter"] },
+    { title: "Grand Canyon overlooks", description: "A map save for dramatic viewpoints and choosing one hike before the scale melts your planning brain.", url: "https://www.google.com/maps/place/Grand+Canyon+National+Park/", thumbnail: picsumThumb("grand-canyon-overlooks"), tags: ["usa", "nature", "canyon"] },
+    { title: "Maldives overwater bungalows", description: "A place save for the most postcard-coded version of rest on the internet.", url: "https://www.google.com/maps/search/maldives+overwater+bungalows/", thumbnail: picsumThumb("maldives-bungalows"), tags: ["maldives", "resort", "ocean"] },
+    { title: "Lisbon miradouros route", description: "A city route save for viewpoints, tiled buildings, and wandering without pretending it's accidental.", url: "https://www.google.com/maps/search/miradouros+in+lisbon/", thumbnail: picsumThumb("lisbon-miradouros"), tags: ["lisbon", "viewpoints", "walk"] },
+  ]),
+  ...seedGroup({ folderId: "f-design", source: "Web", type: "image" }, [
+    { title: "Dribbble best of 2024", description: "A high-signal save for interface polish, expressive illustration, and motion that doesn't feel defaulted.", url: "https://dribbble.com/tags/web_design", source: "Dribbble", thumbnail: picsumThumb("dribbble-best-2024"), tags: ["dribbble", "ui", "trend"] },
+    { title: "Awwwards site of the day rabbit hole", description: "One tab turns into twenty when the layouts are this sharp and weird in the right ways.", url: "https://www.awwwards.com/websites/sites_of_the_day/", source: "Awwwards", thumbnail: picsumThumb("awwwards-sites"), tags: ["awwwards", "web design", "inspo"] },
+    { title: "Figma tutorial stack for better components", description: "A save for leveling up spacing, constraints, and design systems without another vague course wishlist.", url: "https://www.youtube.com/@Figma", source: "YouTube", type: "video", thumbnail: picsumThumb("figma-tutorials"), tags: ["figma", "components", "tutorial"] },
+    { title: "Apple design principles refresh", description: "A useful skim whenever you want to reset your instincts toward clarity, hierarchy, and restraint.", url: "https://developer.apple.com/design/human-interface-guidelines/", source: "Apple", type: "article", thumbnail: picsumThumb("apple-design-principles"), tags: ["apple", "hig", "product design"] },
+    { title: "Swiss poster systems worth stealing from", description: "Rigid grids, huge typography, and the kind of discipline that makes everything else look sleepy.", url: "https://www.pinterest.com/search/pins/?q=swiss%20poster%20design", source: "Pinterest", thumbnail: picsumThumb("swiss-posters"), tags: ["swiss", "poster", "typography"] },
+    { title: "Minimal logo collection", description: "A save for marks that do less, read faster, and somehow feel more expensive because of it.", url: "https://www.behance.net/search/projects?search=minimal%20logo", source: "Behance", thumbnail: picsumThumb("minimal-logos"), tags: ["logo", "branding", "minimal"] },
+    { title: "Editorial landing page composition", description: "A web inspo save for oversized type, slow rhythm, and layouts that make the product feel like a magazine spread.", url: "https://www.are.na/", source: "Web", type: "link", thumbnail: picsumThumb("editorial-landing-page"), tags: ["layout", "editorial", "web"] },
+    { title: "Liquid glass UI references", description: "A save for those soft translucent layers that feel expensive when the spacing is disciplined.", url: "https://dribbble.com/tags/glassmorphism", source: "Dribbble", thumbnail: picsumThumb("glass-ui"), tags: ["glassmorphism", "ui", "surface"] },
+    { title: "Poster color pairings that actually hit", description: "Useful for when you need palettes that feel designed rather than randomly saturated.", url: "https://www.pinterest.com/search/pins/?q=poster%20color%20palette", source: "Pinterest", thumbnail: picsumThumb("poster-color-pairs"), tags: ["color", "palette", "poster"] },
+    { title: "Gallery of calm dashboard design", description: "A reference save for dashboards that reduce noise instead of adding twelve more badges.", url: "https://dribbble.com/tags/dashboard", source: "Dribbble", thumbnail: picsumThumb("calm-dashboard"), tags: ["dashboard", "ux", "calm"] },
+  ]),
+  ...seedGroup({ folderId: "f-research", source: "Web", type: "file" }, [
+    { title: "Attention Is All You Need", description: "The original transformer paper and still the citation that quietly sits under half the modern AI stack.", url: "https://arxiv.org/pdf/1706.03762.pdf", source: "arXiv", thumbnail: picsumThumb("attention-paper"), tags: ["paper", "transformers", "ml"] },
+    { title: "GPT-4 Technical Report", description: "A useful primary-source save on evaluation framing, capabilities language, and what was intentionally left vague.", url: "https://cdn.openai.com/papers/gpt-4.pdf", source: "OpenAI", thumbnail: picsumThumb("gpt4-report"), tags: ["gpt-4", "report", "ai"] },
+    { title: "Claude constitution notes", description: "An important read on constitutional AI and a different way to think about model behavior shaping.", url: "https://www.anthropic.com/news/constitutional-ai-harmlessness-from-ai-feedback", source: "Anthropic", type: "article", thumbnail: picsumThumb("claude-constitution"), tags: ["anthropic", "alignment", "constitutional ai"] },
+    { title: "AI safety research map", description: "A broader research save for interpretability, evaluations, and the layers beneath all the product hype.", url: "https://alignmentforum.org/", source: "Web", type: "article", thumbnail: picsumThumb("ai-safety-map"), tags: ["ai safety", "alignment", "research"] },
+    { title: "Future of computing after silicon optimism", description: "A thought piece on hardware bottlenecks, architecture shifts, and what 'better computing' may actually require next.", url: "https://www.technologyreview.com/topic/computing/", source: "MIT Technology Review", type: "article", thumbnail: picsumThumb("future-computing"), tags: ["computing", "hardware", "future"] },
+    { title: "Moore's Law is bending, not magically fixing itself", description: "A clean analysis of why progress is getting more expensive and more architectural than purely lithographic.", url: "https://en.wikipedia.org/wiki/Moore%27s_law", source: "Wikipedia", type: "article", thumbnail: picsumThumb("moores-law"), tags: ["moores law", "chips", "history"] },
+    { title: "Mechanistic interpretability starter pack", description: "A save for opening the black box with circuits, features, and representation-level analysis.", url: "https://transformer-circuits.pub/", source: "Web", type: "article", thumbnail: picsumThumb("mechanistic-interpretability"), tags: ["interpretability", "transformers", "circuits"] },
+    { title: "The bitter lesson, revisited", description: "A useful framing piece for why scale keeps beating hand-built cleverness more often than people expect.", url: "http://www.incompleteideas.net/IncIdeas/BitterLesson.html", source: "Web", type: "article", thumbnail: picsumThumb("bitter-lesson"), tags: ["ai history", "scale", "essay"] },
+    { title: "RAG papers and practical architectures", description: "A research save for retrieval systems that actually help instead of just bolting search onto vibes.", url: "https://arxiv.org/abs/2005.11401", source: "arXiv", type: "article", thumbnail: picsumThumb("rag-architectures"), tags: ["rag", "retrieval", "systems"] },
+    { title: "Scaling laws in one place", description: "A compact bookmark for the papers that turned 'just make it bigger' into a serious empirical strategy.", url: "https://arxiv.org/abs/2001.08361", source: "arXiv", type: "article", thumbnail: picsumThumb("scaling-laws"), tags: ["scaling laws", "language models", "research"] },
+  ]),
+  ...seedGroup({ folderId: "f-private-vault", source: "Device", type: "file" }, [
+    { title: "Insurance Card Photo", description: "Front and back snapshots for the annoying moment you're asked for the card when the wallet is nowhere nearby.", url: "https://example.com/private/insurance-card-front.jpg", type: "image", thumbnail: picsumThumb("insurance-card"), tags: ["insurance", "card", "private"] },
+    { title: "Passport Scan", description: "A backup copy for travel paperwork and those forms that always ask for it when you are already late.", url: "https://example.com/private/passport-scan.pdf", thumbnail: picsumThumb("passport-scan"), tags: ["passport", "travel", "documents"] },
+    { title: "WiFi Passwords Doc", description: "The modern household survival file: router name, guest password, and the one weird printer note.", url: "https://example.com/private/wifi-passwords.txt", thumbnail: picsumThumb("wifi-passwords"), tags: ["wifi", "home", "secure"] },
+    { title: "Tax Documents 2025", description: "A folder save for returns, receipts, and the PDFs you swear you filed somewhere sensible.", url: "https://www.irs.gov/pub/irs-pdf/fw9.pdf", thumbnail: picsumThumb("tax-documents"), tags: ["taxes", "pdf", "admin"] },
+    { title: "Car Registration", description: "A digital fallback for the kind of document you need right when the glovebox becomes chaos.", url: "https://example.com/private/car-registration.pdf", thumbnail: picsumThumb("car-registration"), tags: ["car", "registration", "documents"] },
+    { title: "Lease Agreement", description: "A searchable copy for rent details, renewal dates, and remembering what was actually signed.", url: "https://example.com/private/lease-agreement.pdf", thumbnail: picsumThumb("lease-agreement"), tags: ["housing", "lease", "private"] },
+    { title: "Medical Records Summary", description: "A private health file with meds, history, and useful details when forms suddenly get specific.", url: "https://example.com/private/medical-records.pdf", thumbnail: picsumThumb("medical-records"), tags: ["medical", "records", "secure"] },
+    { title: "Social Security Card", description: "A secure snapshot save for the rare bureaucratic moment when you actually need the number fast.", url: "https://example.com/private/social-security-card.jpg", type: "image", thumbnail: picsumThumb("social-security-card"), tags: ["id", "card", "private"] },
+    { title: "Emergency Contacts Sheet", description: "A calm little file with names, meds, allergies, and the numbers you never want to hunt down under stress.", url: "https://example.com/private/emergency-contacts.pdf", thumbnail: picsumThumb("emergency-contacts"), tags: ["emergency", "contacts", "preparedness"] },
+    { title: "Vaccination Records", description: "A practical vault save for travel, school, and every form that suddenly wants proof.", url: "https://example.com/private/vaccination-records.pdf", thumbnail: picsumThumb("vaccination-records"), tags: ["health", "records", "pdf"] },
+  ]),
+  ...seedGroup({ folderId: "f-music-memes", source: "Web", type: "link" }, [
+    { title: "Lo-fi Beats", description: "The classic Spotify background playlist for reading, journaling, and pretending you have your life organized.", url: "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn", source: "Spotify", thumbnail: picsumThumb("lofi-beats"), tags: ["spotify", "focus", "playlist"] },
+    { title: "Workout Mix That Fixes the Morning", description: "A higher-BPM playlist save for when the day needs a harder reset than coffee alone can provide.", url: "https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP", source: "Spotify", thumbnail: picsumThumb("workout-mix"), tags: ["music", "workout", "playlist"] },
+    { title: "90s nostalgia hits", description: "A reliable playlist for instant mood transport and a suspicious number of chorus-only memories.", url: "https://open.spotify.com/playlist/37i9dQZF1DXbTxeAdrVG2l", source: "Spotify", thumbnail: picsumThumb("90s-nostalgia"), tags: ["90s", "nostalgia", "playlist"] },
+    { title: "Classic meme compilation", description: "A maximal cut of internet history where every five seconds is another format you forgot you knew by heart.", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", source: "YouTube", type: "video", thumbnail: youtubeThumb("dQw4w9WgXcQ"), tags: ["memes", "internet", "compilation"] },
+    { title: "This Is Fine origin story", description: "A useful save on how one comic panel escaped containment and became permanent internet emotional vocabulary.", url: "https://knowyourmeme.com/memes/this-is-fine", thumbnail: picsumThumb("this-is-fine"), tags: ["meme", "origin", "culture"] },
+    { title: "Pepe the Frog history", description: "A surprisingly layered read on how a comic character mutated through wildly different corners of the web.", url: "https://knowyourmeme.com/memes/pepe-the-frog", thumbnail: picsumThumb("pepe-history"), tags: ["pepe", "history", "meme"] },
+    { title: "Harambe tribute archive", description: "A chaotic memorial to one of the most defining internet absurdities of the 2010s.", url: "https://knowyourmeme.com/memes/harambe", thumbnail: picsumThumb("harambe"), tags: ["harambe", "internet", "tribute"] },
+    { title: "Doge to the moon", description: "A meme-finance artifact save where broken English, Shiba energy, and market speculation fully merged.", url: "https://knowyourmeme.com/memes/doge", thumbnail: picsumThumb("doge-moon"), tags: ["doge", "crypto", "meme"] },
+    { title: "All Star but it's everywhere", description: "A music meme rabbit hole save because Smash Mouth has somehow become a formatting language.", url: "https://www.youtube.com/watch?v=L_jWHffIx5E", source: "YouTube", type: "video", thumbnail: youtubeThumb("L_jWHffIx5E"), tags: ["music meme", "throwback", "internet"] },
+    { title: "Never forget the vine era", description: "A short-form nostalgia archive for six-second comedic timing before everyone got algorithmically optimized.", url: "https://knowyourmeme.com/memes/subcultures/vine", thumbnail: picsumThumb("vine-era"), tags: ["vine", "short-form", "nostalgia"] },
+  ]),
 ];
 
-const FOLDER_COLORS = ["#FF5E5B", "#4ECDC4", "#FFB703", "#3A86FF", "#6D597A", "#E63946", "#9C6644", "#06D6A0", "#F77F00", "#2A9D8F", "#B5179E", "#577590"];
+const SEED_ITEMS = DEMO_ITEMS.map((item, index) => ({
+  id: `i${index + 1}`,
+  savedAt: Date.now() - (index + 2) * 3600000,
+  color: seedColorForFolder(item.folderId),
+  ...item,
+}));
+
+const FOLDER_COLORS = ["#FF6B6B", "#5B8DEF", "#F4B740", "#4D7CF3", "#7567F8", "#FF7A59", "#AA7BFF", "#35C5A2", "#FF9F5A", "#2DB7A3", "#FF5C93", "#7C8CF8", "#A855F7"];
 const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
@@ -1032,18 +1175,19 @@ const mergeMetadata = (...sources) => {
 };
 
 const folderKeywordMap = {
-  "wtf videos": ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "omg"],
-  "mind blowing science": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe"],
-  "life hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut"],
-  "business career": ["career", "work", "job", "resume", "salary", "raise", "manager", "leadership", "interview", "professional", "business", "money", "finance", "budget", "tax", "strategy"],
-  "private vault": ["private", "vault", "id", "passport", "insurance", "document", "license", "bank", "secure", "card", "personal file", "statement"],
-  "must watch": ["watch later", "must watch", "video", "clip", "youtube", "tiktok", "watchlist", "trailer"],
-  "must read": ["article", "essay", "read later", "longread", "bookmark", "newsletter", "news"],
-  "must do": ["try", "visit", "todo", "to do", "bucket list", "trip", "places", "itinerary", "adventure", "walking", "museum", "plan"],
-  "recipes food": ["recipe", "cook", "cooking", "dinner", "lunch", "breakfast", "food", "pasta", "meal", "kitchen", "restaurant"],
-  "travel places": ["travel", "city guide", "hotel", "flight", "vacation", "destination", "maps", "landmark", "paris", "lisbon", "place"],
-  "design inspo": ["design", "ux", "ui", "typography", "brand", "branding", "poster", "visual", "dribbble", "behance", "moodboard", "interior"],
-  research: ["research", "study", "paper", "analysis", "ai", "ml", "neural", "academic", "arxiv", "transformers", "experiment"],
+  "wtf videos": ["wtf", "viral", "chaos", "funny", "weird", "meme", "shock", "internet classic", "rickroll", "numa", "chipmunk", "double rainbow", "fail", "cat"],
+  "mind blowing science": ["science", "space", "physics", "chemistry", "biology", "astronomy", "nasa", "jwst", "lab", "discovery", "universe", "quantum", "fusion", "crispr", "mars", "black hole"],
+  "life hacks": ["hack", "hacks", "tips", "guide", "routine", "productivity", "habits", "shortcut", "claude", "chatgpt", "midjourney", "mac", "iphone", "vscode", "automation"],
+  "business career": ["career", "work", "job", "resume", "salary", "raise", "manager", "leadership", "interview", "professional", "business", "money", "finance", "budget", "tax", "strategy", "negotiation", "startup", "networking", "side hustle"],
+  "private vault": ["private", "vault", "id", "passport", "insurance", "document", "license", "bank", "secure", "card", "personal file", "statement", "tax", "medical", "wifi", "lease", "registration"],
+  "must watch": ["watch later", "must watch", "video", "clip", "youtube", "tiktok", "watchlist", "trailer", "ancient", "mystery", "documentary", "egypt", "atlantis", "nazca", "sphinx"],
+  "must read": ["article", "essay", "read later", "longread", "bookmark", "newsletter", "news", "wait but why", "lex", "paul graham", "naval", "wikipedia"],
+  "must do": ["try", "visit", "todo", "to do", "bucket list", "trip", "places", "itinerary", "adventure", "walking", "museum", "plan", "checklist", "class", "hike", "route"],
+  "recipes food": ["recipe", "cook", "cooking", "dinner", "lunch", "breakfast", "food", "pasta", "meal", "kitchen", "restaurant", "air fryer", "pizza", "cake", "babish"],
+  "travel places": ["travel", "city guide", "hotel", "flight", "vacation", "destination", "maps", "landmark", "paris", "lisbon", "place", "machu picchu", "giza", "santorini", "bali", "iceland"],
+  "design inspo": ["design", "ux", "ui", "typography", "brand", "branding", "poster", "visual", "dribbble", "behance", "moodboard", "interior", "figma", "awwwards", "logo"],
+  research: ["research", "study", "paper", "analysis", "ai", "ml", "neural", "academic", "arxiv", "transformers", "experiment", "gpt-4", "alignment", "computing", "safety"],
+  "music memes": ["music", "playlist", "spotify", "meme", "harambe", "doge", "pepe", "vine", "nostalgia", "lofi", "workout"],
 };
 
 const scoreFolder = (folder, haystack) => {
@@ -1067,10 +1211,13 @@ const guessFolderId = (metadata, folders) => {
   const actionFallback = folders.find(f => f.id === "f-must-do" || f.name.toLowerCase() === "must do");
   const placeFallback = folders.find(f => f.id === "f-travel" || f.name.toLowerCase() === "travel places");
   const mediaFallback = folders.find(f => f.id === "f-must-watch" || f.name.toLowerCase() === "must watch");
+  const musicFallback = folders.find(f => f.id === "f-music-memes" || f.name.toLowerCase() === "music memes");
   const fallback = metadata.filename || metadata.assetName
     ? (uploadFallback || linkFallback || folders.find(f => !f.system))
     : metadata.type === "place"
       ? (actionFallback || placeFallback || linkFallback || folders.find(f => !f.system))
+      : /spotify|playlist|track|song|meme|music/i.test(`${metadata.source || ""} ${metadata.title || ""} ${metadata.description || ""}`)
+        ? (musicFallback || mediaFallback || linkFallback || folders.find(f => !f.system))
       : metadata.type === "video"
         ? (mediaFallback || linkFallback || folders.find(f => !f.system))
         : (linkFallback || actionFallback || uploadFallback || folders.find(f => !f.system));
@@ -1651,11 +1798,11 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
         </div>
       </div>
 
-      <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={items.length === 0 ? { padding: "0 20px 28px" } : { padding: "0 20px 28px", columnCount: 2, columnGap: 14 }}>
         {items.length === 0 ? (
           <EmptyState search={search} searchMode={searchMode} browseMode={browseMode} activeFolderName={activeFolderName} activeSourceLabel={activeSourceLabel} activeType={activeType} />
         ) : (
-          items.map((item, idx) => <ItemCard key={item.id} item={item} onClick={()=>onSelect(item)} delay={idx * 30} />)
+          items.map((item, idx) => <ItemCard key={item.id} item={item} index={idx} onClick={()=>onSelect(item)} delay={idx * 30} />)
         )}
       </div>
     </div>
@@ -1692,35 +1839,52 @@ function EmptyState({ search, searchMode = false, browseMode = "folders", active
   );
 }
 
-function ItemCard({ item, onClick, delay }) {
+function ItemCard({ item, index, onClick, delay }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
+  const mediaAspect = item.type === "video"
+    ? "4 / 5"
+    : item.type === "place"
+      ? "4 / 5.2"
+      : item.type === "article" || item.type === "file"
+        ? "4 / 4.4"
+        : index % 3 === 0
+          ? "4 / 5.3"
+          : "4 / 4.9";
   return (
-    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", textAlign: "left", borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s" }}>
-      <div style={{ display: "flex", gap: 12, padding: 14 }}>
-        <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 12, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, border: `1px solid ${item.color}28`, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, position: "relative", overflow: "hidden" }}>
-          {item.thumbnail && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.04) 0%, rgba(28,26,23,0.18) 100%)" }} />}
-          <div style={{ position: "relative", zIndex: 1, width: 24, height: 24, borderRadius: 8, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {typeIconFor(item.type, { size: 18, stroke: 1.5 })}
+    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", display: "inline-block", marginBottom: 14, textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", breakInside: "avoid", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)" }}>
+      <div style={{ position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, aspectRatio: mediaAspect, color: item.color, overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.08) 0%, rgba(11,16,26,0.16) 30%, rgba(11,16,26,0.72) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
+        <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+          <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 10px", borderRadius: 999, background: "rgba(255,255,255,0.84)", color: T.ink, boxShadow: "0 10px 20px -18px rgba(22,26,35,0.8)" }}>
+            {typeIconFor(item.type, { size: 12, stroke: 1.8 })}
+            {displayTypeLabel(item.type)}
+          </div>
+          <div className="mono" style={{ fontSize: 10, color: "rgba(255,255,255,0.86)", padding: "6px 9px", borderRadius: 999, background: "rgba(11,16,26,0.28)", backdropFilter: "blur(10px)" }}>
+            {relativeTime(item.savedAt)}
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: item.color }}>{displayTypeLabel(item.type)}</div>
-            <div className="mono" style={{ fontSize: 11, flexShrink: 0, color: T.inkMute }}>{relativeTime(item.savedAt)}</div>
-          </div>
-          <div className="clamp2" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, marginBottom: 4, color: T.ink }}>{item.title}</div>
-          <div className="clamp1" style={{ fontSize: 11.5, lineHeight: 1.3, color: T.inkSoft }}>{item.description}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-            <BrandBadge visual={sourceVisual} size={16} />
-            <div className="mono" style={{ fontSize: 11, color: T.inkMute }}>{sourceProfile.label}</div>
-            {(item.tags || []).length > 0 && (
-              <>
-                <div style={{ width: 2, height: 2, borderRadius: "50%", background: T.inkMute }} />
-                <div className="mono clamp1" style={{ fontSize: 11, color: T.inkMute }}>{(item.tags || []).slice(0, 2).join(" · ")}</div>
-              </>
-            )}
-          </div>
+        <div style={{ position: "absolute", left: 14, right: 14, bottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+          <BrandBadge visual={sourceVisual} size={20} />
+          <div className="mono clamp1" style={{ fontSize: 11, color: "rgba(255,255,255,0.9)" }}>{sourceProfile.label}</div>
+        </div>
+      </div>
+      <div style={{ padding: "14px 14px 16px" }}>
+        <div className="clamp2" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.28, marginBottom: 6, color: T.ink }}>
+          {item.title}
+        </div>
+        <div className="clamp3" style={{ fontSize: 12.5, lineHeight: 1.42, color: T.inkSoft }}>
+          {item.description}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+          {(item.tags || []).slice(0, 2).map((tag) => (
+            <span key={tag} className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: T.paperDim, color: T.inkMute }}>
+              {tag}
+            </span>
+          ))}
+          <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: `${item.color}12`, color: item.color }}>
+            save
+          </span>
         </div>
       </div>
     </button>
@@ -1734,7 +1898,7 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
         <div className="mono" style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 8, color: T.inkMute }}>Organized by topic</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
           <div className="serif" style={{ fontSize: 42, lineHeight: 1.02, color: T.ink }}>Folders</div>
-          <button aria-label="Create a new folder" onClick={onNew} style={{ width: 40, height: 40, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button aria-label="Create a new folder" onClick={onNew} style={{ width: 40, height: 40, borderRadius: 999, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 16px 28px -20px rgba(22,26,35,0.72)" }}>
             <IconFolderPlus size={15} />
           </button>
         </div>
@@ -1748,28 +1912,28 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
                 width: "100%",
                 textAlign: "left",
                 padding: 16,
-                borderRadius: 20,
-                aspectRatio: "1 / 1",
+                borderRadius: 26,
+                aspectRatio: "4 / 5",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
                 background: f.image
                   ? `center / cover no-repeat url(${f.image}), ${T.card}`
                   : f.system
-                    ? "linear-gradient(160deg, #1f1b17 0%, #373029 100%)"
-                    : `linear-gradient(155deg, ${f.color}24 0%, ${T.card} 68%)`,
-                border: `1px solid ${f.image ? "rgba(217,211,199,0.55)" : T.lineSoft}`,
-                boxShadow: "0 20px 34px -28px rgba(28,26,23,0.6)",
+                    ? "linear-gradient(160deg, #151A23 0%, #25324A 100%)"
+                    : `linear-gradient(160deg, ${f.color}40 0%, ${f.color}18 28%, ${T.card} 100%)`,
+                border: `1px solid ${f.image ? "rgba(255,255,255,0.18)" : T.lineSoft}`,
+                boxShadow: "0 26px 46px -36px rgba(22,26,35,0.68)",
                 transition: "transform 0.12s",
                 overflow: "hidden",
                 position: "relative",
               }}
             >
-              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(28,26,23,0.08) 0%, rgba(28,26,23,0.22) 34%, rgba(28,26,23,0.82) 100%)" }} />}
+              {f.image && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(10,16,28,0.08) 0%, rgba(10,16,28,0.16) 24%, rgba(10,16,28,0.42) 58%, rgba(10,16,28,0.92) 100%)" }} />}
               <div style={{ position: "relative", zIndex: 1, minHeight: 18, display: "flex", justifyContent: "flex-start" }}>
                 {!f.system && (
-                  <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 999, background: "rgba(20,18,16,0.34)", border: "1px solid rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(10px)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    <span style={{ width: 7, height: 7, borderRadius: 999, background: f.color, boxShadow: "0 0 0 2px rgba(255,255,255,0.14)" }} />
+                  <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 11px", borderRadius: 999, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.94)", backdropFilter: "blur(16px)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", boxShadow: "0 12px 30px -22px rgba(10,16,28,0.85)" }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: f.color, boxShadow: "0 0 0 3px rgba(255,255,255,0.16)" }} />
                     {folderCounts[f.id] ?? 0} saved
                   </div>
                 )}
@@ -1778,21 +1942,21 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
                 style={{
                   position: "relative",
                   zIndex: 1,
-                  borderRadius: 18,
-                  padding: "14px 14px 12px",
-                  background: f.image ? "linear-gradient(180deg, rgba(16,14,12,0.18) 0%, rgba(16,14,12,0.46) 100%)" : f.system ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.72)",
-                  border: f.image ? "1px solid rgba(255,255,255,0.14)" : `1px solid ${f.system ? "rgba(255,255,255,0.12)" : "rgba(217,211,199,0.72)"}`,
-                  backdropFilter: "blur(10px)",
+                  borderRadius: 20,
+                  padding: "16px 16px 14px",
+                  background: f.image ? "linear-gradient(180deg, rgba(6,10,18,0.22) 0%, rgba(6,10,18,0.46) 100%)" : f.system ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.84)",
+                  border: f.image ? "1px solid rgba(255,255,255,0.14)" : `1px solid ${f.system ? "rgba(255,255,255,0.12)" : "rgba(216,222,234,0.84)"}`,
+                  backdropFilter: "blur(18px)",
                 }}
               >
-                <div className="serif" style={{ fontSize: 22, lineHeight: 1.08, marginBottom: 6, color: f.image || f.system ? "#FFFFFF" : T.ink, textShadow: f.image ? "0 10px 28px rgba(0,0,0,0.28)" : "none" }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: f.image ? "rgba(255,255,255,0.82)" : f.system ? "rgba(245,241,234,0.72)" : T.inkMute }}>
+                <div className="serif" style={{ fontSize: 24, lineHeight: 1.04, marginBottom: 8, color: f.image || f.system ? "#FFFFFF" : T.ink, textShadow: f.image ? "0 18px 36px rgba(0,0,0,0.38)" : "none" }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: f.image ? "rgba(255,255,255,0.86)" : f.system ? "rgba(245,241,234,0.72)" : T.inkMute }}>
                   {folderCounts[f.id] ?? 0} items
                 </div>
               </div>
             </button>
             {!f.system && (
-              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 36, height: 36, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0.94)", color: T.ink, border: `1px solid ${f.image ? "rgba(255,255,255,0.16)" : T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 18px -18px rgba(28,26,23,0.8)", backdropFilter: "blur(12px)" }}>
+              <button onClick={()=>onEdit(f.id)} aria-label={`Edit ${f.name}`} style={{ position: "absolute", top: 10, right: 10, width: 38, height: 38, borderRadius: 999, background: f.image ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.96)", color: T.ink, border: `1px solid ${f.image ? "rgba(255,255,255,0.18)" : T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 14px 24px -20px rgba(22,26,35,0.8)", backdropFilter: "blur(12px)" }}>
                 <IconEdit size={14} />
               </button>
             )}
@@ -2773,7 +2937,16 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
   const [isOpeningAsset, setIsOpeningAsset] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const hasLocalAsset = Boolean(item.assetId);
+  const sheetScrollRef = useRef(null);
+  const dragStartYRef = useRef(0);
+  const dragStartXRef = useRef(0);
+  const dragStartTimeRef = useRef(0);
+  const dragLastYRef = useRef(0);
+  const dragLastTimeRef = useRef(0);
+  const dragActiveRef = useRef(false);
 
   const openAsset = async () => {
     if (!item.assetId || isOpeningAsset) return;
@@ -2796,10 +2969,61 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
     }
   };
 
+  const startSwipe = (event) => {
+    if (sheetScrollRef.current && sheetScrollRef.current.scrollTop > 6) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    dragActiveRef.current = true;
+    dragStartYRef.current = touch.clientY;
+    dragStartXRef.current = touch.clientX;
+    dragLastYRef.current = touch.clientY;
+    dragStartTimeRef.current = performance.now();
+    dragLastTimeRef.current = dragStartTimeRef.current;
+    setIsDragging(true);
+  };
+
+  const moveSwipe = (event) => {
+    if (!dragActiveRef.current) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    const deltaY = touch.clientY - dragStartYRef.current;
+    const deltaX = Math.abs(touch.clientX - dragStartXRef.current);
+    if (deltaY <= 0 || deltaX > deltaY * 1.15) {
+      setDragY(0);
+      return;
+    }
+    event.preventDefault();
+    dragLastYRef.current = touch.clientY;
+    dragLastTimeRef.current = performance.now();
+    setDragY(deltaY);
+  };
+
+  const endSwipe = () => {
+    if (!dragActiveRef.current) return;
+    dragActiveRef.current = false;
+    const distance = Math.max(0, dragLastYRef.current - dragStartYRef.current);
+    const elapsed = Math.max(1, dragLastTimeRef.current - dragStartTimeRef.current);
+    const velocity = distance / elapsed;
+    const shouldClose = distance > 120 || velocity > 0.75;
+    setIsDragging(false);
+    setDragY(0);
+    if (shouldClose) onClose();
+  };
+
+  const overlayAlpha = Math.max(0.14, 0.45 - dragY / 520);
+
   return (
-    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(28,26,23,0.45)" }}>
-      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "85%" }} onClick={e=>e.stopPropagation()}>
-        <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center" }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+    <div className="anim-fade" onClick={onClose} style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: `rgba(16, 20, 30, ${overlayAlpha})`, transition: isDragging ? "none" : "background 180ms ease" }}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: "88%", transform: `translateY(${dragY}px)`, transition: isDragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)" }} onClick={e=>e.stopPropagation()}>
+        <div
+          onTouchStart={startSwipe}
+          onTouchMove={moveSwipe}
+          onTouchEnd={endSwipe}
+          onTouchCancel={endSwipe}
+          style={{ padding: "12px 0 6px", display: "flex", justifyContent: "center", cursor: "grab", touchAction: "none" }}
+        >
+          <div style={{ width: 42, height: 5, borderRadius: 999, background: T.line }} />
+        </div>
         <div style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, background: item.thumbnail ? "linear-gradient(180deg, rgba(28,26,23,0.1) 0%, rgba(28,26,23,0.24) 100%)" : "transparent" }}>
             <div style={{ width: 64, height: 64, borderRadius: 20, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2813,7 +3037,15 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
             {displayTypeLabel(item.type)}
           </div>
         </div>
-        <div className="scroll" style={{ padding: "16px 20px" }}>
+        <div
+          ref={sheetScrollRef}
+          className="scroll"
+          style={{ padding: "16px 20px" }}
+          onTouchStart={startSwipe}
+          onTouchMove={moveSwipe}
+          onTouchEnd={endSwipe}
+          onTouchCancel={endSwipe}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <BrandBadge visual={sourceVisual} size={18} />
             <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
