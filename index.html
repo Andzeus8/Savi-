@@ -717,6 +717,8 @@ const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx
 const DOCUMENT_FILE_EXTENSIONS = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "pages", "key", "numbers", "rtf"];
 const PREVIEWABLE_MIME_PREFIXES = ["image/", "video/", "text/"];
 const PREVIEWABLE_MIME_TYPES = ["application/pdf", "application/json"];
+const NON_PREVIEWABLE_IMAGE_MIME_TYPES = ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"];
+const NON_PREVIEWABLE_IMAGE_EXTENSIONS = ["heic", "heif"];
 
 const normalizeUrl = (value) => {
   const raw = (value || "").trim();
@@ -849,7 +851,16 @@ const isTextLikeFile = (file) => {
   const extension = fileExtensionFromName(file?.name || "");
   return (file?.type || "").startsWith("text/") || TEXT_FILE_EXTENSIONS.includes(extension);
 };
-const isPreviewableAsset = (item) => PREVIEWABLE_MIME_PREFIXES.some(prefix => (item?.assetMime || "").startsWith(prefix)) || PREVIEWABLE_MIME_TYPES.includes(item?.assetMime || "");
+const isHeicLikeAsset = (item) => {
+  const mime = (item?.assetMime || "").toLowerCase();
+  const extension = fileExtensionFromName(item?.assetName || "");
+  return NON_PREVIEWABLE_IMAGE_MIME_TYPES.includes(mime) || NON_PREVIEWABLE_IMAGE_EXTENSIONS.includes(extension);
+};
+const isPreviewableAsset = (item) => {
+  const mime = (item?.assetMime || "").toLowerCase();
+  if (isHeicLikeAsset(item)) return false;
+  return PREVIEWABLE_MIME_PREFIXES.some(prefix => mime.startsWith(prefix)) || PREVIEWABLE_MIME_TYPES.includes(mime);
+};
 const inferTypeFromFile = (file) => {
   const mime = file?.type || "";
   const extension = fileExtensionFromName(file?.name || "");
@@ -1625,6 +1636,7 @@ function App() {
   const [editingFolderId, setEditingFolderId] = useState("");
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
   const launchClipboardCheckedRef = useRef(false);
 
@@ -1641,6 +1653,41 @@ function App() {
     setPrefillFromClipboard(Boolean(options.tryClipboard && !nextUrl));
     setPrefillAutoAnalyze(options.autoAnalyzeInitial ?? true);
     setShowSaveSheet(true);
+  };
+
+  const shareApp = async () => {
+    const shareUrl = /^https?:\/\//i.test(window.location.href) ? window.location.href : "https://andzeus8.github.io/Savi-/";
+    const payload = {
+      title: "SAVI",
+      text: "Check out SAVI — a pocket organizer for links, files, places, and ideas.",
+      url: shareUrl,
+    };
+
+    try {
+      if (window.SAVINative?.postMessage) {
+        window.SAVINative.postMessage("share", payload);
+        return;
+      }
+    } catch {}
+
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+        return;
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("SAVI link copied to your clipboard.");
+        return;
+      }
+    } catch {}
+
+    window.prompt("Copy the SAVI link:", shareUrl);
   };
 
   useEffect(() => {
@@ -1822,6 +1869,22 @@ function App() {
     setItems(prev => [nextItem, ...prev]);
     return nextItem;
   };
+  const updateItem = async (id, updates) => {
+    const current = items.find(entry => entry.id === id);
+    if (!current) return null;
+    const nextFolderId = updates.folderId || current.folderId;
+    const nextFolder = folders.find(folder => folder.id === nextFolderId);
+    const nextItem = {
+      ...current,
+      ...updates,
+      folderId: nextFolderId,
+      color: nextFolder?.color || updates.color || current.color || T.accent,
+    };
+    setItems(prev => prev.map(entry => entry.id === id ? nextItem : entry));
+    setSelectedItem(prev => prev?.id === id ? nextItem : prev);
+    setEditingItem(prev => prev?.id === id ? nextItem : prev);
+    return nextItem;
+  };
   const deleteItem = async (id) => {
     const item = items.find(entry => entry.id === id);
     if (item?.assetId) {
@@ -1829,6 +1892,7 @@ function App() {
     }
     setItems(prev => prev.filter(i => i.id !== id));
     if (selectedItem?.id === id) setSelectedItem(null);
+    if (editingItem?.id === id) setEditingItem(null);
   };
   const addFolder = (folderDraft) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, ...folderDraft }]);
   const updateFolder = (folderId, updates) => setFolders(prev => prev.map(folder => folder.id === folderId ? { ...folder, ...updates } : folder));
@@ -1883,7 +1947,7 @@ function App() {
                         search={search}
                         setSearch={setSearch}
                         onSelect={setSelectedItem}
-                        onDemoShare={() => setShowShareSheet(true)}
+                        onShare={shareApp}
                       />
                     )}
                     {route === "folders" && (
@@ -1903,7 +1967,6 @@ function App() {
                     <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet("", { tryClipboard: true })} />
                   </div>
 
-                  {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
                   {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} autoAnalyzeInitial={prefillAutoAnalyze} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
                   {showFolderSheet && (
                     <FolderSheet
@@ -1920,7 +1983,8 @@ function App() {
                       }}
                     />
                   )}
-                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
+                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} onEdit={()=>setEditingItem(selectedItem)} />}
+                  {editingItem && <ItemEditorSheet item={editingItem} folders={folders} onClose={()=>setEditingItem(null)} onSave={async (updates)=>{ await updateItem(editingItem.id, updates); setEditingItem(null); }} />}
                 </div>
               )}
             </div>
@@ -2167,7 +2231,7 @@ function WelcomeWizard({ onFinish }) {
   );
 }
 
-function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onDemoShare }) {
+function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onShare }) {
   const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
   const activeSourceLabel = sourceOptions.find((option) => option.key === activeSource)?.label || (activeSource === "all" ? "All Apps" : titleize(activeSource));
   const heroEyebrow = searchMode ? "Search" : browseMode === "all" ? "Your library" : browseMode === "folders" ? "Folders" : browseMode === "types" ? "Types" : "Apps";
@@ -2238,7 +2302,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
                 );
               })}
             </div>
-            <button onClick={onDemoShare} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "10px 12px", borderRadius: 14, border: `1px solid ${T.lineSoft}`, background: T.card, color: T.inkSoft, boxShadow: "0 12px 24px -22px rgba(22,26,35,0.55)" }}>
+            <button onClick={onShare} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", padding: "10px 12px", borderRadius: 14, border: `1px solid ${T.lineSoft}`, background: T.card, color: T.inkSoft, boxShadow: "0 12px 24px -22px rgba(22,26,35,0.55)" }}>
               Share
             </button>
           </div>
@@ -3576,7 +3640,7 @@ function FolderSheet({ folder, onClose, onSave }) {
   );
 }
 
-function ItemSheet({ item, folders, onClose, onDelete }) {
+function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
   const folder = folders.find(f => f.id === item.folderId);
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
@@ -3600,6 +3664,23 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
       if (!asset?.blob) {
         alert("That file isn't available on this device anymore. Restore a backup or upload it again.");
         return;
+      }
+      if (!isPreviewableAsset(item) && navigator.share && typeof File !== "undefined") {
+        try {
+          const shareFile = new File([asset.blob], item.assetName || asset.name || item.title, {
+            type: item.assetMime || asset.type || asset.blob.type || "application/octet-stream",
+          });
+          if (!navigator.canShare || navigator.canShare({ files: [shareFile] })) {
+            await navigator.share({
+              title: item.title,
+              text: item.description || item.title,
+              files: [shareFile],
+            });
+            return;
+          }
+        } catch (error) {
+          if (error?.name === "AbortError") return;
+        }
       }
       downloadBlob({
         blob: asset.blob,
@@ -3756,17 +3837,157 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
             {hasLocalAsset ? (
               <button onClick={openAsset} disabled={isOpeningAsset} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, opacity: isOpeningAsset ? 0.65 : 1 }}>
                 {isPreviewableAsset(item) ? <IconArrowOut size={14} /> : <IconDownload size={14} />}
-                {isOpeningAsset ? "Opening..." : isPreviewableAsset(item) ? "Open file" : "Download file"}
+                {isOpeningAsset ? "Opening..." : isPreviewableAsset(item) ? "Open file" : "Share or download file"}
               </button>
             ) : (
               <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
                 <IconArrowOut size={14} />Open original
               </a>
             )}
+            <button aria-label="Edit this save" onClick={onEdit} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+              <IconEdit size={14} />
+            </button>
             <button aria-label="Delete this save" onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
               <IconTrash size={14} />
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemEditorSheet({ item, folders, onClose, onSave }) {
+  const [title, setTitle] = useState(item.title || "");
+  const [description, setDescription] = useState(item.description || "");
+  const [folderId, setFolderId] = useState(item.folderId || folders.find(f => !f.system)?.id || "f-must-see");
+  const [tags, setTags] = useState((item.tags || []).join(", "));
+  const [type, setType] = useState(item.type || "link");
+  const [source, setSource] = useState(item.source || "");
+  const [url, setUrl] = useState(item.url || "");
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const scrollRef = useRef(null);
+  const hasLocalAsset = Boolean(item.assetId);
+  const hasDraft = title.trim() !== (item.title || "").trim()
+    || description.trim() !== (item.description || "").trim()
+    || folderId !== (item.folderId || "")
+    || type !== (item.type || "link")
+    || source.trim() !== (item.source || "").trim()
+    || url.trim() !== (item.url || "").trim()
+    || tags.trim() !== (item.tags || []).join(", ");
+
+  const requestClose = () => {
+    if (isSaving) return;
+    if (hasDraft && !confirm("Discard your edits?")) return;
+    onClose();
+  };
+
+  const ensureVisible = (node, behavior = "smooth") => {
+    if (!node || !scrollRef.current) return;
+    window.requestAnimationFrame(() => {
+      node.scrollIntoView({ block: "center", behavior });
+    });
+  };
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateKeyboardInset = () => {
+      const nextInset = Math.max(0, Math.round(window.innerHeight - (viewport.height + viewport.offsetTop)));
+      setKeyboardInset(nextInset);
+      const active = document.activeElement;
+      if (scrollRef.current?.contains(active) && (active?.tagName === "INPUT" || active?.tagName === "TEXTAREA")) {
+        window.setTimeout(() => ensureVisible(active), 90);
+      }
+    };
+
+    updateKeyboardInset();
+    viewport.addEventListener("resize", updateKeyboardInset);
+    viewport.addEventListener("scroll", updateKeyboardInset);
+    window.addEventListener("orientationchange", updateKeyboardInset);
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardInset);
+      viewport.removeEventListener("scroll", updateKeyboardInset);
+      window.removeEventListener("orientationchange", updateKeyboardInset);
+    };
+  }, []);
+
+  const submit = async () => {
+    if (isSaving) return;
+    const nextFolder = folders.find(folder => folder.id === folderId);
+    setIsSaving(true);
+    try {
+      await onSave({
+        title: title.trim() || item.title || "Untitled save",
+        description: description.trim(),
+        folderId,
+        type,
+        source: source.trim() || item.source || (hasLocalAsset ? "device" : "Web"),
+        url: hasLocalAsset ? "" : (normalizeUrl(url.trim()) || item.url || ""),
+        tags: dedupe(tags.split(",").map(tag => tag.trim()).filter(Boolean)),
+        color: nextFolder?.color || item.color || T.accent,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="anim-fade" style={{ position: "absolute", inset: 0, zIndex: 55, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(16, 20, 30, 0.46)", paddingBottom: keyboardInset, transition: "padding-bottom 180ms ease" }} onClick={requestClose}>
+      <div className="anim-sheet" style={{ borderRadius: "28px 28px 0 0", overflow: "hidden", display: "flex", flexDirection: "column", background: T.paper, maxHeight: keyboardInset ? `calc(100% - ${keyboardInset + 8}px)` : "86%", transition: "max-height 180ms ease" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding: "12px 0 4px", display: "flex", justifyContent: "center", flexShrink: 0 }}><div style={{ width: 36, height: 4, borderRadius: 999, background: T.line }} /></div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", flexShrink: 0 }}>
+          <button onClick={requestClose} style={{ fontSize: 14, color: T.inkSoft }}>Cancel</button>
+          <div className="serif" style={{ fontSize: 18, color: T.ink }}>Edit save</div>
+          <button onClick={submit} disabled={isSaving} style={{ padding: "9px 14px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: T.ink, color: T.paper, opacity: isSaving ? 0.65 : 1 }}>
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
+        <div ref={scrollRef} className="scroll" style={{ padding: "0 20px 28px", display: "flex", flexDirection: "column", gap: 16 }} onFocusCapture={(event) => ensureVisible(event.target)}>
+          {item.thumbnail && (
+            <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${T.lineSoft}`, background: T.paperDim }}>
+              <img src={item.thumbnail} alt="" style={{ display: "block", width: "100%", aspectRatio: "1.8 / 1", objectFit: "cover" }} />
+            </div>
+          )}
+          <Field label="Title"><input value={title} onChange={e=>setTitle(e.target.value)} style={inputStyle()} /></Field>
+          <Field label="Description"><textarea value={description} onChange={e=>setDescription(e.target.value)} rows={4} style={{ ...inputStyle(), resize: "none" }} /></Field>
+          {!hasLocalAsset && (
+            <Field label="Original link"><input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." style={inputStyle()} /></Field>
+          )}
+          <Field label="App / source"><input value={source} onChange={e=>setSource(e.target.value)} placeholder={hasLocalAsset ? "Device" : "YouTube, Reddit, Web..."} style={inputStyle()} /></Field>
+          <Field label="Type">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+              {["article", "video", "image", "file", "place", "link"].map(nextType => (
+                <button key={nextType} onClick={()=>setType(nextType)} className="mono" style={{ padding: "8px 0", borderRadius: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", background: type === nextType ? T.ink : T.card, color: type === nextType ? T.paper : T.inkSoft, border: `1px solid ${type === nextType ? T.ink : T.lineSoft}` }}>
+                  {displayTypeLabel(nextType)}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Folder">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {folders.filter(folder => !folder.system).map(folder => (
+                <button key={folder.id} onClick={()=>setFolderId(folder.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 12, background: folderId === folder.id ? T.paperDim : T.card, color: T.ink, border: `1px solid ${folderId === folder.id ? T.line : T.lineSoft}`, textAlign: "left" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: folder.color, flexShrink: 0 }} />
+                  <span className="clamp1">{folder.name}</span>
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Tags"><input value={tags} onChange={e=>setTags(e.target.value)} placeholder="comma, separated, tags" style={inputStyle()} /></Field>
+          {hasLocalAsset && (
+            <div style={{ padding: 14, borderRadius: 14, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
+              <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute, marginBottom: 6 }}>
+                Attached file
+              </div>
+              <div className="clamp1" style={{ fontSize: 13, color: T.ink }}>{item.assetName || item.title}</div>
+              <div className="mono" style={{ marginTop: 4, fontSize: 10, color: T.inkSoft }}>
+                {[item.assetMime, item.assetSize ? formatBytes(item.assetSize) : ""].filter(Boolean).join(" • ")}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
