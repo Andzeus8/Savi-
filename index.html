@@ -1797,9 +1797,8 @@ function App() {
           <div className="bezel-inner">
             <div className="screen">
               <div className="notch" />
-              {showOnboarding ? (
-                <WelcomeWizard onFinish={finishOnboarding} />
-              ) : (
+              {showOnboarding && <WelcomeWizard onFinish={finishOnboarding} />}
+              {!showOnboarding && (
                 <div className="app">
                   <div className="app-main">
                     {route === "home" && (
