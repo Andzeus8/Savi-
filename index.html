@@ -1800,71 +1800,71 @@ function App() {
               {showOnboarding ? (
                 <WelcomeWizard onFinish={finishOnboarding} />
               ) : (
-              <div className="app">
-                <div className="app-main">
-                  {route === "home" && (
-                    <HomeScreen
-                      folders={folders}
-                      items={visibleItems}
-                      searchMode={false}
-                      activeFolder={activeFolder}
-                      setActiveFolder={setActiveFolder}
-                      browseMode={browseMode}
-                      setBrowseMode={setBrowseMode}
-                      activeType={activeType}
-                      setActiveType={setActiveType}
-                      activeSource={activeSource}
-                      setActiveSource={setActiveSource}
-                      viewMode={viewMode}
-                      setViewMode={setViewMode}
-                      folderCounts={folderCounts}
-                      typeCounts={typeCounts}
-                      sourceCounts={sourceCounts}
-                      sourceOptions={sourceOptions}
-                      search={search}
-                      setSearch={setSearch}
-                      onSelect={setSelectedItem}
-                      onDemoShare={() => setShowShareSheet(true)}
-                    />
-                  )}
-                  {route === "folders" && (
-                    <FoldersScreen
-                      folders={folders}
-                      folderCounts={folderCounts}
-                      onOpen={(id)=>{ setBrowseMode("folders"); setActiveFolder(id); setRoute("home"); }}
-                      onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }}
-                      onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }}
-                    />
-                  )}
-                  {route === "profile" && (
-                    <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
-                  )}
-                </div>
-                <div className="navigator-shell">
-                  <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet("", { tryClipboard: true })} />
-                </div>
+                <div className="app">
+                  <div className="app-main">
+                    {route === "home" && (
+                      <HomeScreen
+                        folders={folders}
+                        items={visibleItems}
+                        searchMode={false}
+                        activeFolder={activeFolder}
+                        setActiveFolder={setActiveFolder}
+                        browseMode={browseMode}
+                        setBrowseMode={setBrowseMode}
+                        activeType={activeType}
+                        setActiveType={setActiveType}
+                        activeSource={activeSource}
+                        setActiveSource={setActiveSource}
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        folderCounts={folderCounts}
+                        typeCounts={typeCounts}
+                        sourceCounts={sourceCounts}
+                        sourceOptions={sourceOptions}
+                        search={search}
+                        setSearch={setSearch}
+                        onSelect={setSelectedItem}
+                        onDemoShare={() => setShowShareSheet(true)}
+                      />
+                    )}
+                    {route === "folders" && (
+                      <FoldersScreen
+                        folders={folders}
+                        folderCounts={folderCounts}
+                        onOpen={(id)=>{ setBrowseMode("folders"); setActiveFolder(id); setRoute("home"); }}
+                        onNew={()=>{ setEditingFolderId(""); setShowFolderSheet(true); }}
+                        onEdit={(id)=>{ setEditingFolderId(id); setShowFolderSheet(true); }}
+                      />
+                    )}
+                    {route === "profile" && (
+                      <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
+                    )}
+                  </div>
+                  <div className="navigator-shell">
+                    <TabBar route={route} setRoute={setRoute} onSavePress={()=>openSaveSheet("", { tryClipboard: true })} />
+                  </div>
 
-                {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
-                {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} autoAnalyzeInitial={prefillAutoAnalyze} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
-                {showFolderSheet && (
-                  <FolderSheet
-                    folder={folders.find(folder => folder.id === editingFolderId) || null}
-                    onClose={()=>{ setShowFolderSheet(false); setEditingFolderId(""); }}
-                    onSave={(draft)=>{
-                      if (editingFolderId) {
-                        updateFolder(editingFolderId, draft);
-                      } else {
-                        addFolder(draft);
-                      }
-                      setShowFolderSheet(false);
-                      setEditingFolderId("");
-                    }}
-                  />
-                )}
-                {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
-              </div>
-            </div>
+                  {showShareSheet && <IOSShareSheet onClose={()=>setShowShareSheet(false)} onPickSavi={()=>{ setShowShareSheet(false); openSaveSheet("https://wired.com/future-of-pkm"); }} />}
+                  {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} autoAnalyzeInitial={prefillAutoAnalyze} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
+                  {showFolderSheet && (
+                    <FolderSheet
+                      folder={folders.find(folder => folder.id === editingFolderId) || null}
+                      onClose={()=>{ setShowFolderSheet(false); setEditingFolderId(""); }}
+                      onSave={(draft)=>{
+                        if (editingFolderId) {
+                          updateFolder(editingFolderId, draft);
+                        } else {
+                          addFolder(draft);
+                        }
+                        setShowFolderSheet(false);
+                        setEditingFolderId("");
+                      }}
+                    />
+                  )}
+                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} />}
+                </div>
               )}
+            </div>
           </div>
         </div>
       </div>
