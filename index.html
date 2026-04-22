@@ -410,10 +410,10 @@ const DEFAULT_FOLDER_ORDER = [
 ];
 const DEFAULT_FOLDER_ORDER_MAP = Object.fromEntries(DEFAULT_FOLDER_ORDER.map((id, index) => [id, index]));
 const SEED_FOLDERS = [
-  { id: "f-private-vault", name: "Private Vault", color: "#6C63FF", image: "https://picsum.photos/seed/lockvault/800/600" },
-  { id: "f-growth", name: "Growth Hacks", color: "#FF8A3D", image: "https://picsum.photos/seed/rocket/800/600" },
-  { id: "f-wtf-favorites", name: "WTF Favorites", color: "#5875FF", image: "https://picsum.photos/seed/galaxy/800/600" },
-  { id: "f-tinfoil", name: "Tinfoil Hat Club", color: "#4C3D91", image: "https://picsum.photos/seed/tinfoilhat/800/600" },
+  { id: "f-private-vault", name: "Private Vault", color: "#6C63FF", image: "https://picsum.photos/seed/privatevaultdocs/800/600" },
+  { id: "f-growth", name: "Growth Hacks", color: "#FF8A3D", image: "https://picsum.photos/seed/growthhacksdesk/800/600" },
+  { id: "f-wtf-favorites", name: "WTF Favorites", color: "#5875FF", image: "https://picsum.photos/seed/weird-surreal-wtf/800/600" },
+  { id: "f-tinfoil", name: "Tinfoil Hat Club", color: "#4C3D91", image: "https://commons.wikimedia.org/wiki/Special:FilePath/30C3%20TinFoil-Hat%20(cropped).jpg" },
   { id: "f-lmao", name: "LMAO", color: "#FF4D6D", image: "https://picsum.photos/seed/laugh/800/600" },
   { id: "f-health", name: "Health Hacks", color: "#25C48C", image: "https://picsum.photos/seed/wellness/800/600" },
   { id: "f-recipes", name: "Recipes & Food", color: "#FF9F43", image: "https://picsum.photos/seed/cooking/800/600" },
@@ -428,6 +428,20 @@ const seedColorForFolder = (folderId) => SEED_FOLDERS.find((folder) => folder.id
 const picsumThumb = (seed, width = 900, height = 1100) => `https://picsum.photos/seed/${encodeURIComponent(seed)}/${width}/${height}`;
 const youtubeThumb = (videoId) => `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 const seedGroup = (defaults, items) => items.map((item) => ({ ...defaults, ...item }));
+const seededShuffle = (items, seed = "savi") => {
+  const hash = (value) => {
+    let h = 2166136261;
+    for (let i = 0; i < value.length; i += 1) {
+      h ^= value.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  };
+  return [...items]
+    .map((item, index) => ({ item, rank: hash(`${seed}:${item.title}:${item.url}:${index}`) }))
+    .sort((a, b) => a.rank - b.rank || a.item.title.localeCompare(b.item.title))
+    .map(({ item }) => item);
+};
 
 const DEMO_ITEMS = [
   ...seedGroup({ folderId: "f-lmao", source: "YouTube", type: "video" }, [
@@ -454,32 +468,30 @@ const DEMO_ITEMS = [
     { title: "Hubble's deep field still bends the brain", description: "A reminder of how much cosmic history was hiding inside what looked like a blank patch of night.", url: "https://science.nasa.gov/mission/hubble/science/universe-uncovered/hubble-deep-fields", thumbnail: picsumThumb("hubble-deep-field"), tags: ["hubble", "universe", "deep field"] },
     { title: "Webb finds carbon-rich chemistry on a distant world", description: "Another exoplanet atmosphere result that makes the universe feel much more populated and much stranger.", url: "https://science.nasa.gov/mission/webb/science-overview/", thumbnail: picsumThumb("jwst-exoplanet"), tags: ["exoplanet", "chemistry", "discovery"] },
   ]),
-  ...seedGroup({ folderId: "f-tinfoil", source: "Web", type: "video" }, [
-    { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
-    { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
-    { title: "Tutankhamun tomb discovery timeline", description: "The treasure, the media frenzy, and how archaeology became global spectacle.", url: "https://www.history.com/articles/tutankhamen", thumbnail: picsumThumb("tutankhamun-tomb"), tags: ["tutankhamun", "egypt", "discovery"] },
-    { title: "Atlantis theories that refuse to die", description: "A greatest-hits tour of the historical, geological, and completely unhinged versions of Atlantis.", url: "https://www.nationalgeographic.com/history/article/atlantis", thumbnail: picsumThumb("atlantis-theories"), tags: ["atlantis", "legend", "mystery"] },
-    { title: "Egyptian Book of the Dead explained visually", description: "A crisp visual introduction to spells, judgment scenes, and the aesthetics of an afterlife manual.", url: "https://www.metmuseum.org/toah/hd/dbod/hd_dbod.htm", thumbnail: picsumThumb("book-of-the-dead"), tags: ["egypt", "mythology", "afterlife"] },
-    { title: "Sphinx water erosion theory in plain English", description: "One of those archaeology-adjacent arguments that instantly sends you down three more tabs.", url: "https://www.smithsonianmag.com/history/uncovering-secrets-of-great-sphinx-180952437/", thumbnail: picsumThumb("sphinx-erosion"), tags: ["sphinx", "erosion", "debate"] },
-    { title: "Gobekli Tepe and the rewrite of early civilization", description: "A fascinating watch about ritual, agriculture, and the timeline getting rearranged.", url: "https://www.britannica.com/place/Gobekli-Tepe", thumbnail: picsumThumb("gobekli-tepe"), tags: ["archaeology", "civilization", "ancient"] },
-    { title: "Nazca Lines from the air", description: "An ideal late-night mystery watch: giant geoglyphs, uncertain motives, and endless theory bait.", url: "https://whc.unesco.org/en/list/700/", thumbnail: picsumThumb("nazca-lines"), tags: ["nazca", "mystery", "peru"] },
-    { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.discovery.com/exploration/lost-cities-of-the-world", source: "Web", type: "article", thumbnail: picsumThumb("lost-civilizations-iceberg"), tags: ["iceberg", "history", "deep dive"] },
-    { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.smithsonianmag.com/history/how-great-pyramid-giza-was-built-180979146/", source: "Web", type: "article", thumbnail: picsumThumb("temple-engineering-mysteries"), tags: ["temples", "engineering", "ancient"] },
-  ]),
-  ...seedGroup({ folderId: "f-tinfoil", source: "Web", type: "article" }, [
+  ...seededShuffle(seedGroup({ folderId: "f-tinfoil", source: "Web", type: "article" }, [
+    { title: "How were the pyramids actually built?", description: "A polished breakdown of quarry routes, ramps, labor organization, and why the simple theories are usually the strongest ones.", url: "https://www.history.com/topics/ancient-history/the-egyptian-pyramids", source: "History", type: "article", thumbnail: picsumThumb("pyramid-theories"), tags: ["egypt", "history", "documentary"] },
     { title: "Pentagon fails 7th audit in a row", description: "A budget-watch rabbit hole on how the Pentagon still cannot fully account for hundreds of billions in spending.", url: "https://www.youtube.com/watch?v=30ffX3PXNc0", source: "YouTube", type: "video", thumbnail: youtubeThumb("30ffX3PXNc0"), tags: ["pentagon", "audit", "budget", "government"] },
+    { title: "Ancient Aliens: the wildest episode recap", description: "Pure speculative comfort viewing for nights when you want mystery more than certainty.", url: "https://www.history.com/shows/ancient-aliens", source: "History", type: "article", thumbnail: picsumThumb("ancient-aliens"), tags: ["mystery", "tv", "aliens"] },
     { title: "The Missing $21 Trillion at the Pentagon", description: "The Reuters report that became one of the internet's favorite entry points into black-budget speculation.", url: "https://www.reuters.com/article/us-usa-audit-army-idUSKCN1BW1GE", source: "Reuters", thumbnail: picsumThumb("pentagon-missing-money"), tags: ["pentagon", "missing money", "government", "budget"] },
+    { title: "Tutankhamun tomb discovery timeline", description: "The treasure, the media frenzy, and how archaeology became global spectacle.", url: "https://www.history.com/articles/tutankhamen", source: "History", type: "article", thumbnail: picsumThumb("tutankhamun-tomb"), tags: ["tutankhamun", "egypt", "discovery"] },
     { title: "HOW PYRAMIDS WERE BUILT!", description: "A mystery-heavy watch on impossible precision, massive stone transport, and why Giza keeps restarting the argument.", url: "https://www.youtube.com/watch?v=icW0Itp675c", source: "YouTube", type: "video", thumbnail: youtubeThumb("icW0Itp675c"), tags: ["egypt", "pyramids", "ancient", "mystery"] },
+    { title: "Atlantis theories that refuse to die", description: "A greatest-hits tour of the historical, geological, and completely unhinged versions of Atlantis.", url: "https://www.nationalgeographic.com/history/article/atlantis", source: "National Geographic", thumbnail: picsumThumb("atlantis-theories"), tags: ["atlantis", "legend", "mystery"] },
     { title: "The Sphinx water erosion theory explained", description: "Robert Schoch's case for an older Sphinx, the geology behind it, and why it still sparks endless debate.", url: "https://www.saturniancosmology.org/files/sphinx/sphinxcontent.html", source: "Robert Schoch", thumbnail: picsumThumb("sphinx-water-erosion"), tags: ["sphinx", "egypt", "erosion", "ancient"] },
+    { title: "Egyptian Book of the Dead explained visually", description: "A crisp visual introduction to spells, judgment scenes, and the aesthetics of an afterlife manual.", url: "https://www.metmuseum.org/toah/hd/dbod/hd_dbod.htm", source: "Met Museum", thumbnail: picsumThumb("book-of-the-dead"), tags: ["egypt", "mythology", "afterlife"] },
     { title: "WORLD TRADE CENTER #7: a disturbing deep dive", description: "A long-form Building 7 breakdown that sits right at the center of one of the internet's most persistent modern conspiracies.", url: "https://www.youtube.com/watch?v=fxnSvCc_swE", source: "YouTube", type: "video", thumbnail: youtubeThumb("fxnSvCc_swE"), tags: ["9/11", "building 7", "conspiracy", "rabbit hole"] },
+    { title: "Sphinx water erosion theory in plain English", description: "One of those archaeology-adjacent arguments that instantly sends you down three more tabs.", url: "https://www.smithsonianmag.com/history/uncovering-secrets-of-great-sphinx-180952437/", source: "Smithsonian", thumbnail: picsumThumb("sphinx-erosion"), tags: ["sphinx", "erosion", "debate"] },
     { title: "What's the most believable conspiracy theory?", description: "A classic AskReddit thread full of plausible-sounding cover-ups, wild replies, and links out to deeper holes.", url: "https://www.reddit.com/r/AskReddit/comments/p220cf/what_is_the_most_believable_conspiracy_theory/", source: "Reddit", type: "link", thumbnail: picsumThumb("believable-conspiracy-reddit"), tags: ["conspiracy", "reddit", "theories", "discussion"] },
+    { title: "Gobekli Tepe and the rewrite of early civilization", description: "A fascinating watch about ritual, agriculture, and the timeline getting rearranged.", url: "https://www.britannica.com/place/Gobekli-Tepe", source: "Britannica", thumbnail: picsumThumb("gobekli-tepe"), tags: ["archaeology", "civilization", "ancient"] },
     { title: "Operation Northwoods: the government's own declassified plan", description: "A National Security Archive document showing just how far some proposed Cold War pretexts were willing to go.", url: "https://nsarchive.gwu.edu/CMC-60/joint-chiefs-pretexts-to-invade-Cuba-1962", source: "National Security Archive", thumbnail: picsumThumb("operation-northwoods"), tags: ["operation northwoods", "declassified", "government", "false flag"] },
+    { title: "Nazca Lines from the air", description: "An ideal late-night mystery watch: giant geoglyphs, uncertain motives, and endless theory bait.", url: "https://whc.unesco.org/en/list/700/", source: "UNESCO", thumbnail: picsumThumb("nazca-lines"), tags: ["nazca", "mystery", "peru"] },
     { title: "Atlantis Found: The Search for the Lost City", description: "Peak lost-civilization viewing with submerged ruins, ancient maps, and exactly the kind of evidence montage you want here.", url: "https://www.youtube.com/watch?v=zWZO3_kL1RA", source: "YouTube", type: "video", thumbnail: youtubeThumb("zWZO3_kL1RA"), tags: ["atlantis", "lost civilization", "mystery", "documentary"] },
+    { title: "Lost civilizations iceberg explained", description: "A rabbit-hole compilation for when you want buried cities, giant stones, and increasingly bold claims.", url: "https://www.discovery.com/exploration/lost-cities-of-the-world", source: "Web", thumbnail: picsumThumb("lost-civilizations-iceberg"), tags: ["iceberg", "history", "deep dive"] },
     { title: "MKUltra: The CIA's appalling human experiments with mind control", description: "A readable history of the Cold War-era program that made government secrecy look much darker in hindsight.", url: "https://www.history.com/mkultra-operation-midnight-climax-cia-lsd-experiments", source: "History", thumbnail: picsumThumb("mkultra-history"), tags: ["mkultra", "cia", "mind control", "declassified"] },
+    { title: "Unsolved temple engineering mysteries", description: "A moody visual essay on impossible cuts, transport methods, and what pre-modern precision really looked like.", url: "https://www.smithsonianmag.com/history/how-great-pyramid-giza-was-built-180979146/", source: "Smithsonian", thumbnail: picsumThumb("temple-engineering-mysteries"), tags: ["temples", "engineering", "ancient"] },
     { title: "Aliens and Cover-Ups (S5, E1) | Ancient Aliens", description: "Government secrecy, UFO files, and full History Channel energy for when you want your aliens with extra official denials.", url: "https://www.youtube.com/watch?v=s1l1g98XNbc", source: "YouTube", type: "video", thumbnail: youtubeThumb("s1l1g98XNbc"), tags: ["ancient aliens", "history channel", "aliens", "cover-up"] },
     { title: "Area 51: what we actually know", description: "A more grounded read on Groom Lake, black aircraft, and why real secrecy did so much to fuel the alien mythology.", url: "https://www.history.com/news/what-goes-on-at-area-51", source: "History", thumbnail: picsumThumb("area51-what-we-know"), tags: ["area 51", "aliens", "government", "secrets"] },
     { title: "What conspiracy theories actually turned out to be true in the end?", description: "A modern Reddit thread collecting examples like MKUltra, surveillance programs, and other stories that stopped sounding fake.", url: "https://www.reddit.com/r/AskReddit/comments/1bjmjjk/what_conspiracy_theories_actually_turned_out_to_be_true_in_the_end/", source: "Reddit", type: "link", thumbnail: picsumThumb("proven-true-conspiracies"), tags: ["conspiracy", "government", "proven true", "reddit"] },
-  ]),
+  ]), "tinfoil-hat-club"),
   ...seedGroup({ folderId: "f-growth", source: "Web", type: "article" }, [
     { title: "How to use Claude like a real thinking partner", description: "A practical setup for long-context prompting, critique passes, and using models as editors instead of slot machines.", url: "https://www.anthropic.com/claude", thumbnail: picsumThumb("claude-ai-workflow"), tags: ["claude", "ai", "workflow"] },
     { title: "ChatGPT prompt engineering patterns worth saving", description: "Prompt structures that consistently produce better drafts, better summaries, and fewer weird surprises.", url: "https://platform.openai.com/docs/guides/prompt-engineering", thumbnail: picsumThumb("chatgpt-prompting"), tags: ["chatgpt", "prompts", "ai"] },
@@ -712,12 +724,18 @@ const LEGACY_FOLDER_ID_MAP = {
   "f-travel": "f-travel",
 };
 const LEGACY_SEED_FOLDER_IDS = ["f-personal", "f-hacks", "f-health", "f-finance", "f-career", "f-read", "f-wtf", "f-science", "f-business", "f-must-watch", "f-must-read", "f-must-do", "f-design", "f-research", "f-recipes", "f-travel", "f-music-memes"];
+const REFRESHABLE_SEED_IMAGES = new Set([
+  "https://picsum.photos/seed/lockvault/800/600",
+  "https://picsum.photos/seed/rocket/800/600",
+  "https://picsum.photos/seed/galaxy/800/600",
+  "https://picsum.photos/seed/tinfoilhat/800/600",
+]);
 const withSeededFolderDefaults = (folders = []) => {
   const nextFolders = Array.isArray(folders) ? folders : [];
   const merged = nextFolders.map((folder) => {
     const seed = SEED_FOLDER_LOOKUP[folder.id];
     if (!seed) return folder;
-    const shouldRefreshImage = !folder.image || folder.image.startsWith("https://source.unsplash.com/");
+    const shouldRefreshImage = !folder.image || folder.image.startsWith("https://source.unsplash.com/") || REFRESHABLE_SEED_IMAGES.has(folder.image);
     return {
       ...seed,
       ...folder,
@@ -1554,7 +1572,7 @@ function App() {
   const [browseMode, setBrowseMode] = useState("all");
   const [activeType, setActiveType] = useState("all");
   const [activeSource, setActiveSource] = useState("all");
-  const [viewMode, setViewMode] = useState(uiPrefs?.viewMode === "list" ? "list" : "grid");
+  const [viewMode, setViewMode] = useState(uiPrefs?.viewMode === "grid" ? "grid" : "list");
   const [search, setSearch] = useState("");
   const [route, setRoute] = useState("home");
   const [showSaveSheet, setShowSaveSheet] = useState(false);
@@ -1988,25 +2006,26 @@ function WelcomeWizard({ onFinish }) {
   const touchStartXRef = useRef(0);
   const touchStartTimeRef = useRef(0);
   const touchCurrentXRef = useRef(0);
+  const draggingRef = useRef(false);
 
-  const goToStep = (nextStep) => {
-    const clamped = Math.max(0, Math.min(slides.length - 1, nextStep));
-    setStep(clamped);
-  };
+  const goToStep = (nextStep) => setStep(() => Math.max(0, Math.min(slides.length - 1, nextStep)));
 
   const nextStep = () => {
-    if (step === slides.length - 1) {
-      onFinish();
-      return;
-    }
-    goToStep(step + 1);
+    setStep((current) => {
+      if (current >= slides.length - 1) {
+        window.setTimeout(() => onFinish(), 0);
+        return current;
+      }
+      return current + 1;
+    });
   };
 
-  const previousStep = () => goToStep(step - 1);
+  const previousStep = () => setStep((current) => Math.max(0, current - 1));
 
   const handleTouchStart = (event) => {
     const touch = event.touches?.[0];
     if (!touch) return;
+    draggingRef.current = true;
     touchStartXRef.current = touch.clientX;
     touchCurrentXRef.current = touch.clientX;
     touchStartTimeRef.current = performance.now();
@@ -2019,6 +2038,8 @@ function WelcomeWizard({ onFinish }) {
   };
 
   const handleTouchEnd = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
     const deltaX = touchCurrentXRef.current - touchStartXRef.current;
     const elapsed = Math.max(1, performance.now() - touchStartTimeRef.current);
     const velocity = Math.abs(deltaX) / elapsed;
@@ -2026,8 +2047,10 @@ function WelcomeWizard({ onFinish }) {
     if (deltaX >= 70 || (deltaX > 38 && velocity > 0.45)) previousStep();
   };
 
+  const handleSkip = () => onFinish();
+
   return (
-    <div className="anim-fade" style={{ height: "100%", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #FBFAF7 0%, #F3EEE5 100%)" }}>
+    <div className="anim-fade" style={{ height: "100%", display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #FBFAF7 0%, #F3EEE5 100%)", position: "relative", zIndex: 5, pointerEvents: "auto" }}>
       <div style={{ padding: "calc(18px + env(safe-area-inset-top)) 22px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, background: "linear-gradient(160deg, #161A23 0%, #6D7CFF 100%)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2035,7 +2058,7 @@ function WelcomeWizard({ onFinish }) {
           </div>
           <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.16em", color: T.inkMute }}>SAVI setup</div>
         </div>
-        <button onClick={onFinish} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute }}>
+        <button type="button" onClick={handleSkip} className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute, position: "relative", zIndex: 3 }}>
           Skip
         </button>
       </div>
@@ -2070,6 +2093,7 @@ function WelcomeWizard({ onFinish }) {
           <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 18 }}>
             {slides.map((slide, index) => (
               <button
+                type="button"
                 key={slide.title}
                 aria-label={`Go to onboarding step ${index + 1}`}
                 onClick={() => goToStep(index)}
@@ -2084,13 +2108,14 @@ function WelcomeWizard({ onFinish }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 10, paddingBottom: "calc(8px + env(safe-area-inset-bottom))" }}>
             <button
+              type="button"
               onClick={previousStep}
               disabled={step === 0}
               style={{ padding: 15, borderRadius: 16, fontSize: 13, fontWeight: 600, background: step === 0 ? T.paperDim : T.card, color: step === 0 ? T.inkMute : T.ink, border: `1px solid ${T.lineSoft}`, opacity: step === 0 ? 0.7 : 1 }}
             >
               Back
             </button>
-            <button onClick={nextStep} style={{ padding: 15, borderRadius: 16, fontSize: 14, fontWeight: 700, background: slides[step].accent, color: T.paper, boxShadow: "0 22px 34px -24px rgba(22,26,35,0.52)" }}>
+            <button type="button" onClick={nextStep} style={{ padding: 15, borderRadius: 16, fontSize: 14, fontWeight: 700, background: slides[step].accent, color: T.paper, boxShadow: "0 22px 34px -24px rgba(22,26,35,0.52)", position: "relative", zIndex: 3 }}>
               {step === slides.length - 1 ? "Let's Go!" : step === 0 ? "Get Started" : "Next"}
             </button>
           </div>
@@ -2259,8 +2284,8 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
           <EmptyState search={search} searchMode={searchMode} browseMode={browseMode} activeFolderName={activeFolderName} activeSourceLabel={activeSourceLabel} activeType={activeType} />
         </div>
       ) : viewMode === "grid" ? (
-        <div key={`grid-${browseMode}-${activeFolder}-${activeType}-${activeSource}`} className="anim-fade" style={{ padding: "0 20px 28px", columnCount: 2, columnGap: 14 }}>
-          {items.map((item, idx) => <ItemCard key={item.id} item={item} index={idx} onClick={()=>onSelect(item)} delay={idx * 22} />)}
+        <div key={`grid-${browseMode}-${activeFolder}-${activeType}-${activeSource}`} className="anim-fade" style={{ padding: "0 20px 28px", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14, alignItems: "start" }}>
+          {items.map((item, idx) => <ItemCard key={item.id} item={item} index={idx} onClick={()=>onSelect(item)} delay={idx * 22} layout="grid" />)}
         </div>
       ) : (
         <div key={`list-${browseMode}-${activeFolder}-${activeType}-${activeSource}`} className="anim-fade" style={{ padding: "0 20px 28px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2305,7 +2330,7 @@ function EmptyState({ search, searchMode = false, browseMode = "all", activeFold
   );
 }
 
-function ItemCard({ item, index, onClick, delay }) {
+function ItemCard({ item, index, onClick, delay, layout = "grid" }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
   const mediaAspect = item.type === "video"
@@ -2318,7 +2343,7 @@ function ItemCard({ item, index, onClick, delay }) {
           ? "4 / 5.3"
           : "4 / 4.9";
   return (
-    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", display: "inline-block", marginBottom: 14, textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", breakInside: "avoid", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)" }}>
+    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", display: "block", textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", breakInside: "avoid", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)", alignSelf: "start", marginBottom: layout === "grid" ? 0 : 14 }}>
       <div style={{ position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, aspectRatio: mediaAspect, color: item.color, overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.08) 0%, rgba(11,16,26,0.16) 30%, rgba(11,16,26,0.72) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
         <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
@@ -2448,7 +2473,7 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
                 position: "relative",
               }}
             >
-              {coverImage && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,12,22,0.02) 0%, rgba(8,12,22,0.12) 18%, rgba(8,12,22,0.48) 58%, rgba(8,12,22,0.9) 100%)" }} />}
+              {coverImage && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,10,18,0.02) 0%, rgba(6,10,18,0.16) 16%, rgba(6,10,18,0.38) 42%, rgba(6,10,18,0.76) 72%, rgba(6,10,18,0.96) 100%)" }} />}
               <div style={{ position: "relative", zIndex: 1, minHeight: 18, display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
                 {!f.system && (
                   <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 10px", borderRadius: 999, background: "rgba(255,255,255,0.16)", border: "1px solid rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.94)", backdropFilter: "blur(16px)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", boxShadow: "0 12px 30px -22px rgba(10,16,28,0.85)" }}>
@@ -2464,8 +2489,8 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
                 )}
               </div>
               <div style={{ position: "relative", zIndex: 1, marginTop: "auto", padding: "4px 2px 2px" }}>
-                <div className="serif" style={{ fontSize: 20, lineHeight: 1.08, marginBottom: 6, color: coverImage || f.system ? "#FFFFFF" : T.ink, textShadow: coverImage ? "0 16px 30px rgba(0,0,0,0.34)" : "none" }}>{f.name}</div>
-                <div style={{ fontSize: 12, color: coverImage ? "rgba(255,255,255,0.8)" : f.system ? "rgba(245,241,234,0.78)" : T.inkSoft }}>
+                <div className="serif" style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.04, marginBottom: 6, color: coverImage || f.system ? "#FFFFFF" : T.ink, textShadow: coverImage ? "0 16px 30px rgba(0,0,0,0.48)" : "none" }}>{f.name}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: coverImage ? "rgba(255,255,255,0.9)" : f.system ? "rgba(245,241,234,0.84)" : T.inkSoft, textShadow: coverImage ? "0 10px 24px rgba(0,0,0,0.4)" : "none" }}>
                   {folderCounts[f.id] ?? 0} {folderCounts[f.id] === 1 ? "item" : "items"}
                 </div>
               </div>
@@ -3578,6 +3603,20 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
   };
 
   const overlayAlpha = Math.max(0.14, 0.45 - dragY / 520);
+  const canOpenOriginal = Boolean(!hasLocalAsset && item.url);
+
+  const openOriginal = () => {
+    if (!canOpenOriginal) return;
+    window.open(item.url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleHeroKeyDown = (event) => {
+    if (!canOpenOriginal) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openOriginal();
+    }
+  };
 
   return (
     <div className="anim-fade" onClick={onClose} style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: `rgba(16, 20, 30, ${overlayAlpha})`, transition: isDragging ? "none" : "background 180ms ease" }}>
@@ -3591,18 +3630,36 @@ function ItemSheet({ item, folders, onClose, onDelete }) {
         >
           <div style={{ width: 42, height: 5, borderRadius: 999, background: T.line }} />
         </div>
-        <div style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
+        <div
+          role={canOpenOriginal ? "button" : undefined}
+          tabIndex={canOpenOriginal ? 0 : undefined}
+          onClick={canOpenOriginal ? openOriginal : undefined}
+          onKeyDown={handleHeroKeyDown}
+          style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, cursor: canOpenOriginal ? "pointer" : "default" }}
+        >
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, background: item.thumbnail ? "linear-gradient(180deg, rgba(28,26,23,0.1) 0%, rgba(28,26,23,0.24) 100%)" : "transparent" }}>
-            <div style={{ width: 64, height: 64, borderRadius: 20, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: 20, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: item.type === "video" ? "0 18px 28px -24px rgba(11,16,26,0.8)" : "none" }}>
               {typeIconFor(item.type, { size: 38, stroke: 1.2 })}
             </div>
+            {item.type === "video" && canOpenOriginal && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                <div style={{ width: 76, height: 76, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
+                  <IconPlayCircle size={34} stroke={1.85} />
+                </div>
+              </div>
+            )}
           </div>
-          <button aria-label="Close details" onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button aria-label="Close details" onClick={(event) => { event.stopPropagation(); onClose(); }} style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconX size={14} />
           </button>
           <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
             {displayTypeLabel(item.type)}
           </div>
+          {canOpenOriginal && (
+            <div className="mono" style={{ position: "absolute", left: 12, bottom: 12, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", padding: "7px 10px", borderRadius: 999, background: "rgba(11,16,26,0.42)", color: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)" }}>
+              Tap thumbnail to open original
+            </div>
+          )}
         </div>
         <div
           ref={sheetScrollRef}
