@@ -2033,41 +2033,66 @@ function WelcomeWizard({ onFinish }) {
       ),
     },
     {
-      eyebrow: "Fast capture",
-      title: "Paste it. Forward it. Done.",
-      subtitle: "Links, files, photos, PDFs, map pins, whatever.",
-      description: "Drop it into SAVI and keep moving. It grabs the useful bits, labels it, and keeps it easy to reach at your fingertips.",
+      eyebrow: "Share anything",
+      title: "Share it to SAVI. Done.",
+      subtitle: "Hit share. Send to SAVI. Move on with your day.",
+      description: "Link, file, Instagram post, YouTube video, PDF, map pin. Share it once and SAVI saves it automatically. Paste works too.",
       accent: "linear-gradient(160deg, #FF9F43 0%, #6D7CFF 100%)",
       visual: (
-        <div style={{ width: "100%", maxWidth: 278, padding: 18, borderRadius: 28, background: "linear-gradient(180deg, #FFFFFF 0%, #F8F5FF 100%)", border: `1px solid ${T.lineSoft}`, boxShadow: "0 28px 56px -36px rgba(22,26,35,0.48)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(109,124,255,0.14)", color: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <IconLink size={17} />
+        <div style={{ width: "100%", maxWidth: 286, padding: 18, borderRadius: 28, background: "linear-gradient(180deg, #FFFFFF 0%, #F8F5FF 100%)", border: `1px solid ${T.lineSoft}`, boxShadow: "0 28px 56px -36px rgba(22,26,35,0.48)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div className="mono" style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute }}>From anywhere</div>
+            <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(109,124,255,0.14)", color: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <IconShare size={15} />
             </div>
-            <div style={{ height: 12, flex: 1, borderRadius: 999, background: T.paperDim }} />
-            <div className="mono" style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: T.inkMute }}>Auto</div>
           </div>
-          <div style={{ display: "grid", gap: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
-              <div className="clamp1" style={{ flex: 1, fontSize: 12.5, color: T.inkSoft }}>https://something-you-need.com</div>
-              <div style={{ width: 28, height: 28, borderRadius: 10, background: T.card, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IconArrowOut size={12} />
-              </div>
+          <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[
+                { label: "Instagram", icon: <IconCamera size={12} />, tone: "rgba(255,77,109,0.14)" },
+                { label: "YouTube", icon: <IconPlayCircle size={12} />, tone: "rgba(200,85,61,0.14)" },
+                { label: "File", icon: <IconFile size={12} />, tone: "rgba(109,124,255,0.14)" },
+                { label: "Map", icon: <IconPin size={12} />, tone: "rgba(24,183,160,0.14)" },
+              ].map((item) => (
+                <div key={item.label} className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 10px", borderRadius: 999, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", background: item.tone, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+                  {item.icon}
+                  {item.label}
+                </div>
+              ))}
             </div>
-            <div style={{ padding: 14, borderRadius: 20, background: "linear-gradient(160deg, rgba(109,124,255,0.14) 0%, rgba(200,85,61,0.12) 100%)", border: `1px solid ${T.lineSoft}` }}>
-              <div style={{ display: "grid", gridTemplateColumns: "52px 1fr", gap: 10, alignItems: "center", marginBottom: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, background: T.card, boxShadow: "0 18px 30px -24px rgba(22,26,35,0.34)" }} />
-                <div style={{ display: "grid", gap: 7 }}>
-                  <div style={{ height: 10, borderRadius: 999, background: "rgba(22,26,35,0.14)" }} />
-                  <div style={{ height: 10, width: "78%", borderRadius: 999, background: "rgba(22,26,35,0.1)" }} />
+            <div style={{ padding: 14, borderRadius: 22, background: "linear-gradient(160deg, rgba(109,124,255,0.14) 0%, rgba(200,85,61,0.1) 100%)", border: `1px solid ${T.lineSoft}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{ flex: 1, padding: "12px 13px", borderRadius: 16, background: T.card, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 14px 24px -22px rgba(22,26,35,0.28)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 10, background: "rgba(255,77,109,0.14)", color: "#D6456A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IconCamera size={12} />
+                    </div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: T.ink }}>Share</div>
+                  </div>
+                  <IconArrowOut size={12} />
+                </div>
+                <div style={{ color: T.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IconShare size={14} />
+                </div>
+                <div style={{ flex: 1, padding: "12px 13px", borderRadius: 16, background: "linear-gradient(160deg, #161A23 0%, #6D7CFF 100%)", color: T.paper, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 18px 28px -24px rgba(22,26,35,0.45)" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 10, background: "rgba(255,255,255,0.16)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <IconBookmark size={12} stroke={2} fill={T.paper} />
+                  </div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700 }}>SAVI</div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                {["Title", "Tags", "Folder"].map((label, index) => (
-                  <div key={label} className="mono" style={{ padding: "7px 10px", borderRadius: 999, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", background: index === 2 ? "rgba(109,124,255,0.18)" : T.card, color: index === 2 ? T.accent : T.inkSoft }}>
-                    {label}
-                  </div>
-                ))}
+              <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 14, background: "rgba(255,255,255,0.84)", border: `1px solid ${T.lineSoft}` }}>
+                  <div className="clamp1" style={{ fontSize: 12.5, color: T.inkSoft }}>Saved automatically</div>
+                  <div className="mono" style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: T.accent }}>Done</div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["Title", "Folder", "Tags"].map((label, index) => (
+                    <div key={label} className="mono" style={{ padding: "7px 10px", borderRadius: 999, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", background: index === 1 ? "rgba(109,124,255,0.18)" : T.card, color: index === 1 ? T.accent : T.inkSoft }}>
+                      {label}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
