@@ -211,6 +211,7 @@ const BrandBadge = ({ visual, size = 20, active = false }) => {
 const STORAGE_KEY = "savi_v1";
 const UI_PREFS_KEY = "savi_ui_v1";
 const ONBOARDED_KEY = "savi_onboarded";
+const DEMO_SUPPRESSED_KEY = "savi_demo_suppressed";
 const ASSET_DB_NAME = "savi_assets";
 const ASSET_DB_VERSION = 1;
 const ASSET_STORE = "assets";
@@ -715,8 +716,11 @@ const SEED_ITEMS = buildSeedFeed(DEMO_ITEMS).map((item, index) => ({
   id: `i${index + 1}`,
   savedAt: Date.now() - ((item.folderId === "f-tinfoil" ? (tinfoilSavedAtHoursForTitle(item.title) ?? (index + 2)) : (index + 2)) * 3600000),
   color: seedColorForFolder(item.folderId),
+  demo: true,
   ...item,
 }));
+const DEMO_ITEM_IDS = new Set(SEED_ITEMS.map((item) => item.id));
+const isDemoItem = (item) => Boolean(item?.demo || DEMO_ITEM_IDS.has(item?.id));
 
 const FOLDER_COLORS = ["#6C63FF", "#FF8A3D", "#5875FF", "#4C3D91", "#FF4D6D", "#25C48C", "#FF9F43", "#18B7A0", "#F15BB5", "#6E68FF", "#F7C948"];
 const TEXT_FILE_EXTENSIONS = ["txt", "md", "markdown", "csv", "json", "js", "jsx", "ts", "tsx", "html", "css", "py", "xml", "yaml", "yml"];
@@ -1625,6 +1629,19 @@ const saveOnboarded = (value) => {
     else localStorage.removeItem(ONBOARDED_KEY);
   } catch {}
 };
+const loadDemoSuppressed = () => {
+  try {
+    return localStorage.getItem(DEMO_SUPPRESSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+const saveDemoSuppressed = (value) => {
+  try {
+    if (value) localStorage.setItem(DEMO_SUPPRESSED_KEY, "true");
+    else localStorage.removeItem(DEMO_SUPPRESSED_KEY);
+  } catch {}
+};
 const BACKUP_VERSION = 2;
 const BACKUP_MIME = "application/json";
 
@@ -1666,8 +1683,9 @@ function App() {
   const saved = normalizeSavedState(loadState());
   const uiPrefs = loadUiPrefs();
   const shouldShowOnboarding = !loadOnboarded();
+  const demoSuppressed = loadDemoSuppressed();
   const [folders, setFolders] = useState(saved?.folders || withSeededFolderDefaults([]));
-  const [items, setItems] = useState(saved?.items || SEED_ITEMS);
+  const [items, setItems] = useState(saved?.items || (demoSuppressed ? [] : SEED_ITEMS));
   const [activeFolder, setActiveFolder] = useState("f-all");
   const [browseMode, setBrowseMode] = useState("all");
   const [activeType, setActiveType] = useState("all");
@@ -1978,6 +1996,7 @@ function App() {
       };
     }
 
+    saveDemoSuppressed(false);
     setItems(prev => [nextItem, ...prev]);
     return nextItem;
   };
@@ -2006,6 +2025,16 @@ function App() {
     if (selectedItem?.id === id) setSelectedItem(null);
     if (editingItem?.id === id) setEditingItem(null);
   };
+  const clearDemoContent = async () => {
+    const demoItems = items.filter(isDemoItem);
+    await Promise.all(demoItems.map((item) => item.assetId ? deleteAssetRecord(item.assetId).catch(() => {}) : null));
+    const nextItems = items.filter((item) => !isDemoItem(item));
+    setItems(nextItems);
+    setSelectedItem((prev) => (prev && isDemoItem(prev) ? null : prev));
+    setEditingItem((prev) => (prev && isDemoItem(prev) ? null : prev));
+    saveDemoSuppressed(true);
+    return nextItems.length;
+  };
   const addFolder = (folderDraft) => setFolders(prev => [...prev, { id: `f-${Date.now()}`, ...folderDraft }]);
   const updateFolder = (folderId, updates) => setFolders(prev => prev.map(folder => folder.id === folderId ? { ...folder, ...updates } : folder));
   const clearLibrary = async () => {
@@ -2015,7 +2044,9 @@ function App() {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(UI_PREFS_KEY);
       localStorage.removeItem(ONBOARDED_KEY);
+      localStorage.removeItem(DEMO_SUPPRESSED_KEY);
     }
+    saveDemoSuppressed(true);
     await deleteAssetDatabase().catch(() => false);
     await clearAssetRecords().catch(() => {});
     window.location.reload();
@@ -2073,7 +2104,7 @@ function App() {
                       />
                     )}
                     {route === "profile" && (
-                      <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} />
+                      <ProfileScreen itemCount={items.length} folderCount={folders.filter(f=>!f.system).length} exportBackup={exportBackup} importBackup={importBackup} clearLibrary={clearLibrary} clearDemoContent={clearDemoContent} />
                     )}
                   </div>
                   <div className="navigator-shell">
@@ -2096,7 +2127,7 @@ function App() {
                       }}
                     />
                   )}
-                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} onEdit={()=>setEditingItem(selectedItem)} onOpenImage={openImageLightbox} />}
+                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} onEdit={()=>setEditingItem(selectedItem)} onShare={()=>handleShareItem(selectedItem)} onOpenImage={openImageLightbox} />}
                   {editingItem && <ItemEditorSheet item={editingItem} folders={folders} onClose={()=>setEditingItem(null)} onSave={async (updates)=>{ await updateItem(editingItem.id, updates); setEditingItem(null); }} />}
                   {lightboxImage && <ImageLightbox image={lightboxImage} onClose={closeLightbox} />}
                   {toastMessage && (
@@ -2844,7 +2875,7 @@ function FoldersScreen({ folders, folderCounts, onOpen, onNew, onEdit }) {
   );
 }
 
-function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, clearLibrary }) {
+function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, clearLibrary, clearDemoContent }) {
   const fileInputRef = useRef(null);
   const [backupMessage, setBackupMessage] = useState("");
   const [backupTone, setBackupTone] = useState("muted");
@@ -2853,6 +2884,8 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteStep, setDeleteStep] = useState(1);
   const [isDeletingEverything, setIsDeletingEverything] = useState(false);
+  const [showClearDemoModal, setShowClearDemoModal] = useState(false);
+  const [isClearingDemo, setIsClearingDemo] = useState(false);
 
   const showBackupMessage = (message, tone = "muted") => {
     setBackupMessage(message);
@@ -2886,6 +2919,29 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
       localStorage.removeItem(ONBOARDED_KEY);
     } catch {}
     window.location.reload();
+  };
+
+  const requestClearDemo = () => {
+    setShowClearDemoModal(true);
+  };
+
+  const closeClearDemoModal = () => {
+    if (isClearingDemo) return;
+    setShowClearDemoModal(false);
+  };
+
+  const confirmClearDemo = async () => {
+    if (isClearingDemo) return;
+    setIsClearingDemo(true);
+    try {
+      const remainingCount = await clearDemoContent();
+      showBackupMessage(remainingCount ? "Preview content removed. Your own saves are still here." : "Preview content removed. Starting fresh.", "success");
+      setShowClearDemoModal(false);
+    } catch {
+      showBackupMessage("Couldn't clear the preview content right now.", "error");
+    } finally {
+      setIsClearingDemo(false);
+    }
   };
 
   const handleExport = async () => {
@@ -2990,9 +3046,14 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
         <div style={{ padding: 16, borderRadius: 16, background: T.paperDim, border: `1px solid ${T.lineSoft}` }}>
           <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, color: T.accent }}>Prototype</div>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: T.inkSoft, marginBottom: 12 }}>Web version of SAVI. The native iOS app would add the Share Extension, cross-device sync, and system gestures.</div>
-          <button onClick={resetPrototype} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}`, boxShadow: "0 12px 20px -18px rgba(22,26,35,0.3)" }}>
-            Reset Prototype
-          </button>
+          <div style={{ display: "grid", gap: 10 }}>
+            <button onClick={requestClearDemo} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}`, boxShadow: "0 12px 20px -18px rgba(22,26,35,0.3)" }}>
+              Clear Demo Content
+            </button>
+            <button onClick={resetPrototype} style={{ width: "100%", padding: 12, borderRadius: 12, fontSize: 12.5, fontWeight: 600, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
+              Reset Prototype
+            </button>
+          </div>
         </div>
       </div>
       {showDeleteModal && (
@@ -3018,6 +3079,27 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
               </button>
               <button onClick={deleteStep === 1 ? advanceDeleteStep : confirmDeleteEverything} disabled={isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 700, background: "linear-gradient(180deg, #D45745 0%, #B83428 100%)", color: T.paper, opacity: isDeletingEverything ? 0.6 : 1 }}>
                 {isDeletingEverything ? "Deleting..." : deleteStep === 1 ? "Yes Delete" : "Delete Everything"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showClearDemoModal && (
+        <div className="anim-fade" style={{ position: "fixed", inset: 0, zIndex: 9998, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(20, 18, 24, 0.42)" }} onClick={closeClearDemoModal}>
+          <div className="anim-sheet" style={{ width: "100%", borderRadius: "28px 28px 0 0", background: T.paper, padding: "14px 20px calc(120px + env(safe-area-inset-bottom))", boxShadow: "0 -18px 40px -26px rgba(20,18,24,0.55)" }} onClick={(event) => event.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <div style={{ width: 40, height: 5, borderRadius: 999, background: T.line }} />
+            </div>
+            <div className="serif" style={{ fontSize: 28, lineHeight: 1.05, color: T.ink, marginBottom: 10 }}>Clear demo content?</div>
+            <div style={{ fontSize: 13, lineHeight: 1.55, color: T.inkSoft, marginBottom: 16 }}>
+              Remove all preview content and start fresh?
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <button onClick={closeClearDemoModal} disabled={isClearingDemo} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 600, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, opacity: isClearingDemo ? 0.55 : 1 }}>
+                Cancel
+              </button>
+              <button onClick={confirmClearDemo} disabled={isClearingDemo} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 700, background: T.ink, color: T.paper, opacity: isClearingDemo ? 0.6 : 1 }}>
+                {isClearingDemo ? "Clearing..." : "Clear"}
               </button>
             </div>
           </div>
@@ -3996,7 +4078,7 @@ function ImageLightbox({ image, onClose }) {
   );
 }
 
-function ItemSheet({ item, folders, onClose, onDelete, onEdit, onOpenImage }) {
+function ItemSheet({ item, folders, onClose, onDelete, onEdit, onShare, onOpenImage }) {
   const folder = folders.find(f => f.id === item.folderId);
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
@@ -4098,6 +4180,7 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit, onOpenImage }) {
   const overlayAlpha = Math.max(0.14, 0.45 - dragY / 520);
   const canOpenOriginal = Boolean(!hasLocalAsset && item.url);
   const canPreviewImage = item.type === "image" && Boolean(item.thumbnail || item.url || item.assetId);
+  const heroAspect = item.type === "video" ? "16 / 9" : item.type === "image" ? "1 / 1" : "1.78 / 1";
 
   const openOriginal = () => {
     if (!canOpenOriginal) return;
@@ -4131,55 +4214,76 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit, onOpenImage }) {
           <div style={{ width: 42, height: 5, borderRadius: 999, background: T.line }} />
         </div>
         <div
-          role={canOpenOriginal || canPreviewImage ? "button" : undefined}
-          tabIndex={canOpenOriginal || canPreviewImage ? 0 : undefined}
-          onClick={canPreviewImage ? openImage : (canOpenOriginal ? openOriginal : undefined)}
-          onKeyDown={handleHeroKeyDown}
-          style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, cursor: canPreviewImage || canOpenOriginal ? "pointer" : "default" }}
-        >
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, background: item.thumbnail ? "linear-gradient(180deg, rgba(28,26,23,0.1) 0%, rgba(28,26,23,0.24) 100%)" : "transparent" }}>
-            <div style={{ width: 64, height: 64, borderRadius: 20, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: item.type === "video" ? "0 18px 28px -24px rgba(11,16,26,0.8)" : "none" }}>
-              {typeIconFor(item.type, { size: 38, stroke: 1.2 })}
-            </div>
-            {item.type === "video" && canOpenOriginal && (
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                <div style={{ width: 76, height: 76, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
-                  <IconPlayCircle size={34} stroke={1.85} />
-                </div>
-              </div>
-            )}
-            {item.type === "image" && canPreviewImage && (
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
-                  <IconSearch size={28} stroke={2.05} />
-                </div>
-              </div>
-            )}
-          </div>
-          <button aria-label="Close details" onClick={(event) => { event.stopPropagation(); onClose(); }} style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <IconX size={14} />
-          </button>
-          <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
-            {displayTypeLabel(item.type)}
-          </div>
-          {(canOpenOriginal || canPreviewImage) && (
-            <div className="mono" style={{ position: "absolute", left: 12, bottom: 12, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", padding: "7px 10px", borderRadius: 999, background: "rgba(11,16,26,0.42)", color: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)" }}>
-              {canPreviewImage ? "Tap image to view full size" : "Tap thumbnail to open original"}
-            </div>
-          )}
-        </div>
-        <div
           ref={sheetScrollRef}
           className="scroll"
-          style={{ padding: "16px 20px" }}
+          style={{ padding: "0 20px 20px" }}
           onTouchStart={startSwipe}
           onTouchMove={moveSwipe}
           onTouchEnd={endSwipe}
           onTouchCancel={endSwipe}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <BrandBadge visual={sourceVisual} size={18} />
-            <div className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
+          <div style={{ position: "sticky", top: 0, zIndex: 2, background: `linear-gradient(180deg, ${T.paper} 0%, ${T.paper}f1 78%, rgba(245,241,234,0) 100%)`, padding: "6px 0 10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <BrandBadge visual={sourceVisual} size={18} />
+                <div className="mono clamp1" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: T.inkMute }}>{sourceProfile.label} · saved {relativeTime(item.savedAt)}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <button aria-label="Share this save" onClick={onShare} style={{ width: 40, height: 40, borderRadius: 14, background: T.card, color: T.ink, border: `1px solid ${T.lineSoft}`, boxShadow: "0 12px 22px -20px rgba(22,26,35,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IconShare size={16} stroke={1.95} />
+                </button>
+                <button onClick={onEdit} style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 14px", height: 40, borderRadius: 14, background: T.ink, color: T.paper, boxShadow: "0 14px 24px -20px rgba(22,26,35,0.55)" }}>
+                  <IconEdit size={14} />
+                  <span style={{ fontSize: 12.5, fontWeight: 700 }}>Edit</span>
+                </button>
+                <button aria-label="Close details" onClick={onClose} style={{ width: 40, height: 40, borderRadius: 14, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IconX size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            role={canOpenOriginal || canPreviewImage ? "button" : undefined}
+            tabIndex={canOpenOriginal || canPreviewImage ? 0 : undefined}
+            onClick={canPreviewImage ? openImage : (canOpenOriginal ? openOriginal : undefined)}
+            onKeyDown={handleHeroKeyDown}
+            style={{ position: "relative", marginBottom: 16, cursor: canPreviewImage || canOpenOriginal ? "pointer" : "default" }}
+          >
+            <div style={{ position: "relative", aspectRatio: heroAspect, borderRadius: 22, overflow: "hidden", background: item.thumbnail ? "#EEF1F7" : `linear-gradient(160deg, ${item.color}26 0%, rgba(22,26,35,0.1) 100%)`, border: `1px solid ${T.lineSoft}`, boxShadow: "0 24px 40px -32px rgba(22,26,35,0.45)" }}>
+              {item.thumbnail ? (
+                <img src={item.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              ) : null}
+              <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.04) 0%, rgba(11,16,26,0.18) 48%, rgba(11,16,26,0.55) 100%)" : "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(22,26,35,0.2) 100%)" }} />
+              {!item.thumbnail && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color }}>
+                  <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.78)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 20px 34px -28px rgba(22,26,35,0.48)" }}>
+                    {typeIconFor(item.type, { size: 34, stroke: 1.6 })}
+                  </div>
+                </div>
+              )}
+              {item.type === "video" && canOpenOriginal && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                  <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
+                    <IconPlayCircle size={34} stroke={1.85} />
+                  </div>
+                </div>
+              )}
+              {item.type === "image" && canPreviewImage && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                  <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
+                    <IconSearch size={28} stroke={2.05} />
+                  </div>
+                </div>
+              )}
+              <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", padding: "7px 10px", borderRadius: 999, background: "rgba(255,255,255,0.88)", color: item.color, boxShadow: "0 10px 20px -18px rgba(22,26,35,0.7)" }}>
+                {displayTypeLabel(item.type)}
+              </div>
+              {(canOpenOriginal || canPreviewImage) && (
+                <div className="mono" style={{ position: "absolute", left: 12, bottom: 12, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", padding: "7px 10px", borderRadius: 999, background: "rgba(11,16,26,0.42)", color: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)" }}>
+                  {canPreviewImage ? "Tap image to view full size" : "Tap preview to open original"}
+                </div>
+              )}
+            </div>
           </div>
           <h2 className="serif" style={{ fontSize: 26, lineHeight: 1.2, marginBottom: 8, marginTop: 0, color: T.ink }}>{item.title}</h2>
           <p style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 12, color: T.inkSoft }}>{item.description}</p>
@@ -4218,9 +4322,6 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit, onOpenImage }) {
                 <IconArrowOut size={14} />Open original
               </a>
             )}
-            <button aria-label="Edit this save" onClick={onEdit} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
-              <IconEdit size={14} />
-            </button>
             <button aria-label="Delete this save" onClick={onDelete} style={{ padding: 12, borderRadius: 12, color: T.inkSoft, border: `1px solid ${T.lineSoft}` }}>
               <IconTrash size={14} />
             </button>
