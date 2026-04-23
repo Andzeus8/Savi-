@@ -2000,8 +2000,8 @@ function WelcomeWizard({ onFinish }) {
     {
       eyebrow: "Welcome",
       title: "Welcome to SAVI",
-      subtitle: "Your personal pocket organizer for everything that matters.",
-      description: "Links, files, recipes, videos, articles — if it's important to you, SAVI keeps it safe and organized.",
+      subtitle: "Because your brain should not be your Downloads folder.",
+      description: "Memes, receipts, recipes, links, PDFs, job posts, insurance cards, map pins. If future-you might need it in a panic, SAVI keeps it ready.",
       accent: "linear-gradient(160deg, #6D7CFF 0%, #C8553D 100%)",
       visual: (
         <div style={{ position: "relative", width: 182, height: 182 }}>
@@ -2017,9 +2017,9 @@ function WelcomeWizard({ onFinish }) {
     },
     {
       eyebrow: "Fast capture",
-      title: "Save Anything in Seconds",
-      subtitle: "Paste the link. SAVI handles the heavy lifting.",
-      description: "Just paste any link and we'll do the rest. SAVI automatically fetches the title, description, thumbnail, and tags. We'll even pick the best folder for you. Soon you'll be able to save directly from your phone's share button — forward any link, PDF, or file straight to SAVI.",
+      title: "Save now, thank yourself later",
+      subtitle: "Paste the link. Drop the file. SAVI does the annoying part.",
+      description: "Saw a hilarious meme that matches your date's exact sense of humor? Need your insurance card at the front desk? Found the perfect restaurant, video, PDF, or life hack? Save it once and stop playing detective later. SAVI pulls the title, preview, tags, and even picks a folder for you.",
       accent: "linear-gradient(160deg, #FF9F43 0%, #6D7CFF 100%)",
       visual: (
         <div style={{ width: "100%", maxWidth: 260, padding: 18, borderRadius: 26, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 24px 46px -34px rgba(22,26,35,0.45)" }}>
@@ -2051,9 +2051,9 @@ function WelcomeWizard({ onFinish }) {
     },
     {
       eyebrow: "Smart organization",
-      title: "Everything, Organized",
-      subtitle: "Folders, types, apps, tags, and search all working together.",
-      description: "SAVI automatically categorizes your saves into folders and adds smart tags. Browse by folder, type, or source app. Switch between grid and list views. Search across everything instantly.",
+      title: "A less chaotic digital life",
+      subtitle: "Folders, tags, types, apps, and search all working together.",
+      description: "SAVI automatically sorts your saves so you can find things by folder, file type, or where you found them. That means fewer \"wait, where did I put that?\" moments and more \"hold on, I actually have it.\"",
       accent: "linear-gradient(160deg, #25C48C 0%, #6D7CFF 100%)",
       visual: (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, width: "100%", maxWidth: 264 }}>
@@ -2079,8 +2079,8 @@ function WelcomeWizard({ onFinish }) {
     {
       eyebrow: "Your library",
       title: "Need that link from last week?",
-      subtitle: "SAVI keeps your personal archive ready when memory does not.",
-      description: "Whether it's a recipe you saved, a job posting, a funny video, or an important document — SAVI helps you find it fast. Your personal library, always in your pocket.",
+      subtitle: "SAVI keeps your archive ready when your memory absolutely is not.",
+      description: "Whether you're trying to save the day with a document, pull up a map pin, reopen that job link, or impress someone with the exact meme you promised them, SAVI helps you find it fast. Your digital second brain, minus the chaos.",
       accent: "linear-gradient(160deg, #C8553D 0%, #161A23 100%)",
       visual: (
         <div style={{ width: "100%", maxWidth: 270, padding: 18, borderRadius: 28, background: "linear-gradient(180deg, #FFFFFF 0%, #F3EEE5 100%)", border: `1px solid ${T.lineSoft}`, boxShadow: "0 24px 50px -34px rgba(22,26,35,0.44)" }}>
@@ -2094,7 +2094,7 @@ function WelcomeWizard({ onFinish }) {
             </div>
           </div>
           <div style={{ display: "grid", gap: 10 }}>
-            {["Recipe saved yesterday", "Funny video from last week", "Document you actually need", "Map pin for later"].map((label, index) => (
+            {["Insurance card in 4 seconds", "That meme for your date", "Job link you swore you saved", "Restaurant pin for later"].map((label, index) => (
               <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 16, background: index % 2 === 0 ? T.card : "rgba(255,255,255,0.72)", border: `1px solid ${T.lineSoft}` }}>
                 <div style={{ width: 36, height: 36, borderRadius: 12, background: index === 0 ? "rgba(255,159,67,0.18)" : index === 1 ? "rgba(255,77,109,0.16)" : index === 2 ? "rgba(109,124,255,0.14)" : "rgba(24,183,160,0.14)", color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {index === 0 ? <IconFile size={15} /> : index === 1 ? <IconPlayCircle size={15} /> : index === 2 ? <IconLock size={15} /> : <IconPin size={15} />}
