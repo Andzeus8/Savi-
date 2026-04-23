@@ -1066,6 +1066,47 @@ const downloadBlob = ({ blob, name, openInNewTab = false }) => {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
 };
 
+const shareFallbackTextForItem = (item = {}) => {
+  const bits = [item.title, item.description, item.url].filter(Boolean);
+  return bits.join("\n");
+};
+
+const shareSavedItem = async (item, { onCopied } = {}) => {
+  const payload = {
+    title: item.title || "Saved item",
+    text: item.url ? (item.description || item.title || item.url) : shareFallbackTextForItem(item),
+  };
+  if (item.url) payload.url = item.url;
+
+  try {
+    if (navigator.share) {
+      await navigator.share(payload);
+      return { ok: true, method: "share" };
+    }
+  } catch (error) {
+    if (error?.name === "AbortError") return { ok: false, cancelled: true };
+  }
+
+  const fallbackText = item.url || shareFallbackTextForItem(item);
+  if (!fallbackText) return { ok: false };
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(fallbackText);
+      onCopied?.("Copied");
+      return { ok: true, method: "clipboard" };
+    }
+  } catch {}
+
+  try {
+    window.prompt("Copy this item", fallbackText);
+    onCopied?.("Copied");
+    return { ok: true, method: "prompt" };
+  } catch {}
+
+  return { ok: false };
+};
+
 const inferTypeFromUrl = (value) => {
   const normalized = normalizeUrl(value).toLowerCase();
   if (isMapsUrl(normalized)) return "place";
@@ -1638,7 +1679,11 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
+  const [toastMessage, setToastMessage] = useState("");
+  const [lightboxImage, setLightboxImage] = useState(null);
   const launchClipboardCheckedRef = useRef(false);
+  const toastTimerRef = useRef(null);
+  const lightboxObjectUrlRef = useRef("");
 
   const dismissActiveField = () => {
     const active = document.activeElement;
@@ -1690,9 +1735,70 @@ function App() {
     window.prompt("Copy the SAVI link:", shareUrl);
   };
 
+  const showToast = (message = "Copied") => {
+    setToastMessage(message);
+    window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToastMessage(""), 1900);
+  };
+
+  const closeLightbox = () => {
+    if (lightboxObjectUrlRef.current) {
+      URL.revokeObjectURL(lightboxObjectUrlRef.current);
+      lightboxObjectUrlRef.current = "";
+    }
+    setLightboxImage(null);
+  };
+
+  const openImageLightbox = async (item) => {
+    if (!item || item.type !== "image") return;
+    try {
+      if (lightboxObjectUrlRef.current) {
+        URL.revokeObjectURL(lightboxObjectUrlRef.current);
+        lightboxObjectUrlRef.current = "";
+      }
+
+      if (item.assetId) {
+        const asset = await getAssetRecord(item.assetId).catch(() => null);
+        if (asset?.blob && (asset.type || item.assetMime || "").startsWith("image/")) {
+          const objectUrl = URL.createObjectURL(asset.blob);
+          lightboxObjectUrlRef.current = objectUrl;
+          setLightboxImage({
+            src: objectUrl,
+            title: item.title,
+            subtitle: item.assetName || item.description || "",
+          });
+          return;
+        }
+      }
+
+      const src = item.thumbnail || item.url || "";
+      if (!src) {
+        showToast("Couldn't open image");
+        return;
+      }
+      setLightboxImage({
+        src,
+        title: item.title,
+        subtitle: item.description || "",
+      });
+    } catch {
+      showToast("Couldn't open image");
+    }
+  };
+
+  const handleShareItem = async (item) => {
+    const result = await shareSavedItem(item, { onCopied: showToast });
+    if (!result.ok && !result.cancelled) showToast("Couldn't share that item");
+  };
+
   useEffect(() => {
     dismissActiveField();
   }, [route]);
+
+  useEffect(() => () => {
+    window.clearTimeout(toastTimerRef.current);
+    if (lightboxObjectUrlRef.current) URL.revokeObjectURL(lightboxObjectUrlRef.current);
+  }, []);
 
   // If opened with ?url=..., auto-open the save sheet
   useEffect(() => {
@@ -1948,6 +2054,7 @@ function App() {
                         setSearch={setSearch}
                         onSelect={setSelectedItem}
                         onShare={shareApp}
+                        onShareItem={handleShareItem}
                       />
                     )}
                     {route === "folders" && (
@@ -1983,8 +2090,16 @@ function App() {
                       }}
                     />
                   )}
-                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} onEdit={()=>setEditingItem(selectedItem)} />}
+                  {selectedItem && <ItemSheet item={selectedItem} folders={folders} onClose={()=>setSelectedItem(null)} onDelete={()=>deleteItem(selectedItem.id)} onEdit={()=>setEditingItem(selectedItem)} onOpenImage={openImageLightbox} />}
                   {editingItem && <ItemEditorSheet item={editingItem} folders={folders} onClose={()=>setEditingItem(null)} onSave={async (updates)=>{ await updateItem(editingItem.id, updates); setEditingItem(null); }} />}
+                  {lightboxImage && <ImageLightbox image={lightboxImage} onClose={closeLightbox} />}
+                  {toastMessage && (
+                    <div className="anim-fade" style={{ position: "absolute", left: 20, right: 20, bottom: "calc(var(--navigator-offset) + 14px)", zIndex: 75, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+                      <div className="mono" style={{ padding: "10px 14px", borderRadius: 999, background: "rgba(22,26,35,0.94)", color: T.paper, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", boxShadow: "0 22px 34px -22px rgba(22,26,35,0.72)" }}>
+                        {toastMessage}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2284,7 +2399,7 @@ function WelcomeWizard({ onFinish }) {
   );
 }
 
-function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onShare }) {
+function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, onSelect, onShare, onShareItem }) {
   const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
   const activeSourceLabel = sourceOptions.find((option) => option.key === activeSource)?.label || (activeSource === "all" ? "All Apps" : titleize(activeSource));
   const heroEyebrow = searchMode ? "Search" : browseMode === "all" ? "Your library" : browseMode === "folders" ? "Folders" : browseMode === "types" ? "Types" : "Apps";
@@ -2444,11 +2559,11 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
         </div>
       ) : viewMode === "grid" ? (
         <div key={`grid-${browseMode}-${activeFolder}-${activeType}-${activeSource}`} className="anim-fade" style={{ padding: "0 20px 28px", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14, alignItems: "start" }}>
-          {items.map((item, idx) => <ItemCard key={item.id} item={item} index={idx} onClick={()=>onSelect(item)} delay={idx * 22} layout="grid" />)}
+          {items.map((item, idx) => <ItemCard key={item.id} item={item} index={idx} onClick={()=>onSelect(item)} onShare={()=>onShareItem(item)} delay={idx * 22} layout="grid" />)}
         </div>
       ) : (
         <div key={`list-${browseMode}-${activeFolder}-${activeType}-${activeSource}`} className="anim-fade" style={{ padding: "0 20px 28px", display: "flex", flexDirection: "column", gap: 10 }}>
-          {items.map((item, idx) => <ItemListRow key={item.id} item={item} onClick={()=>onSelect(item)} delay={idx * 18} />)}
+          {items.map((item, idx) => <ItemListRow key={item.id} item={item} onClick={()=>onSelect(item)} onShare={()=>onShareItem(item)} delay={idx * 18} />)}
         </div>
       )}
     </div>
@@ -2489,7 +2604,7 @@ function EmptyState({ search, searchMode = false, browseMode = "all", activeFold
   );
 }
 
-function ItemCard({ item, index, onClick, delay, layout = "grid" }) {
+function ItemCard({ item, index, onClick, onShare, delay, layout = "grid" }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
   const mediaAspect = item.type === "video"
@@ -2502,82 +2617,98 @@ function ItemCard({ item, index, onClick, delay, layout = "grid" }) {
           ? "4 / 5.3"
           : "4 / 4.9";
   return (
-    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", display: "block", textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", breakInside: "avoid", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)", alignSelf: "start", marginBottom: layout === "grid" ? 0 : 14 }}>
-      <div style={{ position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, aspectRatio: mediaAspect, color: item.color, overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.08) 0%, rgba(11,16,26,0.16) 30%, rgba(11,16,26,0.72) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
-        <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-          <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 10px", borderRadius: 999, background: "rgba(255,255,255,0.84)", color: T.ink, boxShadow: "0 10px 20px -18px rgba(22,26,35,0.8)" }}>
-            {typeIconFor(item.type, { size: 12, stroke: 1.8 })}
-            {displayTypeLabel(item.type)}
+    <div className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", position: "relative", breakInside: "avoid", alignSelf: "start", marginBottom: layout === "grid" ? 0 : 14 }}>
+      <button onClick={onClick} style={{ width: "100%", display: "block", textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)" }}>
+        <div style={{ position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, aspectRatio: mediaAspect, color: item.color, overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.08) 0%, rgba(11,16,26,0.16) 30%, rgba(11,16,26,0.72) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
+          <div style={{ position: "absolute", top: 12, left: 12, right: 56, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 10px", borderRadius: 999, background: "rgba(255,255,255,0.84)", color: T.ink, boxShadow: "0 10px 20px -18px rgba(22,26,35,0.8)" }}>
+              {typeIconFor(item.type, { size: 12, stroke: 1.8 })}
+              {displayTypeLabel(item.type)}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+              <div className="mono" style={{ fontSize: 10, color: "rgba(255,255,255,0.86)", padding: "6px 9px", borderRadius: 999, background: "rgba(11,16,26,0.28)", backdropFilter: "blur(10px)" }}>
+                {relativeTime(item.savedAt)}
+              </div>
+            </div>
           </div>
-          <div className="mono" style={{ fontSize: 10, color: "rgba(255,255,255,0.86)", padding: "6px 9px", borderRadius: 999, background: "rgba(11,16,26,0.28)", backdropFilter: "blur(10px)" }}>
-            {relativeTime(item.savedAt)}
+          <div style={{ position: "absolute", left: 14, right: 58, bottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <BrandBadge visual={sourceVisual} size={20} />
+            <div className="mono clamp1" style={{ fontSize: 11, color: "rgba(255,255,255,0.9)" }}>{sourceProfile.label}</div>
           </div>
         </div>
-        <div style={{ position: "absolute", left: 14, right: 14, bottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-          <BrandBadge visual={sourceVisual} size={20} />
-          <div className="mono clamp1" style={{ fontSize: 11, color: "rgba(255,255,255,0.9)" }}>{sourceProfile.label}</div>
-        </div>
-      </div>
-      <div style={{ padding: "14px 14px 16px" }}>
-        <div className="clamp2" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.28, marginBottom: 6, color: T.ink }}>
-          {item.title}
-        </div>
-        <div className="clamp3" style={{ fontSize: 12.5, lineHeight: 1.42, color: T.inkSoft }}>
-          {item.description}
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-          {(item.tags || []).slice(0, 2).map((tag) => (
-            <span key={tag} className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: T.paperDim, color: T.inkMute }}>
-              {tag}
+        <div style={{ padding: "14px 14px 16px" }}>
+          <div className="clamp2" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.28, marginBottom: 6, color: T.ink }}>
+            {item.title}
+          </div>
+          <div className="clamp3" style={{ fontSize: 12.5, lineHeight: 1.42, color: T.inkSoft }}>
+            {item.description}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            {(item.tags || []).slice(0, 2).map((tag) => (
+              <span key={tag} className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: T.paperDim, color: T.inkMute }}>
+                {tag}
+              </span>
+            ))}
+            <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: `${item.color}12`, color: item.color }}>
+              save
             </span>
-          ))}
-          <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 8px", borderRadius: 999, background: `${item.color}12`, color: item.color }}>
-            save
-          </span>
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+      <button
+        aria-label={`Share ${item.title}`}
+        onClick={onShare}
+        style={{ position: "absolute", right: 12, top: 12, width: 36, height: 36, borderRadius: 999, background: "rgba(11,16,26,0.36)", color: T.paper, border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 18px 28px -22px rgba(11,16,26,0.85)" }}
+      >
+        <IconShare size={14} stroke={2} />
+      </button>
+    </div>
   );
 }
 
-function ItemListRow({ item, onClick, delay }) {
+function ItemListRow({ item, onClick, onShare, delay }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
   return (
-    <button onClick={onClick} className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", textAlign: "left", borderRadius: 20, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 16px 28px -24px rgba(22,26,35,0.45)", padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ width: 74, height: 74, flexShrink: 0, borderRadius: 16, overflow: "hidden", position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
-        <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.06) 0%, rgba(11,16,26,0.28) 100%)" : "transparent" }} />
-        <div style={{ position: "absolute", left: 8, bottom: 8, width: 24, height: 24, borderRadius: 9, background: "rgba(255,255,255,0.88)", color: item.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {typeIconFor(item.type, { size: 14, stroke: 1.8 })}
-        </div>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-            <BrandBadge visual={sourceVisual} size={16} />
-            <div className="mono clamp1" style={{ fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: T.inkMute }}>{sourceProfile.label}</div>
+    <div className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", borderRadius: 20, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 16px 28px -24px rgba(22,26,35,0.45)", padding: 12, display: "flex", alignItems: "center", gap: 10 }}>
+      <button onClick={onClick} style={{ flex: 1, minWidth: 0, textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 74, height: 74, flexShrink: 0, borderRadius: 16, overflow: "hidden", position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
+          <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.06) 0%, rgba(11,16,26,0.28) 100%)" : "transparent" }} />
+          <div style={{ position: "absolute", left: 8, bottom: 8, width: 24, height: 24, borderRadius: 9, background: "rgba(255,255,255,0.88)", color: item.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {typeIconFor(item.type, { size: 14, stroke: 1.8 })}
           </div>
-          <div className="mono" style={{ fontSize: 10.5, color: T.inkMute, flexShrink: 0 }}>{relativeTime(item.savedAt)}</div>
         </div>
-        <div className="clamp2" style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.3, color: T.ink, marginBottom: 4 }}>
-          {item.title}
-        </div>
-        <div className="clamp2" style={{ fontSize: 12, lineHeight: 1.38, color: T.inkSoft, marginBottom: 8 }}>
-          {item.description}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "5px 7px", borderRadius: 999, background: `${item.color}12`, color: item.color }}>
-            {displayTypeLabel(item.type)}
-          </span>
-          {(item.tags || []).slice(0, 2).map((tag) => (
-            <span key={tag} className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "5px 7px", borderRadius: 999, background: T.paperDim, color: T.inkMute }}>
-              {tag}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+              <BrandBadge visual={sourceVisual} size={16} />
+              <div className="mono clamp1" style={{ fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: T.inkMute }}>{sourceProfile.label}</div>
+            </div>
+            <div className="mono" style={{ fontSize: 10.5, color: T.inkMute, flexShrink: 0 }}>{relativeTime(item.savedAt)}</div>
+          </div>
+          <div className="clamp2" style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.3, color: T.ink, marginBottom: 4 }}>
+            {item.title}
+          </div>
+          <div className="clamp2" style={{ fontSize: 12, lineHeight: 1.38, color: T.inkSoft, marginBottom: 8 }}>
+            {item.description}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "5px 7px", borderRadius: 999, background: `${item.color}12`, color: item.color }}>
+              {displayTypeLabel(item.type)}
             </span>
-          ))}
+            {(item.tags || []).slice(0, 2).map((tag) => (
+              <span key={tag} className="mono" style={{ fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "5px 7px", borderRadius: 999, background: T.paperDim, color: T.inkMute }}>
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+      <button aria-label={`Share ${item.title}`} onClick={onShare} style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 14, background: T.paperDim, color: T.inkSoft, border: `1px solid ${T.lineSoft}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <IconShare size={14} stroke={2} />
+      </button>
+    </div>
   );
 }
 
@@ -2674,9 +2805,8 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteValue, setDeleteValue] = useState("");
+  const [deleteStep, setDeleteStep] = useState(1);
   const [isDeletingEverything, setIsDeletingEverything] = useState(false);
-  const deleteReady = deleteValue.trim().toUpperCase() === "DELETE";
 
   const showBackupMessage = (message, tone = "muted") => {
     setBackupMessage(message);
@@ -2684,18 +2814,23 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   };
 
   const openDeleteModal = () => {
-    setDeleteValue("");
+    setDeleteStep(1);
     setShowDeleteModal(true);
   };
 
   const closeDeleteModal = () => {
     if (isDeletingEverything) return;
-    setDeleteValue("");
+    setDeleteStep(1);
     setShowDeleteModal(false);
   };
 
+  const advanceDeleteStep = () => {
+    if (isDeletingEverything) return;
+    setDeleteStep(2);
+  };
+
   const confirmDeleteEverything = async () => {
-    if (!deleteReady || isDeletingEverything) return;
+    if (isDeletingEverything) return;
     setIsDeletingEverything(true);
     await clearLibrary();
   };
@@ -2823,29 +2958,20 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
             <div style={{ width: 54, height: 54, borderRadius: 18, background: "rgba(212,87,69,0.14)", color: "#B83428", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
               <IconTrash size={22} />
             </div>
-            <div className="serif" style={{ fontSize: 29, lineHeight: 1.04, color: T.ink, marginBottom: 10 }}>Are you sure?</div>
+            <div className="serif" style={{ fontSize: 29, lineHeight: 1.04, color: T.ink, marginBottom: 10 }}>
+              {deleteStep === 1 ? "Are you sure?" : "Last chance - delete everything?"}
+            </div>
             <div style={{ fontSize: 13, lineHeight: 1.55, color: T.inkSoft, marginBottom: 14 }}>
-              This will permanently delete all your saved items, folders, and settings.
+              {deleteStep === 1
+                ? "This removes all saved content."
+                : "Last chance. This will permanently delete all your saved items, folders, uploads, and local settings."}
             </div>
-            <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute, marginBottom: 8 }}>
-              Type DELETE to confirm
-            </div>
-            <input
-              aria-label="Type DELETE to confirm"
-              value={deleteValue}
-              onChange={(event) => setDeleteValue(event.target.value)}
-              placeholder="DELETE"
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck="false"
-              style={{ ...inputStyle(), marginBottom: 16, fontSize: 15, letterSpacing: "0.08em" }}
-            />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button onClick={closeDeleteModal} disabled={isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 600, background: T.paperDim, color: T.ink, border: `1px solid ${T.lineSoft}`, opacity: isDeletingEverything ? 0.55 : 1 }}>
                 Cancel
               </button>
-              <button onClick={confirmDeleteEverything} disabled={!deleteReady || isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 700, background: deleteReady ? "linear-gradient(180deg, #D45745 0%, #B83428 100%)" : "rgba(184,52,40,0.24)", color: T.paper, opacity: !deleteReady || isDeletingEverything ? 0.6 : 1 }}>
-                {isDeletingEverything ? "Deleting..." : "Delete forever"}
+              <button onClick={deleteStep === 1 ? advanceDeleteStep : confirmDeleteEverything} disabled={isDeletingEverything} style={{ padding: 13, borderRadius: 14, fontSize: 13, fontWeight: 700, background: "linear-gradient(180deg, #D45745 0%, #B83428 100%)", color: T.paper, opacity: isDeletingEverything ? 0.6 : 1 }}>
+                {isDeletingEverything ? "Deleting..." : deleteStep === 1 ? "Yes Delete" : "Delete Everything"}
               </button>
             </div>
           </div>
@@ -3693,7 +3819,138 @@ function FolderSheet({ folder, onClose, onSave }) {
   );
 }
 
-function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
+function ImageLightbox({ image, onClose }) {
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const gestureRef = useRef({ mode: "", startScale: 1, startDistance: 0, startOffset: { x: 0, y: 0 }, startPoint: { x: 0, y: 0 } });
+
+  const clampScale = (value) => Math.max(1, Math.min(4, value));
+
+  const resetView = () => {
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
+    resetView();
+  }, [image?.src]);
+
+  const handleTouchStart = (event) => {
+    if (event.touches.length === 2) {
+      const [a, b] = event.touches;
+      gestureRef.current = {
+        mode: "pinch",
+        startScale: scale,
+        startDistance: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+        startOffset: offset,
+        startPoint: { x: 0, y: 0 },
+      };
+    } else if (event.touches.length === 1 && scale > 1) {
+      const touch = event.touches[0];
+      gestureRef.current = {
+        mode: "pan",
+        startScale: scale,
+        startDistance: 0,
+        startOffset: offset,
+        startPoint: { x: touch.clientX, y: touch.clientY },
+      };
+    }
+  };
+
+  const handleTouchMove = (event) => {
+    if (gestureRef.current.mode === "pinch" && event.touches.length === 2) {
+      event.preventDefault();
+      const [a, b] = event.touches;
+      const distance = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      const nextScale = clampScale((distance / Math.max(1, gestureRef.current.startDistance)) * gestureRef.current.startScale);
+      setScale(nextScale);
+      if (nextScale === 1) setOffset({ x: 0, y: 0 });
+      return;
+    }
+    if (gestureRef.current.mode === "pan" && event.touches.length === 1 && scale > 1) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - gestureRef.current.startPoint.x;
+      const deltaY = touch.clientY - gestureRef.current.startPoint.y;
+      setOffset({
+        x: gestureRef.current.startOffset.x + deltaX,
+        y: gestureRef.current.startOffset.y + deltaY,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    gestureRef.current.mode = "";
+    if (scale <= 1.02) resetView();
+  };
+
+  const handleWheel = (event) => {
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 0.2 : -0.2;
+    setScale((current) => {
+      const next = clampScale(current + delta);
+      if (next === 1) setOffset({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  const handleDoubleClick = () => {
+    if (scale > 1) resetView();
+    else setScale(2);
+  };
+
+  return (
+    <div className="anim-fade" onClick={onClose} style={{ position: "absolute", inset: 0, zIndex: 90, background: "rgba(8,10,16,0.96)", display: "flex", alignItems: "center", justifyContent: "center", padding: "calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))" }}>
+      <button aria-label="Close image viewer" onClick={(event) => { event.stopPropagation(); onClose(); }} style={{ position: "absolute", top: "calc(18px + env(safe-area-inset-top))", right: 18, width: 42, height: 42, borderRadius: 999, background: "rgba(255,255,255,0.14)", color: T.paper, border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(14px)", zIndex: 2 }}>
+        <IconX size={16} />
+      </button>
+      <div onClick={(event) => event.stopPropagation()} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <div style={{ textAlign: "center", maxWidth: 320 }}>
+          <div className="serif" style={{ fontSize: 22, color: T.paper, marginBottom: 4 }}>{image.title}</div>
+          {!!image.subtitle && <div style={{ fontSize: 12.5, lineHeight: 1.45, color: "rgba(245,241,234,0.76)" }}>{image.subtitle}</div>}
+        </div>
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onWheel={handleWheel}
+          onDoubleClick={handleDoubleClick}
+          style={{ flex: 1, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", touchAction: "none" }}
+        >
+          <img
+            src={image.src}
+            alt={image.title || ""}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
+              transformOrigin: "center center",
+              transition: gestureRef.current.mode ? "none" : "transform 180ms ease",
+              userSelect: "none",
+              WebkitUserDrag: "none",
+              cursor: scale > 1 ? "grab" : "zoom-in",
+            }}
+          />
+        </div>
+        <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(245,241,234,0.62)" }}>
+          Pinch to zoom
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemSheet({ item, folders, onClose, onDelete, onEdit, onOpenImage }) {
   const folder = folders.find(f => f.id === item.folderId);
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
@@ -3711,6 +3968,10 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
 
   const openAsset = async () => {
     if (!item.assetId || isOpeningAsset) return;
+    if (item.type === "image" && onOpenImage) {
+      onOpenImage(item);
+      return;
+    }
     setIsOpeningAsset(true);
     try {
       const asset = await getAssetRecord(item.assetId);
@@ -3790,17 +4051,24 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
 
   const overlayAlpha = Math.max(0.14, 0.45 - dragY / 520);
   const canOpenOriginal = Boolean(!hasLocalAsset && item.url);
+  const canPreviewImage = item.type === "image" && Boolean(item.thumbnail || item.url || item.assetId);
 
   const openOriginal = () => {
     if (!canOpenOriginal) return;
     window.open(item.url, "_blank", "noopener,noreferrer");
   };
 
+  const openImage = () => {
+    if (!canPreviewImage) return;
+    onOpenImage?.(item);
+  };
+
   const handleHeroKeyDown = (event) => {
-    if (!canOpenOriginal) return;
+    if (!canOpenOriginal && !canPreviewImage) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      openOriginal();
+      if (canPreviewImage) openImage();
+      else openOriginal();
     }
   };
 
@@ -3817,11 +4085,11 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
           <div style={{ width: 42, height: 5, borderRadius: 999, background: T.line }} />
         </div>
         <div
-          role={canOpenOriginal ? "button" : undefined}
-          tabIndex={canOpenOriginal ? 0 : undefined}
-          onClick={canOpenOriginal ? openOriginal : undefined}
+          role={canOpenOriginal || canPreviewImage ? "button" : undefined}
+          tabIndex={canOpenOriginal || canPreviewImage ? 0 : undefined}
+          onClick={canPreviewImage ? openImage : (canOpenOriginal ? openOriginal : undefined)}
           onKeyDown={handleHeroKeyDown}
-          style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, cursor: canOpenOriginal ? "pointer" : "default" }}
+          style={{ height: 160, position: "relative", flexShrink: 0, background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, cursor: canPreviewImage || canOpenOriginal ? "pointer" : "default" }}
         >
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, background: item.thumbnail ? "linear-gradient(180deg, rgba(28,26,23,0.1) 0%, rgba(28,26,23,0.24) 100%)" : "transparent" }}>
             <div style={{ width: 64, height: 64, borderRadius: 20, background: item.thumbnail ? "rgba(255,255,255,0.84)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: item.type === "video" ? "0 18px 28px -24px rgba(11,16,26,0.8)" : "none" }}>
@@ -3834,6 +4102,13 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
                 </div>
               </div>
             )}
+            {item.type === "image" && canPreviewImage && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(11,16,26,0.28)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(12px)", color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 22px 34px -24px rgba(11,16,26,0.72)" }}>
+                  <IconSearch size={28} stroke={2.05} />
+                </div>
+              </div>
+            )}
           </div>
           <button aria-label="Close details" onClick={(event) => { event.stopPropagation(); onClose(); }} style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", background: T.paper, color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <IconX size={14} />
@@ -3841,9 +4116,9 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
           <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", padding: "2px 8px", borderRadius: 999, background: T.paper, color: item.color }}>
             {displayTypeLabel(item.type)}
           </div>
-          {canOpenOriginal && (
+          {(canOpenOriginal || canPreviewImage) && (
             <div className="mono" style={{ position: "absolute", left: 12, bottom: 12, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", padding: "7px 10px", borderRadius: 999, background: "rgba(11,16,26,0.42)", color: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)" }}>
-              Tap thumbnail to open original
+              {canPreviewImage ? "Tap image to view full size" : "Tap thumbnail to open original"}
             </div>
           )}
         </div>
@@ -3889,8 +4164,8 @@ function ItemSheet({ item, folders, onClose, onDelete, onEdit }) {
           <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: `1px solid ${T.lineSoft}` }}>
             {hasLocalAsset ? (
               <button onClick={openAsset} disabled={isOpeningAsset} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, opacity: isOpeningAsset ? 0.65 : 1 }}>
-                {isPreviewableAsset(item) ? <IconArrowOut size={14} /> : <IconDownload size={14} />}
-                {isOpeningAsset ? "Opening..." : isPreviewableAsset(item) ? "Open file" : "Share or download file"}
+                {item.type === "image" ? <IconSearch size={14} /> : isPreviewableAsset(item) ? <IconArrowOut size={14} /> : <IconDownload size={14} />}
+                {isOpeningAsset ? "Opening..." : item.type === "image" ? "View image" : isPreviewableAsset(item) ? "Open file" : "Share or download file"}
               </button>
             ) : (
               <a href={item.url} target="_blank" rel="noreferrer" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, fontSize: 13, fontWeight: 500, background: T.ink, color: T.paper, textDecoration: "none" }}>
