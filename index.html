@@ -143,7 +143,13 @@ const IconGrid = p => <Icon {...p} d={<><rect x="3" y="3" width="7" height="7"/>
 const IconList = p => <Icon {...p} d={<><line x1="9" y1="6.5" x2="20" y2="6.5"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="17.5" x2="20" y2="17.5"/><rect x="4" y="5" width="2.5" height="2.5" rx="0.6"/><rect x="4" y="10.75" width="2.5" height="2.5" rx="0.6"/><rect x="4" y="16.5" width="2.5" height="2.5" rx="0.6"/></>} />;
 const IconUser = p => <Icon {...p} d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />;
 const IconArrowOut = p => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
-const IconShare = p => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />;
+const IconShare = ({ size = 16, stroke = 1.9 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 15V4.5" />
+    <path d="M8.2 8.25 12 4.5l3.8 3.75" />
+    <path d="M7.5 10.5H6a2.5 2.5 0 0 0-2.5 2.5V18A2.5 2.5 0 0 0 6 20.5h12a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-1.5" />
+  </svg>
+);
 const IconUpload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />;
 const IconDownload = p => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />;
 const IconEdit = p => <Icon {...p} d={<><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></>} />;
@@ -2607,6 +2613,7 @@ function EmptyState({ search, searchMode = false, browseMode = "all", activeFold
 function ItemCard({ item, index, onClick, onShare, delay, layout = "grid" }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
+  const polishedLinkPreview = ["article", "link", "file", "place"].includes(item.type);
   const mediaAspect = item.type === "video"
     ? "4 / 5"
     : item.type === "place"
@@ -2619,8 +2626,27 @@ function ItemCard({ item, index, onClick, onShare, delay, layout = "grid" }) {
   return (
     <div className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", position: "relative", breakInside: "avoid", alignSelf: "start", marginBottom: layout === "grid" ? 0 : 14 }}>
       <button onClick={onClick} style={{ width: "100%", display: "block", textAlign: "left", borderRadius: 24, background: T.card, border: `1px solid ${T.lineSoft}`, transition: "transform 0.12s", overflow: "hidden", boxShadow: "0 18px 40px -34px rgba(22,26,35,0.55)" }}>
-        <div style={{ position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18`, aspectRatio: mediaAspect, color: item.color, overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.08) 0%, rgba(11,16,26,0.16) 30%, rgba(11,16,26,0.72) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
+        <div style={{ position: "relative", aspectRatio: mediaAspect, color: item.color, overflow: "hidden", background: polishedLinkPreview ? "#F7F8FC" : `${item.color}18`, padding: polishedLinkPreview ? 10 : 0 }}>
+          {item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              alt=""
+              style={{
+                position: "absolute",
+                inset: polishedLinkPreview ? 10 : 0,
+                width: polishedLinkPreview ? "calc(100% - 20px)" : "100%",
+                height: polishedLinkPreview ? "calc(100% - 20px)" : "100%",
+                objectFit: "cover",
+                borderRadius: polishedLinkPreview ? 10 : 0,
+                border: polishedLinkPreview ? "1px solid rgba(22,26,35,0.08)" : "none",
+                boxShadow: polishedLinkPreview ? "0 16px 28px -24px rgba(22,26,35,0.28)" : "none",
+                display: "block",
+              }}
+            />
+          ) : (
+            <div style={{ position: "absolute", inset: polishedLinkPreview ? 10 : 0, borderRadius: polishedLinkPreview ? 10 : 0, background: `${item.color}18`, border: polishedLinkPreview ? "1px solid rgba(22,26,35,0.08)" : "none" }} />
+          )}
+          <div style={{ position: "absolute", inset: polishedLinkPreview ? 10 : 0, borderRadius: polishedLinkPreview ? 10 : 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.06) 0%, rgba(11,16,26,0.12) 34%, rgba(11,16,26,0.64) 100%)" : "linear-gradient(180deg, rgba(109,124,255,0.08) 0%, rgba(22,26,35,0.18) 100%)" }} />
           <div style={{ position: "absolute", top: 12, left: 12, right: 56, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
             <div className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 10px", borderRadius: 999, background: "rgba(255,255,255,0.84)", color: T.ink, boxShadow: "0 10px 20px -18px rgba(22,26,35,0.8)" }}>
               {typeIconFor(item.type, { size: 12, stroke: 1.8 })}
@@ -2670,11 +2696,31 @@ function ItemCard({ item, index, onClick, onShare, delay, layout = "grid" }) {
 function ItemListRow({ item, onClick, onShare, delay }) {
   const sourceProfile = sourceProfileForItem(item);
   const sourceVisual = sourceVisualForProfile(sourceProfile);
+  const polishedLinkPreview = ["article", "link", "file", "place"].includes(item.type);
   return (
     <div className="anim-slide" style={{ animationDelay: `${delay}ms`, width: "100%", borderRadius: 20, background: T.card, border: `1px solid ${T.lineSoft}`, boxShadow: "0 16px 28px -24px rgba(22,26,35,0.45)", padding: 12, display: "flex", alignItems: "center", gap: 10 }}>
       <button onClick={onClick} style={{ flex: 1, minWidth: 0, textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 74, height: 74, flexShrink: 0, borderRadius: 16, overflow: "hidden", position: "relative", background: item.thumbnail ? `center / cover no-repeat url(${item.thumbnail}), ${item.color}18` : `${item.color}18` }}>
-          <div style={{ position: "absolute", inset: 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.06) 0%, rgba(11,16,26,0.28) 100%)" : "transparent" }} />
+        <div style={{ width: 74, height: 74, flexShrink: 0, borderRadius: 16, overflow: "hidden", position: "relative", background: polishedLinkPreview ? "#F7F8FC" : `${item.color}18`, padding: polishedLinkPreview ? 6 : 0 }}>
+          {item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              alt=""
+              style={{
+                position: "absolute",
+                inset: polishedLinkPreview ? 6 : 0,
+                width: polishedLinkPreview ? "calc(100% - 12px)" : "100%",
+                height: polishedLinkPreview ? "calc(100% - 12px)" : "100%",
+                objectFit: "cover",
+                borderRadius: polishedLinkPreview ? 9 : 0,
+                border: polishedLinkPreview ? "1px solid rgba(22,26,35,0.08)" : "none",
+                boxShadow: polishedLinkPreview ? "0 12px 24px -22px rgba(22,26,35,0.26)" : "none",
+                display: "block",
+              }}
+            />
+          ) : (
+            <div style={{ position: "absolute", inset: polishedLinkPreview ? 6 : 0, borderRadius: polishedLinkPreview ? 9 : 0, background: `${item.color}18`, border: polishedLinkPreview ? "1px solid rgba(22,26,35,0.08)" : "none" }} />
+          )}
+          <div style={{ position: "absolute", inset: polishedLinkPreview ? 6 : 0, borderRadius: polishedLinkPreview ? 9 : 0, background: item.thumbnail ? "linear-gradient(180deg, rgba(11,16,26,0.04) 0%, rgba(11,16,26,0.24) 100%)" : "transparent" }} />
           <div style={{ position: "absolute", left: 8, bottom: 8, width: 24, height: 24, borderRadius: 9, background: "rgba(255,255,255,0.88)", color: item.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {typeIconFor(item.type, { size: 14, stroke: 1.8 })}
           </div>
