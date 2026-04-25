@@ -884,14 +884,14 @@ const DEMO_ITEMS = [
     { title: "Vaccination Records", description: "A practical vault save for travel, school, and every form that suddenly wants proof.", url: "https://www.cdc.gov/vaccines-adults/recommended-vaccines/keeping-vaccine-records-up-to-date.html", thumbnail: picsumThumb("vaccination-records"), tags: ["health", "records", "pdf"] },
   ]),
   ...seedGroup({ folderId: "f-paste-bin", source: "Paste", type: "text" }, [
-    { title: "Stripe test API key", description: "sk_test_51SAVIExampleNeverShipThis\nUsed for the staging checkout while debugging webhook signatures.", thumbnail: picsumThumb("pastebin-stripe-key"), tags: ["api", "stripe", "staging", "dev"] },
-    { title: "GitHub repo to clone later", description: "https://github.com/openai/openai-cookbook\nGood examples for structured outputs, embeddings, and fast prototype patterns.", thumbnail: picsumThumb("pastebin-github-repo"), tags: ["github", "repo", "code", "reference"] },
-    { title: "Supabase env snippet", description: "NEXT_PUBLIC_SUPABASE_URL=https://project.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...", thumbnail: picsumThumb("pastebin-supabase-env"), tags: ["supabase", "env", "keys", "backend"] },
-    { title: "Random SSH command that fixed it", description: "ssh -L 5432:localhost:5432 user@staging-box\nPort-forward the DB before running the migration script.", thumbnail: picsumThumb("pastebin-ssh-command"), tags: ["ssh", "command", "terminal", "infra"] },
-    { title: "Webhook JSON payload sample", description: "{\n  \"event\": \"invoice.paid\",\n  \"customer\": \"cus_123\",\n  \"amount\": 4900\n}", thumbnail: picsumThumb("pastebin-webhook-json"), tags: ["json", "webhook", "payload", "debug"] },
-    { title: "WiFi guest password paste", description: "Guest network: SAVI-Guest\nPassword: coffee-table-planet-88\nRemember to rotate after the house party.", thumbnail: picsumThumb("pastebin-wifi-password"), tags: ["wifi", "password", "home", "guests"] },
-    { title: "Meeting address and buzzer code", description: "Calle de la Palma 42, 3B\nBuzzer: 14\nBring laptop charger and the printed pitch deck.", thumbnail: picsumThumb("pastebin-address-note"), tags: ["address", "meeting", "buzzer", "note"] },
-    { title: "OpenAI curl example", description: "curl https://api.openai.com/v1/responses \\\n  -H 'Authorization: Bearer $OPENAI_API_KEY' \\\n  -H 'Content-Type: application/json'", thumbnail: picsumThumb("pastebin-openai-curl"), tags: ["openai", "curl", "api", "example"] },
+    { title: "Stripe test API key", description: "sk_test_51SAVIExampleNeverShipThis\nUsed for the staging checkout while debugging webhook signatures.", thumbnail: pasteBinThumbnail("sk_test_51SAVIExampleNeverShipThis\nUsed for the staging checkout while debugging webhook signatures.", "Stripe test API key"), tags: ["api", "stripe", "staging", "dev"] },
+    { title: "GitHub repo to clone later", description: "https://github.com/openai/openai-cookbook\nGood examples for structured outputs, embeddings, and fast prototype patterns.", thumbnail: pasteBinThumbnail("https://github.com/openai/openai-cookbook\nGood examples for structured outputs, embeddings, and fast prototype patterns.", "GitHub repo to clone later"), tags: ["github", "repo", "code", "reference"] },
+    { title: "Supabase env snippet", description: "NEXT_PUBLIC_SUPABASE_URL=https://project.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...", thumbnail: pasteBinThumbnail("NEXT_PUBLIC_SUPABASE_URL=https://project.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...", "Supabase env snippet"), tags: ["supabase", "env", "keys", "backend"] },
+    { title: "Random SSH command that fixed it", description: "ssh -L 5432:localhost:5432 user@staging-box\nPort-forward the DB before running the migration script.", thumbnail: pasteBinThumbnail("ssh -L 5432:localhost:5432 user@staging-box\nPort-forward the DB before running the migration script.", "Random SSH command that fixed it"), tags: ["ssh", "command", "terminal", "infra"] },
+    { title: "Webhook JSON payload sample", description: "{\n  \"event\": \"invoice.paid\",\n  \"customer\": \"cus_123\",\n  \"amount\": 4900\n}", thumbnail: pasteBinThumbnail("{\n  \"event\": \"invoice.paid\",\n  \"customer\": \"cus_123\",\n  \"amount\": 4900\n}", "Webhook JSON payload sample"), tags: ["json", "webhook", "payload", "debug"] },
+    { title: "WiFi guest password paste", description: "Guest network: SAVI-Guest\nPassword: coffee-table-planet-88\nRemember to rotate after the house party.", thumbnail: pasteBinThumbnail("Guest network: SAVI-Guest\nPassword: coffee-table-planet-88\nRemember to rotate after the house party.", "WiFi guest password paste"), tags: ["wifi", "password", "home", "guests"] },
+    { title: "Meeting address and buzzer code", description: "Calle de la Palma 42, 3B\nBuzzer: 14\nBring laptop charger and the printed pitch deck.", thumbnail: pasteBinThumbnail("Calle de la Palma 42, 3B\nBuzzer: 14\nBring laptop charger and the printed pitch deck.", "Meeting address and buzzer code"), tags: ["address", "meeting", "buzzer", "note"] },
+    { title: "OpenAI curl example", description: "curl https://api.openai.com/v1/responses \\\n  -H 'Authorization: Bearer $OPENAI_API_KEY' \\\n  -H 'Content-Type: application/json'", thumbnail: pasteBinThumbnail("curl https://api.openai.com/v1/responses \\\n  -H 'Authorization: Bearer $OPENAI_API_KEY' \\\n  -H 'Content-Type: application/json'", "OpenAI curl example"), tags: ["openai", "curl", "api", "example"] },
   ]),
   ...seedGroup({ folderId: "f-lmao", source: "Web", type: "link" }, [
     { title: "Lo-fi Beats", description: "The classic Spotify background playlist for reading, journaling, and pretending you have your life organized.", url: "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn", source: "Spotify", thumbnail: picsumThumb("lofi-beats"), tags: ["spotify", "focus", "playlist"] },
@@ -1242,6 +1242,12 @@ const thumbnailFromPlainText = (text = "", title = "", { sensitive = false } = {
     <text x="68" y="286" fill="rgba(255,255,255,0.94)" font-size="34" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">${heading}</text>
     ${lineMarkup}
   </svg>`);
+};
+const pasteBinThumbnail = (text = "", title = "") => {
+  const normalized = (text || "").trim();
+  return thumbnailFromPlainText(normalized, title || titleFromPlainText(normalized), {
+    sensitive: looksSensitivePlainText(normalized.toLowerCase()),
+  });
 };
 const deriveTextSaveDraft = (text = "", folders = []) => {
   const normalized = (text || "").trim();
@@ -3007,12 +3013,17 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
   const showDashboard = !searchMode;
   const anySearchFilterActive = activeFolder !== "f-all" || activeType !== "all" || activeSource !== "all";
   const hasLiveQuery = searchMode && Boolean(search.trim());
+  const showSearchDiscovery = searchMode && !hasLiveQuery && !anySearchFilterActive;
   const resultTitle = searchMode
     ? search.trim()
       ? `Results for “${search.trim()}”`
-      : anySearchFilterActive
-        ? "Filtered SAVIs"
-        : "Everything"
+      : activeFolder !== "f-all"
+        ? activeFolderName
+        : activeType !== "all"
+          ? displayTypeLabel(activeType)
+          : activeSource !== "all"
+            ? activeSourceLabel
+            : "Everything"
     : "Recent SAVIs";
 
   const jumpToResults = () => {
@@ -3135,7 +3146,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
         )}
       </div>
 
-      {searchMode && !hasLiveQuery && (
+      {showSearchDiscovery && (
         <div style={{ padding: "0 20px 18px", display: "grid", gap: 16 }}>
           {activeSearchChips.length > 0 && (
             <div>
@@ -3258,7 +3269,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
                 {topFolders.map((folder) => (
                   <button
                     key={folder.id}
-                    onClick={() => { setBrowseMode("folders"); setActiveFolder(folder.id); onOpenFolder?.(folder.id); }}
+                    onClick={() => onOpenFolder?.(folder.id)}
                     style={{
                       minHeight: 132,
                       textAlign: "left",
