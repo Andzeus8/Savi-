@@ -2075,6 +2075,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [route, setRoute] = useState("home");
   const [resultsJumpKey, setResultsJumpKey] = useState(0);
+  const [searchTopJumpKey, setSearchTopJumpKey] = useState(0);
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [prefillUrl, setPrefillUrl] = useState("");
   const [prefillFromClipboard, setPrefillFromClipboard] = useState(false);
@@ -2166,6 +2167,12 @@ function App() {
     setActiveSource("all");
     setSearch("");
     setRoute("home");
+  };
+
+  const goSearch = () => {
+    dismissActiveField();
+    setRoute("search");
+    setSearchTopJumpKey((current) => current + 1);
   };
 
   const closeLightbox = () => {
@@ -2517,7 +2524,8 @@ function App() {
                         search={search}
                         setSearch={setSearch}
                         resultsJumpKey={resultsJumpKey}
-                        onOpenSearch={() => setRoute("search")}
+                        searchTopJumpKey={searchTopJumpKey}
+                        onOpenSearch={goSearch}
                         onSeeAllFolders={() => setRoute("folders")}
                         onOpenFolder={(id) => openFilteredList({ browse: "folders", folderId: id })}
                         onBack={goHome}
@@ -2547,7 +2555,8 @@ function App() {
                         search={search}
                         setSearch={setSearch}
                         resultsJumpKey={resultsJumpKey}
-                        onOpenSearch={() => setRoute("search")}
+                        searchTopJumpKey={searchTopJumpKey}
+                        onOpenSearch={goSearch}
                         onSeeAllFolders={() => setRoute("folders")}
                         onOpenFolder={(id) => openFilteredList({ browse: "folders", folderId: id })}
                         onBack={goHome}
@@ -2569,7 +2578,7 @@ function App() {
                     )}
                   </div>
                   <div className="navigator-shell">
-                    <TabBar route={route} setRoute={setRoute} onHomePress={goHome} onSavePress={()=>openSaveSheet()} />
+                    <TabBar route={route} setRoute={setRoute} onHomePress={goHome} onSearchPress={goSearch} onSavePress={()=>openSaveSheet()} />
                   </div>
 
                   {showSaveSheet && <SaveSheet initialUrl={prefillUrl} prefillFromClipboard={prefillFromClipboard} autoAnalyzeInitial={prefillAutoAnalyze} folders={folders} onClose={()=>setShowSaveSheet(false)} onSave={async (i)=>{ await addItem(i); setShowSaveSheet(false); }} />}
@@ -2968,7 +2977,7 @@ function WelcomeWizard({ onFinish }) {
   );
 }
 
-function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, resultsJumpKey = 0, onSelect, onShareItem, onOpenSearch, onSeeAllFolders, onOpenFolder, onBack }) {
+function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiveFolder, browseMode, setBrowseMode, activeType, setActiveType, activeSource, setActiveSource, viewMode, setViewMode, folderCounts, typeCounts, sourceCounts, sourceOptions, search, setSearch, resultsJumpKey = 0, searchTopJumpKey = 0, onSelect, onShareItem, onOpenSearch, onSeeAllFolders, onOpenFolder, onBack }) {
   const activeFolderName = folders.find(f => f.id === activeFolder)?.name || "All Saves";
   const activeSourceLabel = sourceOptions.find((option) => option.key === activeSource)?.label || (activeSource === "all" ? "All Apps" : titleize(activeSource));
   const heroEyebrow = searchMode ? "Search" : "My SAVIs";
@@ -2977,6 +2986,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
     ? "Search works across every folder, tag, app, and file detail in your library."
     : "Search fast, jump into your top folders, and keep the latest saves right under your thumb.";
   const heroCount = items.length;
+  const scrollContainerRef = useRef(null);
   const searchInputRef = useRef(null);
   const resultSectionRef = useRef(null);
   const allFolders = folders
@@ -3053,6 +3063,17 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
     jumpToResults();
   }, [searchMode, resultsJumpKey]);
 
+  useEffect(() => {
+    if (!searchMode || !searchTopJumpKey) return;
+    const node = scrollContainerRef.current;
+    if (node && typeof node.scrollTo === "function") {
+      node.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    window.setTimeout(() => {
+      searchInputRef.current?.focus({ preventScroll: true });
+    }, 120);
+  }, [searchMode, searchTopJumpKey]);
+
   const filterCount = (count, active) => (
     <span className="mono" style={{ fontSize: 9, opacity: active ? 0.78 : 0.62 }}>{count}</span>
   );
@@ -3064,7 +3085,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
   ].filter(Boolean);
 
   return (
-    <div className="scroll" style={{ height: "100%" }}>
+    <div ref={scrollContainerRef} className="scroll" style={{ height: "100%" }}>
       <div style={{ padding: searchMode ? "16px 20px 6px" : "16px 20px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: searchMode ? 18 : 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -3838,7 +3859,7 @@ function ProfileScreen({ itemCount, folderCount, exportBackup, importBackup, cle
   );
 }
 
-function TabBar({ route, setRoute, onHomePress, onSavePress }) {
+function TabBar({ route, setRoute, onHomePress, onSearchPress, onSavePress }) {
   const TabButton = ({ active, onClick, IconComp, label, disabled }) => (
     <button onClick={onClick} disabled={disabled} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "4px 0", color: active ? T.ink : disabled ? T.lineSoft : T.inkMute }}>
       <IconComp size={17} stroke={active ? 2.2 : 1.7} />
@@ -3850,7 +3871,7 @@ function TabBar({ route, setRoute, onHomePress, onSavePress }) {
     <div style={{ position: "relative", background: T.paper, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", padding: `8px 24px calc(24px + env(safe-area-inset-bottom))`, borderTop: `1px solid ${T.lineSoft}`, background: "var(--paper-nav)", backdropFilter: "blur(12px)" }}>
         <TabButton active={route === "home"} onClick={()=>onHomePress ? onHomePress() : setRoute("home")} IconComp={IconHome} label="Home" />
-        <TabButton active={route === "search"} onClick={()=>setRoute("search")} IconComp={IconSearch} label="Search" />
+        <TabButton active={route === "search"} onClick={()=>onSearchPress ? onSearchPress() : setRoute("search")} IconComp={IconSearch} label="Search" />
         <button aria-label="Add a new save" onClick={onSavePress} style={{ width: 52, height: 52, borderRadius: 18, background: T.ink, color: T.paper, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px -6px rgba(28,26,23,0.35)" }}>
           <IconPlus size={20} stroke={2.2} />
         </button>
