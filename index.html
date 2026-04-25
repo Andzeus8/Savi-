@@ -183,6 +183,8 @@ const IconHome = p => <Icon {...p} d={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5
 const IconChevronLeft = p => <Icon {...p} d={<polyline points="15 18 9 12 15 6"/>} />;
 const IconGrid = p => <Icon {...p} d={<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>} />;
 const IconList = p => <Icon {...p} d={<><line x1="9" y1="6.5" x2="20" y2="6.5"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="17.5" x2="20" y2="17.5"/><rect x="4" y="5" width="2.5" height="2.5" rx="0.6"/><rect x="4" y="10.75" width="2.5" height="2.5" rx="0.6"/><rect x="4" y="16.5" width="2.5" height="2.5" rx="0.6"/></>} />;
+const IconCheck = p => <Icon {...p} d={<polyline points="20 6 9 17 4 12"/>} />;
+const IconMore = p => <Icon {...p} d={<><circle cx="5" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.25" fill="currentColor" stroke="none"/></>} />;
 const IconUser = p => <Icon {...p} d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />;
 const IconArrowOut = p => <Icon {...p} d={<><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></>} />;
 const IconShare = ({ size = 16, stroke = 1.9 }) => (
@@ -5329,7 +5331,63 @@ const inputStyle = () => ({ width: "100%", minHeight: 44, borderRadius: 10, padd
 const Label = ({ children }) => <label className="mono" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8, color: T.inkMute }}>{children}</label>;
 const Field = ({ label, children }) => <div><Label>{label}</Label>{children}</div>;
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+class SaviRootErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error: error || new Error("Unknown render error") };
+  }
+  componentDidCatch(error) {
+    try {
+      const detail = error && error.stack ? error.stack : String(error);
+      window.__saviBundleError = detail;
+      console.error("SAVI root render error", detail);
+    } catch {}
+  }
+  render() {
+    if (this.state.error) {
+      const detail = this.state.error && this.state.error.stack ? this.state.error.stack : String(this.state.error);
+      return (
+        <div style={{ minHeight: "100vh", background: BRAND.bg, color: BRAND.cream, padding: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ maxWidth: 420, width: "100%", background: BRAND.surface, border: `1px solid ${BRAND.lineOnDark}`, borderRadius: 24, padding: 24, boxShadow: "0 20px 80px rgba(76,29,149,0.35)" }}>
+            <div className="mono" style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: BRAND.chartreuse, marginBottom: 12 }}>Startup issue</div>
+            <div style={{ fontFamily: "Fraunces, serif", fontSize: 28, lineHeight: 1.1, marginBottom: 10 }}>SAVI hit a render error.</div>
+            <div style={{ color: BRAND.softOnDark, fontSize: 14, lineHeight: 1.5, marginBottom: 16 }}>The app bundle loaded, but something in the first screen crashed. The details below will help us fix it quickly.</div>
+            <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "JetBrains Mono, monospace", fontSize: 11, lineHeight: 1.5, color: BRAND.cream }}>{detail}</pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const saviRoot = ReactDOM.createRoot(document.getElementById("root"));
+if (ReactDOM.flushSync) {
+  ReactDOM.flushSync(() => {
+    saviRoot.render(<SaviRootErrorBoundary><App /></SaviRootErrorBoundary>);
+  });
+} else {
+  saviRoot.render(<SaviRootErrorBoundary><App /></SaviRootErrorBoundary>);
+}
+</script>
+<script>
+if (window.Babel && typeof window.Babel.transformScriptTags === "function") {
+  try {
+    if (typeof window.Babel.disableScriptTags === "function") {
+      window.Babel.disableScriptTags();
+    }
+    if (!window.__saviBabelBootstrapped) {
+      window.__saviBabelBootstrapped = true;
+      window.Babel.transformScriptTags();
+    }
+  } catch (error) {
+    console.error("SAVI Babel bootstrap failed", error);
+  }
+}
 </script>
 </body>
 </html>
