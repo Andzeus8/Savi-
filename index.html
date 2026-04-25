@@ -3006,6 +3006,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
   const topFolders = allFolders.slice(0, 4);
   const showDashboard = !searchMode;
   const anySearchFilterActive = activeFolder !== "f-all" || activeType !== "all" || activeSource !== "all";
+  const hasLiveQuery = searchMode && Boolean(search.trim());
   const resultTitle = searchMode
     ? search.trim()
       ? `Results for “${search.trim()}”`
@@ -3074,6 +3075,14 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
     }, 120);
   }, [searchMode, searchTopJumpKey]);
 
+  useEffect(() => {
+    if (!hasLiveQuery) return;
+    const timer = window.setTimeout(() => {
+      jumpToResults();
+    }, 90);
+    return () => window.clearTimeout(timer);
+  }, [hasLiveQuery, search, activeFolder, activeType, activeSource]);
+
   const filterCount = (count, active) => (
     <span className="mono" style={{ fontSize: 9, opacity: active ? 0.78 : 0.62 }}>{count}</span>
   );
@@ -3116,7 +3125,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
             <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.inkMute, pointerEvents: "none", display: "flex" }}>
               <IconSearch size={15} />
             </div>
-            <input aria-label="Search your library" ref={searchInputRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles, tags, apps, and notes..." style={{ width: "100%", borderRadius: 16, padding: "12px 14px 12px 42px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink, boxShadow: "0 16px 28px -26px rgba(22,26,35,0.55)" }} />
+            <input aria-label="Search your library" ref={searchInputRef} value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e => { if (e.key === "Enter") jumpToResults(); }} placeholder="Search titles, tags, apps, and notes..." style={{ width: "100%", borderRadius: 16, padding: "12px 14px 12px 42px", fontSize: 14, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.ink, boxShadow: "0 16px 28px -26px rgba(22,26,35,0.55)" }} />
           </div>
         ) : (
           <button onClick={onOpenSearch} aria-label="Open Search" style={{ width: "100%", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, background: T.card, border: `1px solid ${T.lineSoft}`, color: T.inkMute, boxShadow: "0 16px 28px -26px rgba(22,26,35,0.55)", textAlign: "left" }}>
@@ -3126,7 +3135,7 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
         )}
       </div>
 
-      {searchMode && (
+      {searchMode && !hasLiveQuery && (
         <div style={{ padding: "0 20px 18px", display: "grid", gap: 16 }}>
           {activeSearchChips.length > 0 && (
             <div>
@@ -3223,6 +3232,14 @@ function HomeScreen({ folders, items, searchMode = false, activeFolder, setActiv
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {searchMode && hasLiveQuery && (
+        <div style={{ padding: "0 20px 12px" }}>
+          <div className="mono" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: T.inkMute }}>
+            {items.length} {items.length === 1 ? "match" : "matches"}
           </div>
         </div>
       )}
